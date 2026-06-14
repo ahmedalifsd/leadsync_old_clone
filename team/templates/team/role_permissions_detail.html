@@ -1,0 +1,114 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}{{ role.name }} Permissions - LeadSync{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0">
+            <i class="fa-solid fa-shield-halved me-2"></i>{{ role.name }} — Permissions
+        </h1>
+        <p class="text-muted mb-0">Detailed permission breakdown for this role</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'manage_roles' %}" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-1"></i>Back to Roles
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Permission</th>
+                    <th class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><i class="fa-solid fa-eye me-1 text-info"></i> View Leads</td>
+                    <td class="text-center">
+                        {% if role.can_view_leads %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-plus me-1 text-success"></i> Add Leads</td>
+                    <td class="text-center">
+                        {% if role.can_add_leads %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-pen-to-square me-1 text-warning"></i> Edit Leads</td>
+                    <td class="text-center">
+                        {% if role.can_edit_leads %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-trash me-1 text-danger"></i> Delete Leads</td>
+                    <td class="text-center">
+                        {% if role.can_delete_leads %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-layer-group me-1 text-primary"></i> Bulk Add Leads</td>
+                    <td class="text-center">
+                        {% if role.can_bulk_add_leads %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-file-csv me-1 text-success"></i> CSV Upload</td>
+                    <td class="text-center">
+                        {% if role.can_csv_upload %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-file-lines me-1 text-info"></i> Manage Templates</td>
+                    <td class="text-center">
+                        {% if role.can_manage_templates %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-sliders me-1 text-warning"></i> Manage Custom Fields</td>
+                    <td class="text-center">
+                        {% if role.can_manage_custom_fields %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-chart-line me-1 text-success"></i> View Analytics</td>
+                    <td class="text-center">
+                        {% if role.can_view_analytics %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-clock-rotate-left me-1 text-info"></i> View Activity Log</td>
+                    <td class="text-center">
+                        {% if role.can_view_activity_log %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-trash-can-arrow-up me-1 text-warning"></i> View Deleted Leads</td>
+                    <td class="text-center">
+                        {% if role.can_view_deleted_leads %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-user-plus me-1 text-primary"></i> Assign Leads</td>
+                    <td class="text-center">
+                        {% if role.can_assign_leads %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td><i class="fa-solid fa-share-nodes me-1 text-info"></i> Share Leads</td>
+                    <td class="text-center">
+                        {% if role.can_share_leads %}<span class="badge bg-success"><i class="fa-solid fa-check"></i> Granted</span>{% else %}<span class="badge bg-secondary"><i class="fa-solid fa-xmark"></i> Denied</span>{% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

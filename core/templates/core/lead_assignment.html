@@ -1,0 +1,57 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Assign Lead - LeadSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-check me-2"></i>Assign Lead
+                </h4>
+                <p class="text-muted mb-0">Assign this lead to a team member</p>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Lead Information:</strong><br>
+                    Client: <strong>{{ lead.client_name }}</strong><br>
+                    Contact: {{ lead.contact_number }}<br>
+                    Status: <span class="badge status-{{ lead.status }}">{{ lead.get_status_display }}</span>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Assign To *</label>
+                        {{ form.assigned_to }}
+                        {% if form.assigned_to.errors %}
+                            <div class="text-danger small">{{ form.assigned_to.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Assignment</label>
+                        {{ form.reason }}
+                        {% if form.reason.errors %}
+                            <div class="text-danger small">{{ form.reason.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">{{ form.reason.help_text }}</div>
+                    </div>
+
+                    <div class="text-end">
+                        <a href="{% url 'edit_lead' lead.id %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-check me-1"></i>Assign Lead
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

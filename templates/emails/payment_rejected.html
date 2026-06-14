@@ -1,0 +1,58 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p class="greeting">Hello {{ username }},</p>
+
+<p class="message-text" style="color: #dc2626; font-weight: 500;">
+    Your payment request for <strong>{{ plan_name }}</strong> has been rejected.
+</p>
+
+<div class="highlight-box" style="background-color: #fee2e2; border-left: 4px solid #dc2626;">
+    <p style="color: #991b1b; margin: 0;">
+        <strong>Rejection Reason:</strong><br>
+        {{ rejection_reason }}
+    </p>
+</div>
+
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 150px;">Plan Name</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #333; font-weight: 600;">{{ plan_name }}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 150px;">Billing Cycle</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #333; font-weight: 500;">{{ billing_cycle }}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 150px;">Amount</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #333; font-weight: 500;">{{ amount }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 150px;">Status</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #dc2626; font-weight: 600;">Rejected</td>
+    </tr>
+</table>
+
+<div class="divider"></div>
+
+<p class="message-text">
+    <strong>What happens next?</strong><br>
+    You can submit a new payment request from your account dashboard. Please make sure all information is correct before resubmitting.
+</p>
+
+<p class="message-text">
+    If you have questions about this rejection or need further assistance, please contact our support team:
+</p>
+
+<p class="message-text" style="text-align: center; margin: 20px 0;">
+    {% if support_email %}
+    <strong>Email:</strong> <a href="mailto:{{ support_email }}" style="color: #4f46e5; text-decoration: none;">{{ support_email }}</a>
+    {% endif %}
+</p>
+
+<div class="divider"></div>
+
+<p class="message-text">
+    Thank you for choosing LeadSync!
+</p>
+{% endblock %}

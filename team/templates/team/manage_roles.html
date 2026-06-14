@@ -1,0 +1,310 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Manage Roles - LeadSync{% endblock %}
+
+{% block content %}
+
+<style>
+    .roles-top-shell {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 1px 10px rgba(0,0,0,0.06);
+        padding: 24px;
+        margin-bottom: 18px;
+    }
+</style>
+
+
+<div class="page-header page-add-notes">
+    <div class="add-item d-flex">
+        <div class="page-title">
+            <h4>Manage Roles & Permissions</h4>
+            <h6>Create custom roles and assign permissions to your employees</h6>
+        </div>
+
+    </div>
+    <div class="d-flex flex-sm-row flex-column align-items-sm-center align-items-start">
+        <a href="{% url 'create_role' %}" class="btn btn-primary px-3">
+            <i class="fa-solid fa-plus me-1"></i>Create New Role
+        </a>
+    </div>
+</div>
+
+
+
+<!--<div class="roles-top-shell">-->
+
+<!-- Stats Cards -->
+<div class="row">
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+            <!-- Card 6 · Red · Declining Line -->
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-cyan"
+                             data-card="6">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Total Roles</span>
+                                    </div>
+                                    <div class="card-number">{{ total_roles }}</div>
+                                </div>
+                              </div>
+
+                            <!-- DUAL LINE CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <path class="spark-path secondary"
+                                          d="M0,55 C40,48 70,58 110,40 C150,22 170,45 210,30 C240,18 270,25 300,12"
+                                          stroke-width="1.5" stroke-linecap="round"/>
+                                    <path class="spark-path"
+                                          d="M0,65 C30,58 60,68 100,52 C140,36 160,55 200,40 C230,28 265,35 300,20"
+                                          stroke-width="2"
+                                          stroke-linecap="round"/>
+                                    <circle class="chart-dot" cx="300" cy="20" r="3"/>
+                                    <circle class="chart-dot-dim" cx="300" cy="12" r="2"/>
+                                </svg>
+                            </div>
+                        </div>
+
+        </div>
+    </div>
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+                        <!-- Card 3 · Pink · Donut -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-pink"
+                             data-card="3">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Total Permissions</span>
+                                    </div>
+                                    <div class="card-number">{{ total_permissions }}</div>
+                                </div>
+                               </div>
+
+                            <!-- BAR CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <rect class="bar-rect" x="8" y="30" width="22" height="45" rx="4"/>
+                                    <rect class="bar-rect" x="38" y="45" width="22" height="30" rx="4"/>
+                                    <rect class="bar-rect" x="68" y="20" width="22" height="55" rx="4"/>
+                                    <rect class="bar-rect" x="98" y="38" width="22" height="37" rx="4"/>
+                                    <rect class="bar-rect bright" x="128" y="10" width="22" height="65" rx="4"/>
+                                    <rect class="bar-rect" x="158" y="25" width="22" height="50" rx="4"/>
+                                    <rect class="bar-rect" x="188" y="15" width="22" height="60" rx="4"/>
+                                    <rect class="bar-rect bright" x="218" y="5" width="22" height="70" rx="4"/>
+                                    <rect class="bar-rect" x="248" y="20" width="22" height="55" rx="4"/>
+                                    <rect class="bar-rect bright" x="270" y="8" width="22" height="67" rx="4"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-green"
+                 data-card="3">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Roles In Use</span>
+                        </div>
+                        <div class="card-number">{{ roles_in_use }}</div>
+                    </div>
+                </div>
+
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <path class="chart-fill"
+                              d="M0,65 L40,65 L40,50 L80,50 L80,35 L120,35 L120,42 L160,42 L160,20 L200,20 L200,28 L240,28 L240,10 L300,10 L300,75 L0,75 Z"/>
+                        <path class="step-path"
+                              d="M0,65 L40,65 L40,50 L80,50 L80,35 L120,35 L120,42 L160,42 L160,20 L200,20 L200,28 L240,28 L240,10 L300,10"
+                              stroke-width="2" stroke-linecap="square"/>
+                        <circle class="chart-dot" cx="300" cy="10" r="3"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-amber"
+                 data-card="3">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Assigned Members</span>
+                        </div>
+                        <div class="card-number">{{ assigned_members }}</div>
+                    </div>
+                </div>
+
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <rect class="bar-rect" x="8" y="30" width="22" height="45" rx="4"/>
+                        <rect class="bar-rect" x="38" y="45" width="22" height="30" rx="4"/>
+                        <rect class="bar-rect" x="68" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect" x="98" y="38" width="22" height="37" rx="4"/>
+                        <rect class="bar-rect bright" x="128" y="10" width="22" height="65" rx="4"/>
+                        <rect class="bar-rect" x="158" y="25" width="22" height="50" rx="4"/>
+                        <rect class="bar-rect" x="188" y="15" width="22" height="60" rx="4"/>
+                        <rect class="bar-rect bright" x="218" y="5" width="22" height="70" rx="4"/>
+                        <rect class="bar-rect" x="248" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect bright" x="270" y="8" width="22" height="67" rx="4"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="page-header page-add-notes">
+    <div class="add-item d-flex">
+        <div class="page-title">
+            <h4>All Roles</h4>
+        </div>
+    </div>
+</div>
+
+    <div class="card-body">
+        {% if roles %}
+        <div class="row">
+            {% for role in roles %}
+            <div class="col-4 col-lg-4 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0">
+                        <!-- Card 6 · Red · Declining Line -->
+                        <div class="stat-card d-flex flex-column justify-content-between h-100 white-card-cyan"
+                             data-card="6">
+                            <div class="card-header-row">
+                                <div class="d-flex justify-content-between w-100">
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">{{ role.name }}</span>
+                                    </div>
+                                    <div class="card-number fs-6">{{ role.members.count }} Member{{ role.members.count|pluralize }}</div>
+                                </div>
+                            </div>
+
+                        {% if role.description %}
+                        <p class="text-muted small mb-1">{{ role.description }}</p>
+                        {% endif %}
+
+                        <h6 class="small fw-semibold text-uppercase text-muted mb-2">
+                            <i class="fa-solid fa-key me-1"></i>Permissions
+                        </h6>
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            {% if role.can_view_leads %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="fa-solid fa-eye me-1"></i>View</span>
+                            {% endif %}
+                            {% if role.can_add_leads %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="fa-solid fa-plus me-1"></i>Add</span>
+                            {% endif %}
+                            {% if role.can_edit_leads %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="fa-solid fa-pen me-1"></i>Edit</span>
+                            {% endif %}
+                            {% if role.can_delete_leads %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25"><i class="fa-solid fa-trash me-1"></i>Delete</span>
+                            {% endif %}
+                            {% if role.can_bulk_add_leads %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="fa-solid fa-layer-group me-1"></i>Bulk Add</span>
+                            {% endif %}
+                            {% if role.can_csv_upload %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25"><i class="fa-solid fa-file-csv me-1"></i>CSV</span>
+                            {% endif %}
+                            {% if role.can_manage_templates %}
+                            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25"><i class="fa-solid fa-file-lines me-1"></i>Templates</span>
+                            {% endif %}
+                            {% if role.can_manage_custom_fields %}
+                            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25"><i class="fa-solid fa-sliders me-1"></i>Fields</span>
+                            {% endif %}
+                            {% if role.can_view_analytics %}
+                            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25"><i class="fa-solid fa-chart-line me-1"></i>Analytics</span>
+                            {% endif %}
+                            {% if role.can_view_activity_log %}
+                            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25"><i class="fa-solid fa-clock-rotate-left me-1"></i>Log</span>
+                            {% endif %}
+                            {% if role.can_view_deleted_leads %}
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25"><i class="fa-solid fa-trash-can-arrow-up me-1"></i>Deleted</span>
+                            {% endif %}
+                            {% if role.can_assign_leads %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25"><i class="fa-solid fa-user-plus me-1"></i>Assign</span>
+                            {% endif %}
+                            {% if role.can_share_leads %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25"><i class="fa-solid fa-share-nodes me-1"></i>Share</span>
+                            {% endif %}
+
+                            {% if not role.can_view_leads and not role.can_add_leads and not role.can_edit_leads and not role.can_delete_leads and not role.can_bulk_add_leads and not role.can_csv_upload and not role.can_manage_templates and not role.can_manage_custom_fields and not role.can_view_analytics and not role.can_view_activity_log and not role.can_view_deleted_leads and not role.can_assign_leads and not role.can_share_leads %}
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary">No permissions granted</span>
+                            {% endif %}
+                        </div>
+
+                    <div class="card-footer border-top py-2">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'edit_role' role.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-pen-to-square me-1"></i>Edit
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                    data-bs-target="#deleteRoleModal{{ role.id }}">
+                                <i class="fa-solid fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Delete Role Modal -->
+            <div class="modal fade" id="deleteRoleModal{{ role.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Delete Role</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete role <strong>"{{ role.name }}"</strong>?</p>
+                            {% if role.members.count > 0 %}
+                            <div class="alert alert-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                <strong>Warning:</strong> {{ role.members.count }} member{{ role.members.count|pluralize }} currently have this role.
+                                They will lose all permissions assigned through this role.
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <form method="post" action="{% url 'delete_role' role.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fa-solid fa-trash me-1"></i>Delete Role
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fa-solid fa-shield-halved fa-3x text-muted mb-3 d-block"></i>
+            <h5 class="text-muted">No Roles Created Yet</h5>
+            <p class="text-muted">Create roles to assign specific permissions to your employees.</p>
+            <a href="{% url 'create_role' %}" class="btn btn-primary">
+                <i class="fa-solid fa-plus me-1"></i>Create First Role
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

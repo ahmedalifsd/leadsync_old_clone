@@ -1,0 +1,58 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p class="greeting">Welcome to LeadSync, {{ staff_username }}!</p>
+
+<p class="message-text">
+    Great news! Your employer <strong>{{ boss_username }}</strong> has created an account for you on <strong>LeadSync</strong>.
+</p>
+
+{% if is_auto_inactive %}
+<div class="highlight-box" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-left-color: #f59e0b;">
+    <p style="color: #d97706;"><strong>Status:</strong> Your account is currently inactive. Your manager will activate it soon.</p>
+</div>
+{% else %}
+<div class="highlight-box" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left-color: #16a34a;">
+    <p style="color: #16a34a;">Your account is ready to use!</p>
+</div>
+{% endif %}
+
+<p class="message-text" style="font-weight: 600; margin-bottom: 10px;">Your Login Credentials:</p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 10px 0 25px;">
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 120px;">Username</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #333; font-weight: 500;">{{ staff_username }}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 120px;">Password</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #333; font-weight: 500;">{{ staff_password }}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 120px;">Email</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #333; font-weight: 500;">{{ staff_email }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 120px;">Company</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #333; font-weight: 500;">{{ company_name }}</td>
+    </tr>
+</table>
+
+<div style="text-align: center;">
+    <a href="{{ login_url }}" class="btn-primary" style="color: #ffffff !important;">
+        Login to LeadSync
+    </a>
+</div>
+
+<div class="divider"></div>
+
+<div class="highlight-box" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-left-color: #f59e0b;">
+    <p style="color: #d97706;">
+        <strong>Important:</strong> Please change your password after your first login for security.
+    </p>
+</div>
+
+<p class="message-text" style="margin-top: 20px; color: #888; font-size: 13px;">
+    If you didn't expect this email, please contact your employer or our support team.
+</p>
+{% endblock %}

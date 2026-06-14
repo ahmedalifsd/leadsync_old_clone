@@ -1,0 +1,48 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p class="greeting">Hello {{ username }},</p>
+
+<p class="message-text">
+    Thank you for registering on <strong>LeadSync</strong>! Your account has been successfully created and has been submitted for approval.
+</p>
+
+<div class="highlight-box">
+    <p>Your account is currently pending approval. You will receive an email notification once your account has been reviewed and approved.</p>
+</div>
+
+<p class="message-text">
+    Here are your registration details:
+</p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 10px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 130px;">Username</td>
+        <td style="padding: 10px 0; font-size: 15px; color: #333; font-weight: 500;">{{ username }}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 10px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 130px;">Email</td>
+        <td style="padding: 10px 0; font-size: 15px; color: #333; font-weight: 500;">{{ email }}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 10px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 130px;">Account Type</td>
+        <td style="padding: 10px 0; font-size: 15px; color: #333; font-weight: 500;">{{ role }}</td>
+    </tr>
+    {% if plan_name %}
+    <tr>
+        <td style="padding: 10px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 130px;">Plan</td>
+        <td style="padding: 10px 0; font-size: 15px; color: #4f46e5; font-weight: 600;">{{ plan_name }} (will be activated on approval)</td>
+    </tr>
+    {% endif %}
+</table>
+
+<div class="divider"></div>
+
+<p class="message-text">
+    Once your account is approved, you'll receive another email with login instructions. In the meantime, sit tight — we'll get back to you soon!
+</p>
+
+<p class="message-text" style="margin-top: 25px; color: #888; font-size: 13px;">
+    If you didn't create this account, please ignore this email.
+</p>
+{% endblock %}

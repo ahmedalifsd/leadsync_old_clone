@@ -1,0 +1,35 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+*.json
+
+
+# Django
+*.pyc
+__pycache__/
+*.sqlite3
+.DS_Store
+db.sqlite3
+*.log
+media/
+staticfiles/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+
+# Python
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/

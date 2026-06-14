@@ -1,0 +1,54 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p class="greeting">Congratulations, {{ username }}!</p>
+
+<p class="message-text">
+    Great news! Your <strong>LeadSync</strong> account has been <strong style="color: #16a34a;">approved</strong>. You can now log in and start using the platform.
+</p>
+
+<div class="highlight-box" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left-color: #16a34a;">
+    <p style="color: #16a34a;">Your account is now active and ready to use!</p>
+</div>
+
+{% if plan_name %}
+<p class="message-text">
+    Your <strong>{{ plan_name }}</strong> plan has been activated automatically. You're all set to manage your leads efficiently.
+</p>
+{% endif %}
+
+<div style="text-align: center;">
+    <a href="{{ login_url }}" class="btn-primary" style="color: #ffffff !important;">
+        Login to LeadSync
+    </a>
+</div>
+
+<div class="divider"></div>
+
+<p class="message-text">
+    Here's what you can do now:
+</p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 20px; width: 40px; text-align: center;">1.</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #555;">Add and manage your leads</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 20px; width: 40px; text-align: center;">2.</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #555;">Invite team members to collaborate</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 20px; width: 40px; text-align: center;">3.</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #555;">Track analytics and conversions</td>
+    </tr>
+    <tr>
+        <td style="padding: 12px 0; font-size: 20px; width: 40px; text-align: center;">4.</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #555;">Upgrade your plan anytime for more features</td>
+    </tr>
+</table>
+
+<p class="message-text" style="margin-top: 20px; color: #888; font-size: 13px;">
+    If you have any questions, feel free to reach out to our support team.
+</p>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Permission Denied - LeadSync{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+    <div class="text-center">
+        <div class="mb-4">
+            <i class="fa-solid fa-lock fa-4x text-danger"></i>
+        </div>
+        <h2 class="fw-bold text-danger mb-3">Access Denied</h2>
+        <p class="text-muted fs-16 mb-4">
+            You do not have permission to access this feature.<br>
+            Please contact your manager to request access.
+        </p>
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">
+            <i class="fa-solid fa-house me-1"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

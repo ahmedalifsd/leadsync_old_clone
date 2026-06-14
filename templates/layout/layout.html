@@ -1,0 +1,299 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="LeadSync"/>
+    <meta name="keywords"
+          content="admin, estimates, bootstrap, business, corporate, creative, leads, social media, responsive, Projects">
+    <meta name="author" content="LeadSync">
+    <meta name="robots" content="">
+    <meta name="google-site-verification" content="uF1E77JMHtliXIW-zaQIGn-VRXjqE3hW4PkHQap2cSw"/>
+    <title>{% block title %}LeadSync - Lead Management System{% endblock %}</title>
+
+    {% block extra_links %}
+
+    {% endblock %}
+
+    {% include 'layout/links.html' %}
+
+    {% if print_mode %}
+    <style>
+        :root {
+            color-scheme: light;
+        }
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+        html, body {
+            background: #ffffff !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        body.print-mode-body .main-wrapper,
+        body.print-mode-body .page-wrapper,
+        body.print-mode-body .content {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            min-height: auto !important;
+        }
+        body.print-mode-body .page-wrapper {
+            margin-left: 0 !important;
+        }
+        .print-only-page {
+            padding: 12px;
+            background: #ffffff;
+        }
+        .print-hide {
+            display: none !important;
+        }
+    </style>
+    {% endif %}
+
+    {% if GA_MEASUREMENT_ID %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ GA_MEASUREMENT_ID }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ GA_MEASUREMENT_ID }}');
+    </script>
+    {% endif %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+<body class="{% if print_mode %}print-mode-body{% endif %}">
+
+<div class="main-wrapper">
+
+    {% if not print_mode %}
+    {% include 'layout/navbar.html' %}
+
+    {% include 'layout/sidebar.html' %}
+    {% endif %}
+
+
+    <!-- Start Main Content Area -->
+
+    <div class="page-wrapper {% if print_mode %}print-only-page{% endif %}">
+        <div class="content">
+
+            <!-- Plan Status Alert Banner -->
+            {% if not print_mode %}
+            {% if plan_alert %}
+            <div class="plan-alert-banner mb-3" id="planAlertBanner">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 px-3 py-2"
+                     style="background: {% if plan_alert.color == 'danger' %}linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%){% elif plan_alert.color == 'warning' %}linear-gradient(135deg, #f9ca24 0%, #f0932b 100%){% elif plan_alert.color == 'info' %}linear-gradient(135deg, #74b9ff 0%, #0984e3 100%){% endif %}; color: {% if plan_alert.color == 'warning' %}#2d3436{% else %}#fff{% endif %}; font-size: 0.88rem; border-bottom: 1px solid rgba(0,0,0,0.08);">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="{{ plan_alert.icon }}" style="font-size:1rem;"></i>
+                        <span class="fw-medium">{{ plan_alert.message }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if plan_alert.show_upgrade %}
+                        <a href="{% url 'my_plan' %}"
+                           class="btn btn-sm {% if plan_alert.color == 'warning' %}btn-dark{% else %}btn-light{% endif %} fw-bold px-3 py-1"
+                           style="font-size: 0.8rem; border-radius: 20px;">
+                            <i class="fas fa-rocket me-1"></i>Upgrade Now
+                        </a>
+                        {% endif %}
+                        <button type="button"
+                                class="btn-close btn-close-{% if plan_alert.color == 'warning' %}dark{% else %}white{% endif %} p-0"
+                                style="font-size:0.6rem;"
+                                onclick="document.getElementById('planAlertBanner').style.display='none'"
+                                aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            <!-- Global Django Messages -->
+            {% if not print_mode %}
+            {% if messages %}
+            <div class="px-3 pt-3">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show"
+                     role="alert" id="message-{{ forloop.counter }}">
+                    {% if message.tags == 'error' or message.tags == 'danger' %}
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {% elif message.tags == 'success' %}
+                    <i class="fas fa-check-circle me-2"></i>
+                    {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% elif message.tags == 'info' %}
+                    <i class="fas fa-info-circle me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <script>
+                    setTimeout(function() {
+                        const alert = document.getElementById('message-{{ forloop.counter }}');
+                        if (alert) {
+                            const bsAlert = new bootstrap.Alert(alert);
+                            bsAlert.close();
+                        }
+                    }, 10000); // 10 seconds
+                </script>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endif %}
+
+            {% block content %}
+            {% endblock %}
+        </div>
+
+        <div class="flex-grow-1"></div>
+
+
+     </div>
+
+<!--    <div class="customizer-links" id="setdata">-->
+<!--        <ul class="sticky-sidebar">-->
+<!--            <li class="sidebar-icons">-->
+<!--                <a href="#" class="navigation-add" data-bs-toggle="tooltip" data-bs-placement="left"-->
+<!--                   data-bs-original-title="Theme">-->
+<!--                    <i data-feather="settings" class="feather-five"></i>-->
+<!--                </a>-->
+<!--            </li>-->
+<!--        </ul>-->
+<!--    </div>-->
+
+</div>
+
+{% block extra_scripts %}
+{% endblock %}
+
+{% include 'layout/scripts.html' %}
+
+<!-- Auto-dismiss Django messages after 5 seconds -->
+{% if messages %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            document.querySelectorAll('.alert-dismissible').forEach(function(alert) {
+                var bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                if (bsAlert) {
+                    alert.classList.remove('show');
+                    setTimeout(function() { bsAlert.close(); }, 300);
+                }
+            });
+        }, 5000);
+    });
+</script>
+{% endif %}
+
+<!-- Notification AJAX loader — no DB hit until dropdown is opened or every 60s -->
+{% if user.is_authenticated and not print_mode %}
+<script>
+    (function() {
+        var loaded = false;
+
+        function loadNotifications() {
+            fetch('/leads/notifications/api/')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var badge = document.getElementById('notifBadge');
+                    var countText = document.getElementById('notifCountText');
+                    var markAllLink = document.getElementById('markAllReadLink');
+                    var list = document.getElementById('notifList');
+                    var emptyEl = document.getElementById('notifEmpty');
+
+                    // Update badge count
+                    if (data.unread_count > 0) {
+                        badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                        badge.classList.remove('d-none');
+                        countText.textContent = '(' + data.unread_count + ')';
+                        countText.classList.remove('d-none');
+                        markAllLink.classList.remove('d-none');
+                    } else {
+                        badge.classList.add('d-none');
+                        countText.classList.add('d-none');
+                        markAllLink.classList.add('d-none');
+                    }
+
+                    // Build notification items
+                    if (data.notifications.length > 0) {
+                        var html = '';
+                        data.notifications.forEach(function(n) {
+                            html += '<li class="notification-message">';
+                            html += '<a href="' + n.url + '" class="dropdown-item">';
+                            html += '<div class="media d-flex align-items-center">';
+                            html += '<div class="flex-shrink-0"><i class="' + n.icon_class + '"></i></div>';
+                            html += '<div class="media-body flex-grow-1">';
+                            html += '<p class="noti-details">' + n.message + '</p>';
+                            html += '<p class="noti-time"><span class="notification-time">' + n.time_ago + '</span></p>';
+                            html += '</div></div></a></li>';
+                        });
+                        list.innerHTML = html;
+                    } else if (emptyEl) {
+                        // Keep the empty state
+                    }
+
+                    loaded = true;
+                })
+                .catch(function() { /* silently fail */ });
+        }
+
+        // Load on first dropdown open (lazy — saves unnecessary requests)
+        var bellBtn = document.getElementById('notifBellBtn');
+        if (bellBtn) {
+            bellBtn.addEventListener('click', function() {
+                if (!loaded) loadNotifications();
+            });
+        }
+
+        // Also do an initial lightweight badge-only check after 2 seconds
+        setTimeout(function() { loadNotifications(); }, 2000);
+
+        // Refresh every 60 seconds in background
+        setInterval(loadNotifications, 60000);
+    })();
+</script>
+
+<script>
+    (function() {
+        function updateSidebarChatBadge() {
+            fetch('/leads/chat/unread-count/')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var count = parseInt(data.unread_chat_count || 0, 10);
+                    var badge = document.getElementById('sidebarChatBadge');
+                    var placeholder = document.getElementById('sidebarChatBadgePlaceholder');
+
+                    if (count > 0) {
+                        if (!badge && placeholder) {
+                            placeholder.id = 'sidebarChatBadge';
+                            placeholder.classList.remove('d-none');
+                            badge = placeholder;
+                            placeholder = null;
+                        }
+                        if (badge) {
+                            badge.textContent = count > 99 ? '99+' : String(count);
+                            badge.classList.remove('d-none');
+                        }
+                    } else {
+                        if (badge) {
+                            badge.classList.add('d-none');
+                        }
+                        if (placeholder) {
+                            placeholder.classList.add('d-none');
+                        }
+                    }
+                })
+                .catch(function() { /* ignore transient network errors */ });
+        }
+
+        setTimeout(updateSidebarChatBadge, 600);
+        setInterval(updateSidebarChatBadge, 2000);
+    })();
+</script>
+{% endif %}
+
+</body>
+</html>

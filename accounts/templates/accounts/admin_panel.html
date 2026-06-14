@@ -1,0 +1,393 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Dashboard - LeadSync{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+            <!-- Card 3 · Pink · Donut -->
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-amber"
+                 data-card="3">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Total Users</span>
+                        </div>
+                        <div class="card-number">{{ total_users }}</div>
+                    </div>
+                </div>
+                <!-- BAR CHART — colours from CSS vars -->
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <rect class="bar-rect" x="8" y="30" width="22" height="45" rx="4"/>
+                        <rect class="bar-rect" x="38" y="45" width="22" height="30" rx="4"/>
+                        <rect class="bar-rect" x="68" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect" x="98" y="38" width="22" height="37" rx="4"/>
+                        <rect class="bar-rect bright" x="128" y="10" width="22" height="65" rx="4"/>
+                        <rect class="bar-rect" x="158" y="25" width="22" height="50" rx="4"/>
+                        <rect class="bar-rect" x="188" y="15" width="22" height="60" rx="4"/>
+                        <rect class="bar-rect bright" x="218" y="5" width="22" height="70" rx="4"/>
+                        <rect class="bar-rect" x="248" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect bright" x="270" y="8" width="22" height="67" rx="4"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+            <!-- Card 3 · Pink · Donut -->
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-red"
+                 data-card="3">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Pending Owners</span>
+                        </div>
+                        <div class="card-number">{{ pending_owners.count }}</div>
+                    </div>
+                </div>
+                <!-- BAR CHART — colours from CSS vars -->
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <path class="spark-path secondary"
+                              d="M0,55 C40,48 70,58 110,40 C150,22 170,45 210,30 C240,18 270,25 300,12"
+                              stroke-width="1.5" stroke-linecap="round"/>
+                        <path class="spark-path"
+                              d="M0,65 C30,58 60,68 100,52 C140,36 160,55 200,40 C230,28 265,35 300,20" stroke-width="2"
+                              stroke-linecap="round"/>
+                        <circle class="chart-dot" cx="300" cy="20" r="3"/>
+                        <circle class="chart-dot-dim" cx="300" cy="12" r="2"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+            <!-- Card 3 · Pink · Donut -->
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-green"
+                 data-card="3">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Approved Users</span>
+                        </div>
+                        <div class="card-number">{{ approved_users }}</div>
+                    </div>
+                </div>
+                <!-- BAR CHART — colours from CSS vars -->
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <path class="chart-fill"
+                              d="M0,65 L40,65 L40,50 L80,50 L80,35 L120,35 L120,42 L160,42 L160,20 L200,20 L200,28 L240,28 L240,10 L300,10 L300,75 L0,75 Z"/>
+                        <path class="step-path"
+                              d="M0,65 L40,65 L40,50 L80,50 L80,35 L120,35 L120,42 L160,42 L160,20 L200,20 L200,28 L240,28 L240,10 L300,10"
+                              stroke-width="2" stroke-linecap="square"/>
+                        <circle class="chart-dot" cx="300" cy="10" r="3"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+            <!-- Card 3 · Pink · Donut -->
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-pink"
+                 data-card="3">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Staff Users</span>
+                        </div>
+                        <div class="card-number">{{ staff_users }}</div>
+                    </div>
+                </div>
+                <!-- BAR CHART — colours from CSS vars -->
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <rect class="bar-rect" x="8" y="30" width="22" height="45" rx="4"/>
+                        <rect class="bar-rect" x="38" y="45" width="22" height="30" rx="4"/>
+                        <rect class="bar-rect" x="68" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect" x="98" y="38" width="22" height="37" rx="4"/>
+                        <rect class="bar-rect bright" x="128" y="10" width="22" height="65" rx="4"/>
+                        <rect class="bar-rect" x="158" y="25" width="22" height="50" rx="4"/>
+                        <rect class="bar-rect" x="188" y="15" width="22" height="60" rx="4"/>
+                        <rect class="bar-rect bright" x="218" y="5" width="22" height="70" rx="4"/>
+                        <rect class="bar-rect" x="248" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect bright" x="270" y="8" width="22" height="67" rx="4"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- Pending Owner Approvals -->
+    <div class="col-12 mb-3">
+
+        <div class="card bg-white mb-4">
+            <div class="card-body">
+                <h5 class="mb-2">
+                    Pending Owner Approvals
+                </h5>
+                {% if pending_owners %}
+                <div class="table-responsive">
+                    <table class="table text-nowrap table-sm">
+                        <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Company</th>
+                            <th>Registered</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for profile in pending_owners %}
+                        <tr>
+                            <td>{{ profile.user.username }}</td>
+                            <td>{{ profile.user.email }}</td>
+                            <td>{{ profile.phone_number }}</td>
+                            <td>{{ profile.company_name }}</td>
+                            <td>{{ profile.user.date_joined|date:"M d, Y" }}</td>
+                            <td class="d-flex">
+                                <form method="post" action="{% url 'approve_owner' profile.user.id %}" class="me-2">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-icon btn-sm btn-soft-success rounded-pill">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                                <button class="btn btn-icon btn-sm btn-soft-danger rounded-pill" data-bs-toggle="modal"
+                                        data-bs-target="#rejectModal{{ profile.user.id }}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                        <!-- Reject Modals for Pending Owners -->
+                        {% for profile in pending_owners %}
+                        <div class="modal fade" id="rejectModal{{ profile.user.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Reject Owner Request</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Are you sure you want to reject {{ profile.user.username }}'s request to become
+                                        an
+                                        owner? This will permanently delete their account.
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel
+                                        </button>
+                                        <form method="post" action="{% url 'reject_owner' profile.user.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Reject & Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p class="text-muted">No pending owner approvals!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- All Users -->
+        <div class="col-12 mb-3">
+
+            <div class="card bg-white mb-4">
+                <div class="card-body">
+                    <h5 class="mb-2">
+                        All Users
+                    </h5>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Email</th>
+                                <th>Company</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for profile in all_users %}
+                            <tr>
+                                <td>{{ profile.user.username }}</td>
+                                <td>
+                            <span class="badge bg-soft-{% if profile.role == 'owner' %}primary{% elif profile.role == 'super_admin' %}danger{% else %}success{% endif %}">
+                                {{ profile.get_role_display }}
+                            </span>
+                                </td>
+                                <td>
+                                    {% if profile.is_approved %}
+                                    <span class="badge bg-soft-success">Approved</span>
+                                    {% else %}
+                                    <span class="badge bg-soft-warning text-dark">Pending</span>
+                                    {% endif %}
+                                    <br>
+                                    {% if profile.user.is_active %}
+                                    <span class="badge bg-soft-primary mt-1">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-soft-secondary mt-1">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ profile.user.email }}</td>
+                                <td>{{ profile.company_name|default:"-" }}</td>
+                                <td>{{ profile.user.date_joined|date:"M d, Y" }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-icon btn-sm btn-soft-info rounded-pill me-2"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#viewModal{{ profile.user.id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                                {% if profile.role == 'owner' %}
+                                                <form method="post" action="{% url 'toggle_owner_approval' profile.user.id %}" class="d-inline me-2"
+                                                      onsubmit="return confirm('{% if profile.is_approved %}Disapprove{% else %}Approve{% endif %} {{ profile.user.username }}?')">
+                                                    {% csrf_token %}
+                                                    <button type="submit"
+                                                            class="btn btn-icon btn-sm {% if profile.is_approved %}btn-soft-warning{% else %}btn-soft-success{% endif %} rounded-pill">
+                                                        <i class="fas {% if profile.is_approved %}fa-user-slash{% else %}fa-user-check{% endif %}"></i>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                        <a href="mailto:{{ profile.user.email }}"
+                                           class="btn btn-icon btn-sm btn-soft-success rounded-pill">
+                                            <i class="fas fa-envelope"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Modals -->
+            {% for profile in all_users %}
+            <div class="modal fade" id="viewModal{{ profile.user.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">User Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Username:</th>
+                                    <td>{{ profile.user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Full Name:</th>
+                                    <td>{{ profile.user.get_full_name|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>{{ profile.user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Phone:</th>
+                                    <td>{{ profile.phone_number|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Company:</th>
+                                    <td>{{ profile.company_name|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Role:</th>
+                                    <td>{{ profile.get_role_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td>
+                                        {% if profile.is_approved %}
+                                        <span class="badge bg-success">Approved</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">Pending Approval</span>
+                                        {% endif %}
+                                        <div class="mt-2">
+                                            {% if profile.user.is_active %}
+                                            <span class="badge bg-primary">Active</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Boss:</th>
+                                    <td>{{ profile.pending_boss_username|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Joined:</th>
+                                    <td>{{ profile.user.date_joined|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Last Login:</th>
+                                    <td>{{ profile.user.last_login|date:"M d, Y H:i"|default:"Never" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            {% if profile.role == 'owner' %}
+                            <form method="post" action="{% url 'toggle_owner_approval' profile.user.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success">
+                                    {% if profile.is_approved %}Disapprove Owner{% else %}Approve Owner{% endif %}
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

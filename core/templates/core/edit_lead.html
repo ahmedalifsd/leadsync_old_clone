@@ -1,0 +1,497 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Dashboard - LeadSync{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mx-auto">
+        <div class="card bg-white">
+            <div class="card-body bg-white">
+
+            <div class=" d-flex mb-2 justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Edit Lead
+                </h4>
+                <span class="badge bg-{{ lead.status }}">
+                    {{ lead.get_status_display }}
+                </span>
+            </div>
+                <form method="post" id="leadForm">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                        <div class="col-lg-3 col-md-6 col-sm-12 col-12">
+                            <label class="form-label">Added By</label>
+                            <input type="text" class="form-control"
+                                   value="{{ lead.created_by.username }}" readonly>
+                        </div>
+                        <div class="col-lg-3 col-md-6 col-sm-12 col-12">
+                            <label class="form-label">Owner</label>
+                            <input type="text" class="form-control"
+                                   value="{{ lead.owner.username }}" readonly>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 col-sm-12 col-12 mb-3">
+                            <label class="form-label">Client Name *</label>
+                            {{ form.client_name }}
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 col-sm-12 col-12 mb-3">
+                            <label class="form-label">Contact Number *</label>
+                            {{ form.contact_number }}
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 col-sm-12 col-12 mb-3">
+                            <label class="form-label">Email</label>
+                            {{ form.email }}
+                        </div>
+
+                        <div class="col-lg-3 col-md-6 col-sm-12 col-12 mb-3">
+                            <label class="form-label">Status *</label>
+                            {{ form.status }}
+                        </div>
+                    </div>
+
+                    <!-- Profile Links -->
+                    <div id="profile-links-section">
+                        <h5 class="mb-3">
+                            <i class="fas fa-link me-2"></i>Profile Links
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="add-profile-link">
+                                <i class="fas fa-plus me-1"></i>Add Link
+                            </button>
+                        </h5>
+
+                        <div id="profile-links-container">
+                            {{ profile_link_formset.management_form }}
+                            {% for profile_link_form in profile_link_formset %}
+                            <div class="profile-link-item border rounded p-3 mb-3">
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label">Platform</label>
+                                        {{ profile_link_form.platform }}
+                                    </div>
+                                    <div class="col-md-3 mb-2" id="custom-platform-{{ forloop.counter0 }}" style="display: none;">
+                                        <label class="form-label">Custom Platform</label>
+                                        {{ profile_link_form.custom_platform }}
+                                    </div>
+                                    <div class="col-md-5 mb-2">
+                                        <label class="form-label">URL</label>
+                                        {{ profile_link_form.url }}
+                                    </div>
+                                    <div class="col-md-1 mb-2 d-flex align-items-end">
+                                        {% if profile_link_formset.can_delete %}
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-profile-link">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if profile_link_form.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ profile_link_form.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Category Selection -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Category</label>
+                            {% with selected_category=form.category_choice.value|stringformat:"s" %}
+                            <select name="category_choice" id="id_category_choice" class="form-select">
+                                <option value="">Select Category</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                                <option value="other" {% if lead.category_other %}selected{% endif %}>
+                                    Other (Please specify)
+                                </option>
+                            </select>
+                            {% endwith %}
+                        </div>
+
+                        <div class="col-md-6" id="category_other_div" style="display: {% if lead.category_other %}block{% else %}none{% endif %};">
+                            <label class="form-label">Specify Category *</label>
+                            <input type="text" name="category_other" id="id_category_other" class="form-control"
+                                   value="{{ lead.category_other }}"
+                                   {% if lead.category_other %}required{% endif %}>
+                        </div>
+                    </div>
+
+                    <!-- Source Selection -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Source</label>
+                            {% with selected_source=form.source_choice.value|stringformat:"s" %}
+                            <select name="source_choice" id="id_source_choice" class="form-select">
+                                <option value="">Select Source</option>
+                                {% for source in sources %}
+                                <option value="{{ source.id }}" {% if selected_source == source.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ source.name }}
+                                </option>
+                                {% endfor %}
+                                <option value="other" {% if lead.source_other %}selected{% endif %}>
+                                    Other (Please specify)
+                                </option>
+                            </select>
+                            {% endwith %}
+                        </div>
+
+                        <div class="col-md-6" id="source_other_div" style="display: {% if lead.source_other %}block{% else %}none{% endif %};">
+                            <label class="form-label">Specify Source *</label>
+                            <input type="text" name="source_other" id="id_source_other" class="form-control"
+                                   value="{{ lead.source_other }}"
+                                   {% if lead.source_other %}required{% endif %}>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Requirement *</label>
+                        {{ form.requirement }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Follow-up Date</label>
+                            {{ form.follow_up_date }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Notes</label>
+                            {{ form.notes }}
+                        </div>
+                    </div>
+
+                    <!-- Assignment Section -->
+                    {% if user.profile.role == 'owner' %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user-check me-2"></i>Lead Assignment
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Assigned To</label>
+                                    <select name="assigned_to" class="form-select">
+                                        <option value="">Unassigned</option>
+                                        {% for team_member in lead.owner.team_members.all %}
+                                            {% if team_member.staff.profile.is_approved and team_member.is_active %}
+                                            <option value="{{ team_member.staff.id }}" {% if lead.assigned_to == team_member.staff %}selected{% endif %}>
+                                                {{ team_member.staff.username }}
+                                            </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Assignment Reason</label>
+                                    <input type="text" name="assignment_reason" class="form-control" placeholder="Reason for assignment">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Lead Activities -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-history me-2"></i>Lead Activity
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if lead_activities %}
+                            <div class="timeline">
+                                {% for activity in lead_activities|slice:":10" %}
+                                <div class="timeline-item mb-3">
+                                    <div class="d-flex">
+                                        <div class="flex-shrink-0 me-3">
+                                            {% if activity.activity_type == 'note' %}
+                                                <i class="fas fa-sticky-note text-info"></i>
+                                            {% elif activity.activity_type == 'call' %}
+                                                <i class="fas fa-phone text-success"></i>
+                                            {% elif activity.activity_type == 'meeting' %}
+                                                <i class="fas fa-calendar-check text-primary"></i>
+                                            {% elif activity.activity_type == 'email' %}
+                                                <i class="fas fa-envelope text-warning"></i>
+                                            {% elif activity.activity_type == 'conversion' %}
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            {% elif activity.activity_type == 'assignment' %}
+                                                <i class="fas fa-user-check text-primary"></i>
+                                            {% elif activity.activity_type == 'status_update' %}
+                                                <i class="fas fa-sync-alt text-info"></i>
+                                            {% else %}
+                                                <i class="fas fa-info-circle text-secondary"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">{{ activity.get_activity_type_display }}</h6>
+                                            <p class="text-muted mb-1">{{ activity.description }}</p>
+                                            <small class="text-muted">{{ activity.timestamp|date:"M d, Y H:i" }} by {{ activity.user.username }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-muted mb-0">No activities recorded for this lead.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Custom Fields Section -->
+                    {% if form.fields|dictsort:"name"|slice:":15"|length < form.fields|length %}  <!-- Check if there are custom fields -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cog me-2"></i>Custom Fields
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for field in form %}
+                                    {% if field.name|slice:":6" == "custom" %}
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">{{ field.label }}</label>
+                                            {{ field }}
+                                            {% if field.errors %}
+                                                <div class="text-danger small">{{ field.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Assignment History -->
+                    {% if assignment_history %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user-clock me-2"></i>Assignment History
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Assigned By</th>
+                                            <th>Assigned To</th>
+                                            <th>Reason</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for history in assignment_history %}
+                                        <tr>
+                                            <td>{{ history.assigned_at|date:"M d, Y H:i" }}</td>
+                                            <td>{{ history.assigned_by.username }}</td>
+                                            <td>{{ history.assigned_to.username }}</td>
+                                            <td>{{ history.reason|truncatewords:10|default:"-" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <small class="text-muted">Created: {{ lead.created_at|date:"M d, Y H:i" }}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">Last Updated: {{ lead.updated_at|date:"M d, Y H:i" }}</small>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                        <button type="submit" name="action" value="continue" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-plus me-1"></i>Save & Add Another
+                        </button>
+                        <button type="submit" name="action" value="save" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Update Lead
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Profile Links functionality
+        let profileLinkIndex = {{ profile_link_formset.total_form_count|default:0 }};
+
+        // Add profile link - prevent duplicate event listeners
+        const addButton = document.getElementById('add-profile-link');
+        if (addButton && !addButton.hasAttribute('data-listener-added')) {
+            addButton.setAttribute('data-listener-added', 'true');
+            addButton.addEventListener('click', function() {
+                const container = document.getElementById('profile-links-container');
+                const newFormHtml = `
+                    <div class="profile-link-item border rounded p-3 mb-3">
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label">Platform</label>
+                                <select name="profile_links-${profileLinkIndex}-platform" class="form-select profile-platform">
+                                    <option value="linkedin">LinkedIn</option>
+                                    <option value="instagram">Instagram</option>
+                                    <option value="facebook">Facebook</option>
+                                    <option value="twitter">Twitter</option>
+                                    <option value="youtube">YouTube</option>
+                                    <option value="website">Website</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-2 custom-platform-div" style="display: none;">
+                                <label class="form-label">Custom Platform</label>
+                                <input type="text" name="profile_links-${profileLinkIndex}-custom_platform" class="form-control" placeholder="Platform name">
+                            </div>
+                            <div class="col-md-5 mb-2">
+                                <label class="form-label">URL</label>
+                                <input type="url" name="profile_links-${profileLinkIndex}-url" class="form-control" placeholder="https://example.com">
+                            </div>
+                            <div class="col-md-1 mb-2 d-flex align-items-end">
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-profile-link">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="profile_links-${profileLinkIndex}-id" id="id_profile_links-${profileLinkIndex}-id">
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', newFormHtml);
+                profileLinkIndex++;
+
+                // Update management form
+                document.querySelector('[name="profile_links-TOTAL_FORMS"]').value = profileLinkIndex;
+            });
+        }
+
+        // Handle platform change for showing/hiding custom platform field
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('profile-platform')) {
+                const item = e.target.closest('.profile-link-item');
+                const customPlatformDiv = item.querySelector('.custom-platform-div');
+                const customPlatformInput = item.querySelector('[name*="-custom_platform"]');
+
+                if (e.target.value === 'other') {
+                    customPlatformDiv.style.display = 'block';
+                    customPlatformInput.required = true;
+                } else {
+                    customPlatformDiv.style.display = 'none';
+                    customPlatformInput.required = false;
+                    customPlatformInput.value = '';
+                }
+            }
+        });
+
+        // Remove profile link
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-profile-link') || e.target.closest('.remove-profile-link')) {
+                e.target.closest('.profile-link-item').remove();
+            }
+        });
+        // Category "Other" toggle
+        const categorySelect = document.getElementById('id_category_choice');
+        const categoryOtherDiv = document.getElementById('category_other_div');
+
+        categorySelect.addEventListener('change', function() {
+            if (this.value === 'other') {
+                categoryOtherDiv.style.display = 'block';
+                categoryOtherDiv.querySelector('input').required = true;
+            } else {
+                categoryOtherDiv.style.display = 'none';
+                categoryOtherDiv.querySelector('input').required = false;
+            }
+        });
+
+        // Source "Other" toggle
+        const sourceSelect = document.getElementById('id_source_choice');
+        const sourceOtherDiv = document.getElementById('source_other_div');
+
+        sourceSelect.addEventListener('change', function() {
+            if (this.value === 'other') {
+                sourceOtherDiv.style.display = 'block';
+                sourceOtherDiv.querySelector('input').required = true;
+            } else {
+                sourceOtherDiv.style.display = 'none';
+                sourceOtherDiv.querySelector('input').required = false;
+            }
+        });
+
+        // Handle form submission to include new fields
+        const form = document.getElementById('leadForm');
+        form.addEventListener('submit', function(e) {
+            // Update the form fields with new values before submitting
+            const budgetInput = document.querySelector('input[name="budget"]');
+            const timelineInput = document.querySelector('input[name="timeline"]');
+            const decisionMakerCheckbox = document.querySelector('input[name="decision_maker"]');
+            const assignedToSelect = document.querySelector('select[name="assigned_to"]');
+            const assignmentReasonInput = document.querySelector('input[name="assignment_reason"]');
+
+            // Add hidden inputs to the form to ensure values are submitted
+            if (budgetInput) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'budget';
+                hiddenInput.value = budgetInput.value;
+                form.appendChild(hiddenInput);
+            }
+
+            if (timelineInput) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'timeline';
+                hiddenInput.value = timelineInput.value;
+                form.appendChild(hiddenInput);
+            }
+
+            if (decisionMakerCheckbox) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'decision_maker';
+                hiddenInput.value = decisionMakerCheckbox.checked ? 'on' : '';
+                form.appendChild(hiddenInput);
+            }
+
+            if (assignedToSelect) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'assigned_to';
+                hiddenInput.value = assignedToSelect.value;
+                form.appendChild(hiddenInput);
+            }
+
+            if (assignmentReasonInput) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'assignment_reason';
+                hiddenInput.value = assignmentReasonInput.value;
+                form.appendChild(hiddenInput);
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

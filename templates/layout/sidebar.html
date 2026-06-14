@@ -1,0 +1,313 @@
+{% load static %}
+
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-inner slimscroll">
+        <div id="sidebar-menu" class="sidebar-menu">
+            <ul>
+
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">Main</h6>
+                    <ul>
+                        <li>
+                            <a href="{% url 'dashboard' %}">
+                                <i data-feather="grid"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        {% if user.profile.role == 'super_admin' or user.profile.is_approved %}
+                        <li>
+                            <a href="{% url 'chat_screen' %}">
+                                <i data-feather="smartphone"></i>
+                                <span>Chat</span>
+                                {% if unread_chat_count > 0 %}
+                                <span id="sidebarChatBadge"
+                                      class="badge bg-soft-danger ms-auto text-danger">{{ unread_chat_count }}</span>
+                                {% endif %}
+                                <span id="sidebarChatBadgePlaceholder"
+                                      class="badge bg-soft-danger ms-auto d-none text-danger"></span>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% if user_perms.can_view_analytics %}
+                        <li>
+                            <a href="{% url 'lead_analytics' %}">
+                                <i data-feather="codesandbox"></i>
+                                <span>Analytics</span>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% if user_perms.can_view_activity_log %}
+                        <li>
+                            <a href="{% url 'activity_log' %}">
+                                <i data-feather="bar-chart"></i>
+                                <span>Activity Log</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </li>
+                {# ========== STAFF SECTION ========== #}
+                {% if user.profile.role == 'staff' and user.profile.is_approved %}
+
+                {% if user_perms.can_view_leads or user_perms.can_add_leads or user_perms.can_bulk_add_leads %}
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">Leads</h6>
+                    <ul>
+                        <li class="submenu">
+                            <a href="javascript:void(0);" class="subdrop"><i
+                                    data-feather="grid"></i><span>Lead</span><span
+                                    class="menu-arrow"></span></a>
+                            <ul>
+                                {% if user_perms.can_view_leads %}
+                                <li>
+                                    <a href="{% url 'lead_list' %}" class="">
+                                        All Leads
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if user_perms.can_add_leads %}
+                                <li>
+                                    <a href="{% url 'add_lead' %}" class="">
+                                        Add Leads
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if user_perms.can_bulk_add_leads %}
+                                <li>
+                                    <a href="{% url 'bulk_add_leads' %}" class="">
+                                        Bulk Add Leads
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if user_perms.can_csv_upload %}
+                                <li>
+                                    <a href="{% url 'csv_upload' %}" class="">
+                                        CSV Upload
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if user_perms.can_view_deleted_leads %}
+                                <li>
+                                    <a href="{% url 'deleted_leads' %}" class="">
+                                        Deleted Leads
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if user_perms.can_manage_templates %}
+                                <li>
+                                    <a href="{% url 'manage_templates' %}" class="">
+                                        Templates
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if user_perms.can_manage_custom_fields %}
+                                <li>
+                                    <a href="{% url 'custom_fields' %}" class="">
+                                        Custom Fields
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                {% endif %}
+
+                {% endif %}
+                {# ========== END STAFF SECTION ========== #}
+
+                {# ========== OWNER SECTION ========== #}
+                {% if user.profile.role == 'owner' and user.profile.is_approved %}
+
+                {% with current_url_name=request.resolver_match.url_name %}
+
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">Apps</h6>
+                    <ul>
+                        <li class="submenu {% if current_url_name == 'manage_team' or current_url_name == 'create_employee' or current_url_name == 'manage_roles' or current_url_name == 'create_role' or current_url_name == 'edit_role' or current_url_name == 'delete_role' or current_url_name == 'view_role_permissions' or current_url_name == 'assign_role' %}submenu-open{% endif %}">
+                            <a href="javascript:void(0);" class="{% if current_url_name == 'manage_team' or current_url_name == 'create_employee' or current_url_name == 'manage_roles' or current_url_name == 'create_role' or current_url_name == 'edit_role' or current_url_name == 'delete_role' or current_url_name == 'view_role_permissions' or current_url_name == 'assign_role' %}subdrop{% endif %}">
+                                <i data-feather="layers"></i><span>Owner Panel</span><span class="menu-arrow"></span>
+                            </a>
+                            <ul{% if current_url_name == 'manage_team' or current_url_name == 'create_employee' or current_url_name == 'manage_roles' or current_url_name == 'create_role' or current_url_name == 'edit_role' or current_url_name == 'delete_role' or current_url_name == 'view_role_permissions' or current_url_name == 'assign_role' %} style="display: block;"{% endif %}>
+                                <li><a href="{% url 'manage_team' %}" class="{% if current_url_name == 'manage_team' %}active{% endif %}">Manage Team</a></li>
+                                <li><a href="{% url 'manage_roles' %}" class="{% if current_url_name == 'manage_roles' or current_url_name == 'create_role' or current_url_name == 'edit_role' or current_url_name == 'delete_role' or current_url_name == 'view_role_permissions' or current_url_name == 'assign_role' %}active{% endif %}">Roles & Permissions</a></li>
+                                <li><a href="{% url 'my_plan' %}" class="{% if current_url_name == 'my_plan' %}active{% endif %}">My Plan</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">Leads</h6>
+                    <ul>
+                        <li class="submenu">
+                            <a href="javascript:void(0);">
+                                <i data-feather="grid"></i><span>Lead</span><span class="menu-arrow"></span>
+                            </a>
+                            <ul>
+                                <li><a href="{% url 'lead_list' %}">All Leads</a></li>
+                                <li><a href="{% url 'bulk_add_leads' %}">Add Lead</a></li>
+                                <li><a href="{% url 'csv_upload' %}">CSV Upload</a></li>
+                                <li><a href="{% url 'deleted_leads' %}">Deleted Leads</a></li>
+                                <li><a href="{% url 'manage_templates' %}">Templates</a></li>
+                                <li><a href="{% url 'custom_fields' %}">Custom Fields</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                {% endwith %}
+                {% endif %}
+                {# ========== END OWNER SECTION ========== #}
+
+                {# ========== SUPER ADMIN SECTION ========== #}
+                {% if user.profile.role == 'super_admin' %}
+
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">Apps</h6>
+                    <ul>
+                        <li class="submenu">
+                            <a href="javascript:void(0);">
+                                <i data-feather="user-check"></i><span>Users</span><span class="menu-arrow"></span>
+                            </a>
+                            <ul>
+                                <li><a href="{% url 'admin_panel' %}">User Approvals</a></li>
+                                <li><a href="{% url 'admin_manage_employees' %}">Manage Employees</a></li>
+                                <li><a href="{% url 'admin_manage_business_owners' %}">Manage Business Owners</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="submenu">
+                            <a href="javascript:void(0);">
+                                <i data-feather="settings"></i><span>Configurations</span><span class="menu-arrow"></span>
+                            </a>
+                            <ul>
+                                <li><a href="{% url 'manage_plans' %}">Manage Plans</a></li>
+                                <li><a href="{% url 'site_settings' %}">Site Settings</a></li>
+                                <li><a href="{% url 'manage_categories' %}">Categories</a></li>
+                                <li><a href="{% url 'manage_sources' %}">Sources</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">Leads</h6>
+                    <ul>
+                        <li class="submenu">
+                            <a href="javascript:void(0);">
+                                <i data-feather="grid"></i><span>Lead</span><span class="menu-arrow"></span>
+                            </a>
+                            <ul>
+                                <li><a href="{% url 'bulk_add_leads' %}">Add Lead</a></li>
+                                <li><a href="{% url 'lead_list' %}">All Leads</a></li>
+                                <li><a href="{% url 'deleted_leads' %}"> Deleted Leads</a></li>
+                                <li><a href="{% url 'manage_templates' %}">Templates</a></li>
+                                <li><a href="{% url 'custom_fields' %}">Custom Fields</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                {% endif %}
+                {# ========== END SUPER ADMIN SECTION ========== #}
+
+
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">User</h6>
+                    <ul>
+                        <li>
+                    <form method="post" action="{% url 'logout' %}" id="sidebar-logout-form">
+                        {% csrf_token %}
+                        <a href="#" onclick="document.getElementById('sidebar-logout-form').submit(); return false;">
+                            <i data-feather="lock"></i><span>Logout</span></a>
+                    </form>
+                </li>
+                    </ul>
+                </li>
+
+
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+<!-- End Sidebar Area -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebarMenu = document.getElementById('sidebar-menu');
+        if (!sidebarMenu) return;
+
+        const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+        const allLinks = sidebarMenu.querySelectorAll('a');
+        
+        let exactMatch = null;
+        let prefixMatch = null;
+
+        allLinks.forEach((link) => {
+            const href = link.getAttribute('href');
+            if (!href || href === '#' || href.startsWith('javascript:')) return;
+            
+            const linkPath = href.replace(/\/+$/, '') || '/';
+
+            if (currentPath === linkPath) {
+                exactMatch = link;
+            } else if (linkPath !== '/' && currentPath.startsWith(linkPath)) {
+                if (!prefixMatch || linkPath.length > prefixMatch.getAttribute('href').replace(/\/+$/, '').length) {
+                    prefixMatch = link;
+                }
+            }
+        });
+
+        const targetLink = exactMatch || prefixMatch;
+
+        if (targetLink) {
+            // Add active class to the link itself
+            targetLink.classList.add('active');
+
+            // Find parent li and add active class
+            const parentLi = targetLink.closest('li');
+            if (parentLi) {
+                parentLi.classList.add('active');
+            }
+
+            // If the link is inside a submenu, open the parent submenu
+            let parentSubmenu = targetLink.closest('.submenu');
+            while (parentSubmenu) {
+                parentSubmenu.classList.add('submenu-open');
+                
+                const submenuLink = parentSubmenu.querySelector(':scope > a');
+                if (submenuLink) {
+                    submenuLink.classList.add('subdrop');
+                }
+
+                const submenuUl = parentSubmenu.querySelector(':scope > ul');
+                if (submenuUl) {
+                    submenuUl.style.display = 'block';
+                }
+
+                // Move up to see if there's a nested submenu
+                parentSubmenu = parentSubmenu.parentElement.closest('.submenu');
+            }
+        }
+
+        // Auto-scroll sidebar so active item is visible
+        const activeItem = sidebarMenu.querySelector('a.active');
+        if (activeItem) {
+            setTimeout(() => {
+                activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 200);
+        }
+
+        // Re-render Feather icons (if feather is available)
+        if (window.feather && typeof window.feather.replace === 'function') {
+            window.feather.replace({ 'stroke-width': 2 });
+        }
+    });
+</script>

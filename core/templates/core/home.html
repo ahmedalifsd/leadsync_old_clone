@@ -1,0 +1,827 @@
+{% extends 'core/public_base.html' %}
+{% load billing_tags %}
+{% load humanize %}
+
+{% block page_title %}LeadSync - Premium Lead Management{% endblock %}
+
+{% block extra_style %}
+<style>
+    /* ═══════════════════════════════
+       HERO
+    ═══════════════════════════════ */
+    .ls-hero {
+        background: linear-gradient(135deg, #0a0f1e 0%, #0f2460 48%, #0a1535 100%);
+        border-radius: 24px;
+        padding: 64px 56px;
+        position: relative;
+        overflow: hidden;
+    }
+    .ls-hero::before {
+        content: '';
+        position: absolute;
+        top: -100px; right: -100px;
+        width: 480px; height: 480px;
+        background: radial-gradient(circle, rgba(6,182,212,0.18), transparent 65%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .ls-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -80px; left: 30%;
+        width: 320px; height: 320px;
+        background: radial-gradient(circle, rgba(37,99,235,0.15), transparent 65%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .ls-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 99px;
+        padding: 6px 16px;
+        font-size: .74rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.85);
+        margin-bottom: 20px;
+    }
+    .ls-badge-dot {
+        width: 7px; height: 7px;
+        background: #10b981;
+        border-radius: 50%;
+        animation: blink 2s infinite;
+    }
+    @keyframes blink {
+        0%,100% { opacity: 1; box-shadow: 0 0 0 3px rgba(16,185,129,.3); }
+        50%      { opacity: .5; box-shadow: 0 0 0 6px rgba(16,185,129,.1); }
+    }
+    .ls-hero-title {
+        font-size: 3.4rem;
+        font-weight: 800;
+        line-height: 1.12;
+        letter-spacing: -.4px;
+        color: #fff;
+    }
+    .ls-hero-title em { font-style: normal; color: #06b6d4; }
+    .ls-hero-sub {
+        color: rgba(255,255,255,0.68);
+        font-size: 1.02rem;
+        line-height: 1.8;
+        max-width: 500px;
+    }
+    .ls-hero-stats {
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding-top: 28px;
+    }
+    .ls-stat-val {
+        font-size: 1.7rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+    }
+    .ls-stat-label { font-size: .78rem; color: rgba(255,255,255,0.5); margin-top: 3px; }
+
+    /* Dashboard Card */
+    .ls-dash-card {
+        background: rgba(255,255,255,0.97);
+        border-radius: 20px;
+        padding: 22px;
+        box-shadow: 0 32px 64px rgba(0,0,0,0.35);
+        position: relative;
+        z-index: 2;
+    }
+    .ls-dash-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+    .ls-live-badge {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: #dcfce7;
+        border-radius: 99px;
+        padding: 3px 10px;
+        font-size: .72rem;
+        font-weight: 700;
+        color: #16a34a;
+    }
+    .ls-live-dot {
+        width: 6px; height: 6px;
+        background: #16a34a;
+        border-radius: 50%;
+        animation: blink 1.5s infinite;
+    }
+    .ls-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .ls-mini-stat {
+        background: #f0f4ff;
+        border-radius: 12px;
+        padding: 12px 14px;
+        border: 1px solid rgba(37,99,235,0.08);
+    }
+    .ls-mini-label { font-size: .7rem; color: #6b7a99; font-weight: 500; margin-bottom: 4px; }
+    .ls-mini-val { font-size: 1.3rem; font-weight: 800; line-height: 1; }
+    .ls-prog-box {
+        background: #f0f4ff;
+        border-radius: 12px;
+        padding: 13px 14px;
+        margin-bottom: 12px;
+    }
+    .ls-prog-bar { height: 7px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin-top: 7px; }
+    .ls-prog-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #00A866, #06b6d4); }
+    .ls-lead-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 9px 11px;
+        background: #fff;
+        border: 1px solid rgba(37,99,235,0.09);
+        border-radius: 10px;
+        margin-bottom: 7px;
+    }
+    .ls-lead-row:last-child { margin-bottom: 0; }
+    .ls-avatar {
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        color: #fff;
+        font-size: .75rem;
+        font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .ls-lead-name { font-size: .8rem; font-weight: 600; color: #0a0f1e; }
+    .ls-lead-src  { font-size: .7rem; color: #6b7a99; }
+    .ls-status { margin-left: auto; font-size: .68rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+    .s-hot  { background: #fee2e2; color: #dc2626; }
+    .s-won  { background: #dcfce7; color: #16a34a; }
+    .s-new  { background: #dbeafe; color: #1d4ed8; }
+    .ls-notif {
+        position: absolute;
+        bottom: -18px; left: -18px;
+        background: #fff;
+        border-radius: 14px;
+        padding: 11px 15px;
+        box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 195px;
+        z-index: 3;
+    }
+    .ls-notif-icon {
+        width: 34px; height: 34px;
+        background: #dcfce7;
+        border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    /* ═══════════════════════════════
+       SECTION SHARED
+    ═══════════════════════════════ */
+    .ls-section { padding: 80px 0; }
+    .ls-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #f0f4ff;
+        border: 1px solid rgba(37,99,235,0.15);
+        border-radius: 99px;
+        padding: 5px 14px;
+        font-size: .73rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #00A866;
+        margin-bottom: 14px;
+    }
+    .ls-title {
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: #0a0f1e;
+        line-height: 1.15;
+        letter-spacing: -.3px;
+    }
+    .ls-title em { font-style: normal; color: #00A866; }
+    .ls-sub { color: #6b7a99; font-size: .97rem; line-height: 1.8; max-width: 540px; }
+
+    /* ═══════════════════════════════
+       FEATURES STRIP (3 cards)
+    ═══════════════════════════════ */
+    .ls-feat-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 28px;
+        border: 1px solid rgba(37,99,235,0.09);
+        height: 100%;
+        transition: all .25s;
+    }
+    .ls-feat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 18px 40px rgba(37,99,235,0.1);
+        border-color: rgba(37,99,235,0.2);
+    }
+    .ls-feat-icon {
+        width: 50px; height: 50px;
+        border-radius: 13px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px;
+        margin-bottom: 16px;
+    }
+
+    /* ═══════════════════════════════
+       MODULES SECTION
+    ═══════════════════════════════ */
+    .ls-module-item {
+        background: #fff;
+        border: 1px solid rgba(37,99,235,0.09);
+        border-radius: 14px;
+        padding: 18px;
+        height: 100%;
+        transition: all .22s;
+    }
+    .ls-module-item:hover {
+        border-color: rgba(37,99,235,0.22);
+        box-shadow: 0 8px 24px rgba(37,99,235,0.08);
+    }
+    .ls-quickstart {
+        background: linear-gradient(135deg, #0a0f1e, #0f2460);
+        border-radius: 18px;
+        padding: 28px;
+        height: 100%;
+    }
+    .ls-qs-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 11px;
+        margin-bottom: 10px;
+        color: rgba(255,255,255,0.85);
+        font-size: .88rem;
+        font-weight: 500;
+    }
+    .ls-qs-item:last-child { margin-bottom: 0; }
+    .ls-qs-num {
+        width: 26px; height: 26px;
+        background: rgba(37,99,235,0.5);
+        border-radius: 7px;
+        font-size: .72rem;
+        font-weight: 800;
+        color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* ═══════════════════════════════
+       PIPELINE VISUAL
+    ═══════════════════════════════ */
+    .ls-pipeline-bg {
+        background: #f0f4ff;
+        border-radius: 24px;
+        padding: 48px 40px;
+    }
+    .ls-pipe-stage {
+        background: #fff;
+        border: 1px solid rgba(37,99,235,0.1);
+        border-radius: 16px;
+        padding: 20px 16px;
+        flex: 1;
+        min-width: 130px;
+        transition: all .25s;
+    }
+    .ls-pipe-stage:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(37,99,235,0.1);
+    }
+    .ls-pipe-dot { width: 10px; height: 10px; border-radius: 50%; margin-bottom: 10px; }
+    .ls-pipe-label { font-size: .82rem; font-weight: 700; color: #0a0f1e; margin-bottom: 4px; }
+    .ls-pipe-count { font-size: 1.7rem; font-weight: 800; color: #1c2640; line-height: 1; }
+    .ls-pipe-sub { font-size: .7rem; color: #6b7a99; margin-top: 4px; }
+    .ls-pipe-arrow {
+        color: #94a3b8;
+        font-size: 1.2rem;
+        padding: 0 4px;
+        flex-shrink: 0;
+        align-self: center;
+    }
+
+    /* ═══════════════════════════════
+       PRICING
+    ═══════════════════════════════ */
+    .ls-price-card {
+        background: #fff;
+        border: 1.5px solid rgba(37,99,235,0.1);
+        border-radius: 20px;
+        padding: 32px;
+        height: 100%;
+        transition: all .25s;
+        position: relative;
+    }
+    .ls-price-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 50px rgba(37,99,235,0.12);
+    }
+    .ls-price-card.featured {
+        background: linear-gradient(135deg, #0a0f1e 0%, #0f2460 100%);
+        border-color: transparent;
+        color: #fff;
+    }
+    .ls-popular-badge {
+        position: absolute;
+        top: -13px; left: 50%;
+        transform: translateX(-50%);
+        background: #06b6d4;
+        color: #fff;
+        font-size: .7rem;
+        font-weight: 800;
+        letter-spacing: .06em;
+        padding: 4px 14px;
+        border-radius: 99px;
+        white-space: nowrap;
+    }
+    .ls-price-name { font-size: 1rem; font-weight: 700; margin-bottom: 4px; color: #0a0f1e; }
+    .ls-price-name.light { color: #fff; }
+    .ls-price-desc { font-size: .82rem; color: #6b7a99; margin-bottom: 18px; }
+    .ls-price-desc.light { color: rgba(255,255,255,0.55); }
+    .ls-price-val { font-size: 2.8rem; font-weight: 800; line-height: 1; color: #0a0f1e; }
+    .ls-price-val.light { color: #fff; }
+    .ls-price-period { font-size: .85rem; color: #6b7a99; }
+    .ls-price-period.light { color: rgba(255,255,255,0.55); }
+    .ls-price-divider { height: 1px; background: rgba(37,99,235,0.08); margin: 18px 0; }
+    .ls-price-divider.light { background: rgba(255,255,255,0.12); }
+    .ls-price-features { list-style: none; padding: 0; margin: 0 0 24px; display: flex; flex-direction: column; gap: 9px; }
+    .ls-price-features li { display: flex; align-items: center; gap: 9px; font-size: .86rem; color: #475569; }
+    .ls-price-features li.light { color: rgba(255,255,255,0.82); }
+    .ls-check { width: 18px; height: 18px; background: #dcfce7; border-radius: 5px; color: #16a34a; font-size: .7rem; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ls-check.light { background: rgba(16,185,129,0.2); color: #34d399; }
+    .ls-billing-toggle .btn { border-radius: 8px; font-size: .88rem; }
+
+    /* ═══════════════════════════════
+       CTA STRIP
+    ═══════════════════════════════ */
+    .ls-cta-strip {
+        background: linear-gradient(135deg, #0a0f1e 0%, #0f2460 100%);
+        border-radius: 22px;
+        padding: 48px 44px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        flex-wrap: wrap;
+        position: relative;
+        overflow: hidden;
+    }
+    .ls-cta-strip::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 280px; height: 280px;
+        background: radial-gradient(circle, rgba(6,182,212,0.2), transparent 65%);
+        border-radius: 50%;
+    }
+
+    /* ═══════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════ */
+    @media (max-width: 991px) {
+        .ls-hero { padding: 40px 28px; }
+        .ls-hero-title { font-size: 2.2rem; }
+        .ls-title { font-size: 1.9rem; }
+        .ls-pipeline-bg { padding: 28px 20px; }
+        .ls-cta-strip { padding: 32px 24px; text-align: center; justify-content: center; }
+    }
+    @media (max-width: 575px) {
+        .ls-hero-title { font-size: 1.8rem; }
+        .ls-notif { display: none; }
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .sr { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s ease; }
+    .sr.visible { opacity: 1; transform: translateY(0); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pb-2">
+
+    <!-- ══════════════ HERO ══════════════ -->
+    <section class="ls-hero mb-5">
+        <div class="row g-5 align-items-center" style="position:relative;z-index:2">
+
+            <!-- Left -->
+            <div class="col-lg-6">
+                <div class="ls-hero-badge">
+                    <span class="ls-badge-dot"></span> Smart Lead Management
+                </div>
+                <h1 class="ls-hero-title mb-3">
+                    Capture every lead.<br>
+                    <em>Close every deal.</em><br>
+                    Track everything.
+                </h1>
+                <p class="ls-hero-sub mb-4">
+                    LeadSync is a powerful CRM built for sales teams and business owners — manage leads, assign staff,
+                    track pipelines, and follow up smarter. All in one place.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'signup' %}" class="btn btn-light btn-lg fw-semibold px-4">Start Free Trial →</a>
+                    <a href="{% url 'login' %}" class="btn btn-lg fw-medium px-4"
+                       style="background:rgba(255,255,255,0.1);color:#fff;border:1.5px solid rgba(255,255,255,0.22)">Login</a>
+                    {% else %}
+                    <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg fw-semibold px-4">Open Dashboard →</a>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-4 flex-wrap ls-hero-stats mt-4">
+                    <div>
+                        <div class="ls-stat-val">12k+</div>
+                        <div class="ls-stat-label">Leads Managed</div>
+                    </div>
+                    <div>
+                        <div class="ls-stat-val">99.9%</div>
+                        <div class="ls-stat-label">Uptime</div>
+                    </div>
+                    <div>
+                        <div class="ls-stat-val">3×</div>
+                        <div class="ls-stat-label">Faster Follow-ups</div>
+                    </div>
+                    <div>
+                        <div class="ls-stat-val">24/7</div>
+                        <div class="ls-stat-label">Cloud Access</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right — Dashboard Card -->
+            <div class="col-lg-6 d-none d-lg-block">
+                <div style="position:relative">
+                    <div class="ls-dash-card">
+                        <div class="ls-dash-header">
+                            <span class="fw-bold" style="font-size:.95rem;color:#0a0f1e">📊 Dashboard Snapshot</span>
+                            <span class="ls-live-badge"><span class="ls-live-dot"></span> Live</span>
+                        </div>
+                        <div class="ls-mini-grid">
+                            <div class="ls-mini-stat">
+                                <div class="ls-mini-label">Total Leads</div>
+                                <div class="ls-mini-val" style="color:#00A866">12,480</div>
+                            </div>
+                            <div class="ls-mini-stat">
+                                <div class="ls-mini-label">Won Deals</div>
+                                <div class="ls-mini-val" style="color:#10b981">1,964</div>
+                            </div>
+                            <div class="ls-mini-stat">
+                                <div class="ls-mini-label">Avg Score</div>
+                                <div class="ls-mini-val" style="color:#f59e0b">8.4</div>
+                            </div>
+                            <div class="ls-mini-stat">
+                                <div class="ls-mini-label">Follow-ups</div>
+                                <div class="ls-mini-val" style="color:#06b6d4">18 Due</div>
+                            </div>
+                        </div>
+                        <div class="ls-prog-box">
+                            <div class="d-flex justify-content-between"
+                                 style="font-size:.75rem;font-weight:600;color:#0a0f1e">
+                                <span>Monthly Conversion</span><span style="color:#00A866">31%</span>
+                            </div>
+                            <div class="ls-prog-bar">
+                                <div class="ls-prog-fill" style="width:31%"></div>
+                            </div>
+                        </div>
+                        <div class="ls-lead-row">
+                            <div class="ls-avatar" style="background:#00A866">AK</div>
+                            <div>
+                                <div class="ls-lead-name">Ahmed Khan</div>
+                                <div class="ls-lead-src">Facebook</div>
+                            </div>
+                            <span class="ls-status s-hot">🔥 Hot</span>
+                        </div>
+                        <div class="ls-lead-row">
+                            <div class="ls-avatar" style="background:#10b981">SR</div>
+                            <div>
+                                <div class="ls-lead-name">Sara Riaz</div>
+                                <div class="ls-lead-src">Website</div>
+                            </div>
+                            <span class="ls-status s-won">✓ Won</span>
+                        </div>
+                        <div class="ls-lead-row">
+                            <div class="ls-avatar" style="background:#f59e0b">MQ</div>
+                            <div>
+                                <div class="ls-lead-name">M. Qasim</div>
+                                <div class="ls-lead-src">Referral</div>
+                            </div>
+                            <span class="ls-status s-new">New</span>
+                        </div>
+                    </div>
+                    <div class="ls-notif">
+                        <div class="ls-notif-icon">🔔</div>
+                        <div>
+                            <div style="font-size:.78rem;font-weight:700;color:#0a0f1e">Follow-up Alert</div>
+                            <div style="font-size:.7rem;color:#6b7a99">18 callbacks due today</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════ FEATURES 3-CARD ══════════════ -->
+    <section id="features" class="ls-section pt-2">
+        <div class="text-center mb-5 sr">
+            <div class="ls-label">⚡ Core Features</div>
+            <h2 class="ls-title">Everything your team <em>needs</em></h2>
+            <p class="ls-sub mx-auto mt-2">Purpose-built tools to reduce manual work and improve your close rate.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4 sr">
+                <div class="ls-feat-card">
+                    <div class="ls-feat-icon" style="background:#dbeafe"><i class="fa-solid fa-users text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Team & Role Control</h5>
+                    <p class="text-muted mb-0" style="font-size:.9rem;line-height:1.75">Manage owners and staff with
+                        permission-based access and full activity visibility.</p>
+                </div>
+            </div>
+            <div class="col-md-4 sr">
+                <div class="ls-feat-card">
+                    <div class="ls-feat-icon" style="background:#dcfce7"><i
+                            class="fa-solid fa-chart-line text-success"></i></div>
+                    <h5 class="fw-bold mb-2">Real-Time Analytics</h5>
+                    <p class="text-muted mb-0" style="font-size:.9rem;line-height:1.75">Track lead growth, conversion
+                        trends, and team performance with live charts.</p>
+                </div>
+            </div>
+            <div class="col-md-4 sr">
+                <div class="ls-feat-card">
+                    <div class="ls-feat-icon" style="background:#fef3c7"><i
+                            class="fa-solid fa-mobile-screen-button text-warning"></i></div>
+                    <h5 class="fw-bold mb-2">Mobile Friendly</h5>
+                    <p class="text-muted mb-0" style="font-size:.9rem;line-height:1.75">Access your full pipeline from
+                        desktop, tablet, or phone without any workflow breaks.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════ MODULES + QUICKSTART ══════════════ -->
+    <section class="ls-section pt-0">
+        <div class="row g-4">
+            <div class="col-lg-8 sr">
+                <div class="premium-card h-100">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="ls-label">🔧 Modules</div>
+                        <h3 class="fw-bold mb-2">Designed for your workflow</h3>
+                        <p class="text-muted mb-4" style="font-size:.9rem">Every section reduces manual work and
+                            improves close rate.</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="ls-module-item">
+                                    <h6 class="mb-1"><i class="fa-solid fa-filter text-primary me-2"></i>Pipeline
+                                        Tracking</h6>
+                                    <p class="mb-0 text-muted" style="font-size:.82rem">Keep statuses updated with clear
+                                        pipeline visibility at every stage.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="ls-module-item">
+                                    <h6 class="mb-1"><i class="fa-solid fa-user-check text-success me-2"></i>Lead
+                                        Assignment</h6>
+                                    <p class="mb-0 text-muted" style="font-size:.82rem">Assign leads to staff with
+                                        accountability, notes, and full logs.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="ls-module-item">
+                                    <h6 class="mb-1"><i class="fa-solid fa-file-arrow-up text-warning me-2"></i>Bulk CSV
+                                        Import</h6>
+                                    <p class="mb-0 text-muted" style="font-size:.82rem">Upload hundreds of leads at once
+                                        via CSV. Clean, fast, and accurate.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="ls-module-item">
+                                    <h6 class="mb-1"><i class="fa-solid fa-bell text-danger me-2"></i>Follow-up Alerts
+                                    </h6>
+                                    <p class="mb-0 text-muted" style="font-size:.82rem">Never miss important callbacks.
+                                        Get reminders for every due task.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 sr">
+                <div class="ls-quickstart h-100">
+                    <div class="ls-label"
+                         style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8)">
+                        🚀 Quick Start
+                    </div>
+                    <h5 class="text-white fw-bold mb-4">Up and running in minutes</h5>
+                    <div class="ls-qs-item"><span class="ls-qs-num">1</span> Create owner account</div>
+                    <div class="ls-qs-item"><span class="ls-qs-num">2</span> Add team members</div>
+                    <div class="ls-qs-item"><span class="ls-qs-num">3</span> Configure Custom Templates and custom Fields</div>
+                    <div class="ls-qs-item"><span class="ls-qs-num">4</span> Import or add your leads</div>
+                    <div class="ls-qs-item"><span class="ls-qs-num">5</span> Track, follow up & convert</div>
+                    <div class="mt-4">
+                        {% if not user.is_authenticated %}
+                        <a href="{% url 'signup' %}" class="btn btn-light w-100 fw-semibold">Create Free Account →</a>
+                        {% else %}
+                        <a href="{% url 'dashboard' %}" class="btn btn-light w-100 fw-semibold">Go to Dashboard →</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════ PIPELINE VISUAL ══════════════ -->
+    <section class="ls-section pt-0" id="pipeline">
+        <div class="ls-pipeline-bg">
+            <div class="text-center mb-5 sr">
+                <div class="ls-label">🔄 Visual Pipeline</div>
+                <h2 class="ls-title">See exactly where every lead <em>stands</em></h2>
+                <p class="ls-sub mx-auto mt-2">Your entire sales pipeline at a glance — from first contact to closed
+                    deal.</p>
+            </div>
+            <div class="d-flex align-items-stretch gap-2 flex-wrap justify-content-center sr">
+                <div class="ls-pipe-stage text-center">
+                    <div class="ls-pipe-dot mx-auto" style="background:#94a3b8"></div>
+                    <div class="ls-pipe-label">New</div>
+                    <div class="ls-pipe-count">48</div>
+                    <div class="ls-pipe-sub">Just added</div>
+                </div>
+                <div class="ls-pipe-arrow">›</div>
+                <div class="ls-pipe-stage text-center">
+                    <div class="ls-pipe-dot mx-auto" style="background:#3b82f6"></div>
+                    <div class="ls-pipe-label">Contacted</div>
+                    <div class="ls-pipe-count">31</div>
+                    <div class="ls-pipe-sub">Reached out</div>
+                </div>
+                <div class="ls-pipe-arrow">›</div>
+                <div class="ls-pipe-stage text-center">
+                    <div class="ls-pipe-dot mx-auto" style="background:#f59e0b"></div>
+                    <div class="ls-pipe-label">In Progress</div>
+                    <div class="ls-pipe-count">22</div>
+                    <div class="ls-pipe-sub">Negotiating</div>
+                </div>
+                <div class="ls-pipe-arrow">›</div>
+                <div class="ls-pipe-stage text-center">
+                    <div class="ls-pipe-dot mx-auto" style="background:#06b6d4"></div>
+                    <div class="ls-pipe-label">Follow-up</div>
+                    <div class="ls-pipe-count">18</div>
+                    <div class="ls-pipe-sub">Due today</div>
+                </div>
+                <div class="ls-pipe-arrow">›</div>
+                <div class="ls-pipe-stage text-center">
+                    <div class="ls-pipe-dot mx-auto" style="background:#10b981"></div>
+                    <div class="ls-pipe-label">Won ✓</div>
+                    <div class="ls-pipe-count">14</div>
+                    <div class="ls-pipe-sub">This month</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══════════════ PRICING ══════════════ -->
+
+ <section id="pricing" class="ls-section pt-0">
+        <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-5">
+            <div class="sr">
+                <div class="ls-label">Pricing Plans</div>
+                <h2 class="ls-title mb-1">Simple, honest <em>Pricing</em></h2>
+                <p class="ls-sub mt-1">Choose a plan that matches your growth stage.</p>
+            </div>
+            <div class="ls-billing-toggle btn-group sr" role="group" id="homeBillingToggle">
+                <button type="button" class="btn btn-primary active" data-cycle="monthly" onclick="switchHomeBilling('monthly')">Monthly</button>
+                <button type="button" class="btn btn-outline-primary" data-cycle="yearly" onclick="switchHomeBilling('yearly')">Yearly <span class="badge bg-warning text-dark ms-1">Save</span></button>
+            </div>
+        </div>
+        <div class="row g-4">
+            {% for plan in plans %}
+            <div class="col-lg-4 col-md-6 sr">
+                <div class="ls-quickstart bg-primary text-white premium-card h-100 {% if forloop.first %}border border-primary{% endif %}">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between text-white align-items-center mb-3">
+                            <h3 class="mb-0  text-white">{{ plan.name }}</h3>
+                            {% if plan.name|lower == 'business' %}<span class="badge bg-light text-primary">Popular</span>{% endif %}
+                        </div>
+                        <div class="home-price-monthly">
+                            {% if plan.monthly_campaign_discount > 0 %}
+                            <div class="small text-white-50 text-decoration-line-through">Main: {{ currency_symbol }}{{ plan.monthly_price|clean_price }}/month</div>
+                            <div class="small text-white-50">{{ plan.active_campaign_name|default:"Discount" }} (-{{ currency_symbol }}{{ plan.monthly_campaign_discount|clean_price }}) -> {{ currency_symbol }}{{ plan.display_monthly_price|clean_price }}</div>
+                            <h1 class="display-5 fw-bold mb-1 text-white">{{ currency_symbol }}{{ plan.display_monthly_price|clean_price }}<small class="fs-6">/month</small></h1>
+                            {% else %}
+                            <h1 class="display-5 fw-bold mb-1 text-white">{{ currency_symbol }}{{ plan.display_monthly_price|clean_price }}<small class="fs-6">/month</small></h1>
+                            {% endif %}
+                        </div>
+                        <div class="home-price-yearly" style="display:none;">
+                            <div class="small text-white-50 text-decoration-line-through">Main Yearly: {{ currency_symbol }}{{ plan.yearly_base_price|clean_price }}</div>
+                            {% if plan.yearly_base_discount_amount > 0 %}
+                            <div class="small text-white-50">Yearly Discount ({{ plan.yearly_discount|clean_price }}% | -{{ currency_symbol }}{{ plan.yearly_base_discount_amount|clean_price }}) -> {{ currency_symbol }}{{ plan.yearly_price|clean_price }}</div>
+                            {% endif %}
+                            {% if plan.yearly_campaign_discount > 0 %}
+                            <div class="small text-white-50">{{ plan.active_campaign_name|default:"Discount" }} (-{{ currency_symbol }}{{ plan.yearly_campaign_discount|clean_price }}) -> {{ currency_symbol }}{{ plan.display_yearly_price|clean_price }}</div>
+                            <h1 class="display-5 fw-bold mb-1 text-white">{{ currency_symbol }}{{ plan.display_yearly_price|clean_price }}<small class="fs-6">/year</small></h1>
+                            {% else %}
+                            <h1 class="display-5 fw-bold mb-1 text-white">{{ currency_symbol }}{{ plan.display_yearly_price|clean_price }}<small class="fs-6">/year</small></h1>
+                            {% endif %}
+                            {% if plan.yearly_discount > 0 %}<span class="badge bg-warning text-dark">{{ plan.yearly_discount|clean_price }}% OFF</span>{% endif %}
+                        </div>
+                        <p class="mb-3 home-summary-monthly">{{ plan.monthly_max_leads|intcomma|default:"Unlimited" }} leads · {{ plan.max_employees }} staff</p>
+                        <p class="mb-3 home-summary-yearly" style="display:none;">{{ plan.yearly_max_leads|intcomma|default:"Unlimited" }} leads · {{ plan.max_employees }} staff</p>
+                        <ul class="list-unstyled mb-4 flex-grow-1">
+                            <li class="mb-2 home-leads-monthly"><i class="fa-solid fa-check text-success me-2"></i>{{ plan.monthly_max_leads|intcomma|default:"Unlimited" }} Leads</li>
+                            <li class="mb-2 home-leads-yearly" style="display:none;"><i class="fa-solid fa-check text-success me-2"></i>{{ plan.yearly_max_leads|intcomma|default:"Unlimited" }} Leads</li>
+                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>{{ plan.max_employees }} Team Members</li>
+                            {% if plan.features %}
+                            {% for feature in plan.features.splitlines %}
+                            {% if feature.strip %}<li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>{{ feature }}</li>{% endif %}
+                            {% endfor %}
+                            {% endif %}
+                        </ul>
+                        <a href="{% url 'signup' %}" class="btn bg-white text-primary py-2 fs-5 w-100">Get Started</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12"><div class="alert alert-info mb-0">Plans will appear here once configured by admin.</div></div>
+            {% endfor %}
+        </div>
+    </section>
+    <!-- ══════════════ CTA STRIP ══════════════ -->
+    <section class="pb-4 sr">
+        <div class="ls-cta-strip">
+            <div style="position:relative;z-index:2">
+                <h3 class="text-white fw-bold mb-1" style="font-size:1.8rem">Ready to stop losing leads?</h3>
+                <p style="color:rgba(255,255,255,0.6);margin:0;font-size:.95rem">Start with LeadSync and scale your
+                    sales operations with confidence.</p>
+                <div class="d-flex flex-wrap gap-2 mt-3" style="font-size:.8rem;color:rgba(255,255,255,0.5)">
+                    <span>✓ No credit card required</span>
+                    <span>· ✓ Free 14-day trial</span>
+                    <span>· ✓ Cancel anytime</span>
+                </div>
+            </div>
+            <div style="position:relative;z-index:2">
+                {% if not user.is_authenticated %}
+                <a href="{% url 'signup' %}" class="btn btn-light btn-lg fw-semibold px-5">Start Free Trial →</a>
+                {% else %}
+                <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg fw-semibold px-5">Go to Dashboard →</a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    /* Billing toggle */
+    function switchHomeBilling(cycle) {
+        document.querySelectorAll('#homeBillingToggle button').forEach(btn => {
+            const active = btn.dataset.cycle === cycle;
+            btn.classList.toggle('btn-primary', active);
+            btn.classList.toggle('active', active);
+            btn.classList.toggle('btn-outline-primary', !active);
+        });
+        ['home-price-monthly','home-price-yearly','home-summary-monthly',
+         'home-summary-yearly','home-leads-monthly','home-leads-yearly'].forEach(cls => {
+            const show = cls.includes(cycle);
+            document.querySelectorAll('.' + cls).forEach(el => el.style.display = show ? '' : 'none');
+        });
+    }
+
+    /* Scroll reveal */
+    const sr = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.sr').forEach(el => sr.observe(el));
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

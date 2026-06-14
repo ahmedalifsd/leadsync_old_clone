@@ -1,0 +1,54 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p class="greeting">Hello {{ username }},</p>
+
+<p class="message-text">
+    Your plan has been successfully activated on <strong>LeadSync</strong>. Here are the details:
+</p>
+
+<div class="highlight-box">
+    <p>Your <strong>{{ plan_name }}</strong> plan is now active!</p>
+</div>
+
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 150px;">Plan Name</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #4f46e5; font-weight: 600;">{{ plan_name }}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 150px;">Billing Cycle</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #333; font-weight: 500;">{{ billing_cycle }}</td>
+    </tr>
+    {% if amount %}
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 150px;">Amount</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #333; font-weight: 500;">{{ currency_symbol }}{{ amount }}</td>
+    </tr>
+    {% endif %}
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 150px;">Max Employees</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #333; font-weight: 500;">{{ max_employees }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 12px 0; font-size: 13px; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; width: 150px;">Status</td>
+        <td style="padding: 12px 0; font-size: 15px; color: #16a34a; font-weight: 600;">Active</td>
+    </tr>
+</table>
+
+<div style="text-align: center;">
+    <a href="{{ dashboard_url }}" class="btn-primary" style="color: #ffffff !important;">
+        Go to Dashboard
+    </a>
+</div>
+
+<div class="divider"></div>
+
+<p class="message-text">
+    You can manage your plan, view billing history, and upgrade anytime from your account settings.
+</p>
+
+<p class="message-text" style="margin-top: 20px; color: #888; font-size: 13px;">
+    Thank you for choosing LeadSync!
+</p>
+{% endblock %}

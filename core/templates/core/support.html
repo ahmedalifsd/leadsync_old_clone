@@ -1,0 +1,67 @@
+{% extends 'core/public_base.html' %}
+
+{% block page_title %}Support - LeadSync{% endblock %}
+
+{% block content %}
+<div class="container pb-4">
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="premium-card card h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <span class="badge bg-info-subtle text-info mb-2">Support</span>
+                    <h3 class="mb-2">Need help with LeadSync?</h3>
+                    <p class="text-muted">Share your issue and our team will respond as soon as possible.</p>
+                    <div class="mt-4">
+                        <div class="d-flex mb-3">
+                            <span class="me-3 text-primary"><i class="fa-solid fa-envelope fs-5"></i></span>
+                            <div><strong>Email Help</strong><p class="mb-0 text-muted small">support@leadsync.com</p></div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <span class="me-3 text-success"><i class="fa-solid fa-clock fs-5"></i></span>
+                            <div><strong>Response Time</strong><p class="mb-0 text-muted small">Usually within 24 hours</p></div>
+                        </div>
+                        <div class="d-flex">
+                            <span class="me-3 text-warning"><i class="fa-solid fa-shield-halved fs-5"></i></span>
+                            <div><strong>Priority Support</strong><p class="mb-0 text-muted small">Available for active paid plans</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="premium-card card h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <h4 class="mb-3">Submit Support Request</h4>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" name="name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Subject</label>
+                                <input type="text" name="subject" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Message</label>
+                                <textarea name="message" rows="6" class="form-control" required placeholder="Explain your issue in detail..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="fa-solid fa-paper-plane me-2"></i>Send Request
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

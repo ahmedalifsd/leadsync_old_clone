@@ -1,0 +1,50 @@
+{% extends 'emails/base_email.html' %}
+
+{% block content %}
+<div class="greeting">Hi {{ username }},</div>
+
+{% if is_first_notice %}
+<p class="message-text">
+    Your auto-renew workflow has created a renewal request for your plan.
+    Payment is still manual, so please submit payment and share proof as soon as possible.
+</p>
+{% else %}
+<p class="message-text">
+    This is a reminder that your renewal request is still pending manual payment verification.
+</p>
+{% endif %}
+
+<div class="highlight-box">
+    <p>Plan: {{ plan_name }} ({{ billing_cycle }})</p>
+</div>
+
+<div class="info-row">
+    <div class="info-label">Amount</div>
+    <div class="info-value">{{ currency_symbol }}{{ amount }}</div>
+</div>
+<div class="info-row">
+    <div class="info-label">Due Date</div>
+    <div class="info-value">{{ due_date|date:"M d, Y" }}</div>
+</div>
+<div class="info-row">
+    <div class="info-label">Status</div>
+    <div class="info-value">
+        {% if days_to_expiry >= 0 %}
+        Expires in {{ days_to_expiry }} day{{ days_to_expiry|pluralize }}
+        {% else %}
+        Expired {{ expired_days }} day{{ expired_days|pluralize }} ago (grace: {{ grace_days }} days)
+        {% endif %}
+    </div>
+</div>
+
+<p class="message-text">
+    Open My Plan and submit payment details. Super admin will verify and activate/extend your subscription.
+</p>
+
+<a href="{{ dashboard_url }}" class="btn-primary">Open My Plan</a>
+
+<div class="divider"></div>
+<p class="message-text" style="font-size: 13px; color: #777;">
+    Auto-renew here means automated reminders and request creation only. Your payment method remains manual.
+</p>
+{% endblock %}
