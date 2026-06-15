@@ -1,0 +1,252 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Dashboard - LeadSync{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+
+
+<div class="row">
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+
+            <!-- Card 6 · Red · Declining Line -->
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-pink"
+                 data-card="6">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Total Employees</span>
+                        </div>
+                        <div class="card-number">{{ total_employees }}</div>
+                    </div>
+
+                </div>
+
+
+                <!-- DUAL LINE CHART — colours from CSS vars -->
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <path class="spark-path secondary"
+                              d="M0,55 C40,48 70,58 110,40 C150,22 170,45 210,30 C240,18 270,25 300,12"
+                              stroke-width="1.5" stroke-linecap="round"/>
+                        <path class="spark-path"
+                              d="M0,65 C30,58 60,68 100,52 C140,36 160,55 200,40 C230,28 265,35 300,20"
+                              stroke-width="2"
+                              stroke-linecap="round"/>
+                        <circle class="chart-dot" cx="300" cy="20" r="3"/>
+                        <circle class="chart-dot-dim" cx="300" cy="12" r="2"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-green"
+                 data-card="3">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Approved Employees</span>
+                        </div>
+                        <div class="card-number">{{ approved_employees }}</div>
+                    </div>
+
+                </div>
+
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <path class="chart-fill"
+                              d="M0,65 L40,65 L40,50 L80,50 L80,35 L120,35 L120,42 L160,42 L160,20 L200,20 L200,28 L240,28 L240,10 L300,10 L300,75 L0,75 Z"/>
+                        <path class="step-path"
+                              d="M0,65 L40,65 L40,50 L80,50 L80,35 L120,35 L120,42 L160,42 L160,20 L200,20 L200,28 L240,28 L240,10 L300,10"
+                              stroke-width="2" stroke-linecap="square"/>
+                        <circle class="chart-dot" cx="300" cy="10" r="3"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-red"
+                 data-card="6">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Pending Employees</span>
+                        </div>
+                        <div class="card-number">{{ pending_employees }}</div>
+                    </div>
+
+                </div>
+
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <path class="spark-path secondary"
+                              d="M0,55 C40,48 70,58 110,40 C150,22 170,45 210,30 C240,18 270,25 300,12"
+                              stroke-width="1.5" stroke-linecap="round"/>
+                        <path class="spark-path"
+                              d="M0,65 C30,58 60,68 100,52 C140,36 160,55 200,40 C230,28 265,35 300,20"
+                              stroke-width="2"
+                              stroke-linecap="round"/>
+                        <circle class="chart-dot" cx="300" cy="20" r="3"/>
+                        <circle class="chart-dot-dim" cx="300" cy="12" r="2"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-amber"
+                 data-card="3">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Active Team Members</span>
+                        </div>
+                        <div class="card-number">{{ active_team_members }}</div>
+                    </div>
+
+                </div>
+
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <rect class="bar-rect" x="8" y="30" width="22" height="45" rx="4"/>
+                        <rect class="bar-rect" x="38" y="45" width="22" height="30" rx="4"/>
+                        <rect class="bar-rect" x="68" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect" x="98" y="38" width="22" height="37" rx="4"/>
+                        <rect class="bar-rect bright" x="128" y="10" width="22" height="65" rx="4"/>
+                        <rect class="bar-rect" x="158" y="25" width="22" height="50" rx="4"/>
+                        <rect class="bar-rect" x="188" y="15" width="22" height="60" rx="4"/>
+                        <rect class="bar-rect bright" x="218" y="5" width="22" height="70" rx="4"/>
+                        <rect class="bar-rect" x="248" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect bright" x="270" y="8" width="22" height="67" rx="4"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card bg-white mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-2">
+                        Employees Management
+                    </h5>
+                    <form method="get" class="d-flex align-items-center gap-2">
+                        <label for="employeesPerPage" class="small text-muted mb-0">Rows</label>
+                        <select id="employeesPerPage" name="per_page" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                            <option value="15" {% if per_page == 15 %}selected{% endif %}>15</option>
+                            <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                            <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                            <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                        </select>
+                    </form>
+                    </div>
+                {% if employees %}
+                <div class="table-responsive">
+                    <table class="table text-nowrap table-sm">
+                        <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Company</th>
+                            <th>Status</th>
+                            <th>Joined Date</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>
+                                <strong>{{ employee.user.username }}</strong>
+                                {% if employee.user.first_name or employee.user.last_name %}
+                                <br><small class="text-muted">{{ employee.user.first_name }} {{ employee.user.last_name
+                                }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ employee.user.email|default:"-" }}</td>
+                            <td>{{ employee.phone_number|default:"-" }}</td>
+                            <td>{{ employee.company_name|default:"-" }}</td>
+                            <td>
+                                {% if employee.is_approved %}
+                                <span class="badge bg-soft-success">Approved</span>
+                                {% else %}
+                                <span class="badge bg-soft-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ employee.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'profile' %}?user={{ employee.user.id }}"
+                                       class="btn btn-icon btn-sm btn-soft-primary rounded-pill">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if not employee.is_approved %}
+                                    <a href="#" class="btn btn-icon btn-sm btn-soft-success rounded-pill">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if employees.has_other_pages %}
+                <nav aria-label="Employees pagination" class="mt-3">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if employees.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ employees.previous_page_number }}&per_page={{ per_page }}">Previous</a></li>
+                        {% endif %}
+
+                        {% for num in employees.paginator.page_range %}
+                            {% if employees.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > employees.number|add:'-3' and num < employees.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}&per_page={{ per_page }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if employees.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ employees.next_page_number }}&per_page={{ per_page }}">Next</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No employees found</h5>
+                    <p class="text-muted">There are no employees registered in the system.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

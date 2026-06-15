@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign Up - LeadSync{% endblock %}
+
+{% block content %}
+<style>
+    .signup-field {
+        position: relative;
+    }
+    .signup-field .form-control,
+    .signup-field .form-select {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.95rem;
+        border-radius: 0.5rem;
+        border: 1.5px solid #dee2e6;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        background-color: #f8f9fc;
+    }
+    .signup-field .form-control:focus,
+    .signup-field .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.15);
+        background-color: #fff;
+    }
+    .signup-field .form-control.is-valid {
+        border-color: #1cc88a;
+        background-color: #fff;
+    }
+    .signup-field .form-control.is-invalid {
+        border-color: #e74a3b;
+        background-color: #fff;
+    }
+    .signup-field .form-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #5a5c69;
+        margin-bottom: 0.35rem;
+        letter-spacing: 0.02em;
+    }
+    .signup-field .field-icon {
+        position: absolute;
+        right: 12px;
+        top: 39px;
+        font-size: 0.9rem;
+        z-index: 5;
+    }
+    .signup-field .field-feedback {
+        font-size: 0.78rem;
+        margin-top: 0.25rem;
+        min-height: 1.1rem;
+        transition: all 0.2s;
+    }
+    .signup-field .password-toggle-btn {
+        position: absolute;
+        right: 12px;
+        top: 39px;
+        border: 0;
+        background: transparent;
+        color: #6c757d;
+        font-size: 0.9rem;
+        z-index: 6;
+        padding: 0;
+        line-height: 1;
+    }
+    .signup-field .password-toggle-btn:focus {
+        outline: none;
+        color: #4e73df;
+    }
+    .pwd-strength-bar {
+        height: 4px;
+        border-radius: 2px;
+        background: #e9ecef;
+        margin-top: 6px;
+        overflow: hidden;
+    }
+    .pwd-strength-bar .bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.3s, background 0.3s;
+        width: 0%;
+    }
+    .signup-card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 2rem rgba(0,0,0,0.08);
+    }
+    .field-spinner {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #dee2e6;
+        border-top-color: #4e73df;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<div class="container">
+    <div class="main-content d-flex flex-column align-items-center justify-content-center p-0">
+        <div class="row justify-content-center w-100">
+            <div class="col-md-10 col-lg-7 col-xl-6">
+                <div class="card mt-4 signup-card shadow-0 border">
+                    <div class="card-body p-4 p-md-5">
+                        <div class=" mb-4">
+                            <a href="{% url 'home' %}" aria-label="Go to home page">
+                                <img src="{% static 'assets/img/leadlogobg.png' %}" class="rounded-3 for-light-logo mb-3" alt="LeadSync" style="max-height:48px;">
+<!--                                <img src="{% static 'assets/img/white-logo.svg' %}" class="rounded-3 for-dark-logo mb-3" alt="LeadSync" style="max-height:48px;">-->
+                            </a>
+                            <h6 class=" fs-18 fw-bold mb-1">Create Your Account</h6>
+                            <p class="text-muted mb-0">Join LeadSync and start managing your leads</p>
+                        </div>
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2 mb-3">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            {% for error in form.non_field_errors %}
+                                {{ error }}{% if not forloop.last %}<br>{% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <form method="post" id="signupForm" novalidate>
+                            {% csrf_token %}
+
+                            <!-- Row 1: Username + Email -->
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <div class="signup-field">
+                                        <label for="id_username" class="form-label"><i class="fas fa-user me-1 text-primary"></i>Username</label>
+                                        {{ form.username }}
+                                        <span class="field-icon" id="username-icon"></span>
+                                        <div class="field-spinner" id="username-spinner"></div>
+                                        <div class="field-feedback" id="username-feedback">
+                                            {% if form.username.errors %}<span class="text-danger">{{ form.username.errors.0 }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="signup-field">
+                                        <label for="id_email" class="form-label"><i class="fas fa-envelope me-1 text-primary"></i>Email</label>
+                                        {{ form.email }}
+                                        <span class="field-icon" id="email-icon"></span>
+                                        <div class="field-spinner" id="email-spinner"></div>
+                                        <div class="field-feedback" id="email-feedback">
+                                            {% if form.email.errors %}<span class="text-danger">{{ form.email.errors.0 }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 2: Password + Confirm Password -->
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <div class="signup-field">
+                                        <label for="id_password1" class="form-label"><i class="fas fa-lock me-1 text-primary"></i>Password</label>
+                                        {{ form.password1 }}
+                                        <button type="button" class="password-toggle-btn toggle-password" data-target="id_password1" aria-label="Show password">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <div class="pwd-strength-bar mt-1"><div class="bar-fill" id="pwdStrengthBar"></div></div>
+                                        <div class="field-feedback" id="password1-feedback">
+                                            {% if form.password1.errors %}<span class="text-danger">{{ form.password1.errors.0 }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="signup-field">
+                                        <label for="id_password2" class="form-label"><i class="fas fa-lock me-1 text-primary"></i>Confirm Password</label>
+                                        {{ form.password2 }}
+                                        <button type="button" class="password-toggle-btn toggle-password" data-target="id_password2" aria-label="Show password">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <div class="field-feedback" id="password2-feedback">
+                                            {% if form.password2.errors %}<span class="text-danger">{{ form.password2.errors.0 }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 3: Role + Phone -->
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <div class="signup-field">
+                                        <label for="id_role" class="form-label"><i class="fas fa-id-badge me-1 text-primary"></i>Account Type</label>
+                                        <select name="role" id="id_role" class="form-select" required>
+                                            <option value="" {% if not form.role.value %}selected{% endif %}>Select Account Type</option>
+                                            <option value="owner" {% if form.role.value == 'owner' %}selected{% endif %}>Business Owner</option>
+                                            <option value="staff" {% if form.role.value == 'staff' %}selected{% endif %}>Employee</option>
+                                        </select>
+                                        <div class="field-feedback">
+                                            {% if form.role.errors %}<span class="text-danger">{{ form.role.errors.0 }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="signup-field">
+                                        <label for="id_phone_number" class="form-label"><i class="fas fa-phone me-1 text-primary"></i>Phone Number</label>
+                                        {{ form.phone_number }}
+                                        <div class="field-feedback">
+                                            {% if form.phone_number.errors %}<span class="text-danger">{{ form.phone_number.errors.0 }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 4: Company Name + Boss Username (conditional) -->
+                            <div class="row">
+                                <div class="col-md-6 mb-2" id="companyField" style="{% if form.role.value == 'staff' %}display: none;{% endif %}">
+                                    <div class="signup-field">
+                                        <label for="id_company_name" class="form-label"><i class="fas fa-building me-1 text-primary"></i>Company Name</label>
+                                        {{ form.company_name }}
+                                        <div class="field-feedback">
+                                            {% if form.company_name.errors %}<span class="text-danger">{{ form.company_name.errors.0 }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2" id="bossField" style="{% if form.role.value == 'staff' %}display: block;{% else %}display: none;{% endif %}">
+                                    <div class="signup-field">
+                                        <label for="id_pending_boss_username" class="form-label"><i class="fas fa-user-tie me-1 text-primary"></i>Boss Username</label>
+                                        <input type="text" name="pending_boss_username" id="id_pending_boss_username"
+                                               class="form-control" placeholder="Enter your boss's username"
+                                               value="{{ form.pending_boss_username.value|default:'' }}">
+                                        <div class="field-feedback">
+                                            <small class="text-muted">Must be an approved Business Owner</small>
+                                            {% if form.pending_boss_username.errors %}<br><span class="text-danger">{{ form.pending_boss_username.errors.0 }}</span>{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Terms -->
+                            <div class="mb-2 mt-1">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="terms" required>
+                                    <label class="form-check-label small" for="terms">
+                                        I agree to the <a href="#" class="text-decoration-none fw-medium">Terms of Service</a> and
+                                        <a href="#" class="text-decoration-none fw-medium">Privacy Policy</a>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" id="submitBtn">
+                                <i class="fas fa-user-plus me-1"></i>Create Account
+                            </button>
+                        </form>
+
+                        <div class="text-center mt-2">
+                            <p class="mb-0 text-muted">Already have an account?
+                                <a href="{% url 'login' %}" class="text-decoration-none fw-bold">Login here</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkUrl = '{% url "check_availability" %}';
+    let usernameOk = true, emailOk = true;
+    let usernameTimer, emailTimer;
+
+    // ── Debounced AJAX availability check ──
+    function checkField(field, value) {
+        const input = document.getElementById('id_' + field);
+        const feedback = document.getElementById(field + '-feedback');
+        const icon = document.getElementById(field + '-icon');
+        const spinner = document.getElementById(field + '-spinner');
+
+        if (!value || value.length < 2) {
+            input.classList.remove('is-valid', 'is-invalid');
+            icon.innerHTML = '';
+            feedback.innerHTML = '';
+            if (field === 'username') usernameOk = true;
+            if (field === 'email') emailOk = true;
+            updateSubmitBtn();
+            return;
+        }
+
+        // Show spinner
+        spinner.style.display = 'inline-block';
+        icon.innerHTML = '';
+
+        fetch(checkUrl + '?field=' + field + '&value=' + encodeURIComponent(value))
+            .then(r => r.json())
+            .then(data => {
+                spinner.style.display = 'none';
+                if (data.available) {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                    icon.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
+                    feedback.innerHTML = '<span class="text-success">' + data.message + '</span>';
+                    if (field === 'username') usernameOk = true;
+                    if (field === 'email') emailOk = true;
+                } else {
+                    input.classList.remove('is-valid');
+                    input.classList.add('is-invalid');
+                    icon.innerHTML = '<i class="fas fa-times-circle text-danger"></i>';
+                    feedback.innerHTML = '<span class="text-danger">' + data.message + '</span>';
+                    if (field === 'username') usernameOk = false;
+                    if (field === 'email') emailOk = false;
+                }
+                updateSubmitBtn();
+            })
+            .catch(() => {
+                spinner.style.display = 'none';
+            });
+    }
+
+    // Username: check on blur + debounced input
+    const usernameInput = document.getElementById('id_username');
+    usernameInput.addEventListener('blur', function() {
+        clearTimeout(usernameTimer);
+        checkField('username', this.value.trim());
+    });
+    usernameInput.addEventListener('input', function() {
+        clearTimeout(usernameTimer);
+        const val = this.value.trim();
+        usernameTimer = setTimeout(() => checkField('username', val), 500);
+    });
+
+    // Email: check on blur + debounced input
+    const emailInput = document.getElementById('id_email');
+    emailInput.addEventListener('blur', function() {
+        clearTimeout(emailTimer);
+        checkField('email', this.value.trim());
+    });
+    emailInput.addEventListener('input', function() {
+        clearTimeout(emailTimer);
+        const val = this.value.trim();
+        emailTimer = setTimeout(() => checkField('email', val), 500);
+    });
+
+    // ── Password strength ──
+    const pwd1 = document.getElementById('id_password1');
+    const pwd2 = document.getElementById('id_password2');
+    const strengthBar = document.getElementById('pwdStrengthBar');
+    const pwd1Feedback = document.getElementById('password1-feedback');
+    const pwd2Feedback = document.getElementById('password2-feedback');
+
+    document.querySelectorAll('.toggle-password').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const input = document.getElementById(this.getAttribute('data-target'));
+            const icon = this.querySelector('i');
+            if (!input) {
+                return;
+            }
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            icon.classList.toggle('fa-eye', !show);
+            icon.classList.toggle('fa-eye-slash', show);
+            this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        });
+    });
+
+    pwd1.addEventListener('input', function() {
+        const val = this.value;
+        let score = 0;
+        if (val.length >= 8) score++;
+        if (/[a-z]/.test(val) && /[A-Z]/.test(val)) score++;
+        if (/\d/.test(val)) score++;
+        if (/[^a-zA-Z0-9]/.test(val)) score++;
+
+        const pct = (score / 4) * 100;
+        const colors = ['#e74a3b', '#f6c23e', '#f6c23e', '#1cc88a'];
+        const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+        strengthBar.style.width = pct + '%';
+        strengthBar.style.background = colors[score - 1] || '#e9ecef';
+        if (val.length > 0) {
+            pwd1Feedback.innerHTML = '<span style="color:' + (colors[score - 1] || '#858796') + '">' + (labels[score - 1] || '') + '</span>';
+        } else {
+            pwd1Feedback.innerHTML = '';
+            strengthBar.style.width = '0%';
+        }
+        checkPasswordMatch();
+    });
+
+    pwd2.addEventListener('input', checkPasswordMatch);
+    pwd2.addEventListener('blur', checkPasswordMatch);
+
+    function checkPasswordMatch() {
+        if (!pwd2.value) {
+            pwd2.classList.remove('is-valid', 'is-invalid');
+            pwd2Feedback.innerHTML = '';
+            return;
+        }
+        if (pwd1.value === pwd2.value) {
+            pwd2.classList.remove('is-invalid');
+            pwd2.classList.add('is-valid');
+            pwd2Feedback.innerHTML = '<span class="text-success">Passwords match!</span>';
+        } else {
+            pwd2.classList.remove('is-valid');
+            pwd2.classList.add('is-invalid');
+            pwd2Feedback.innerHTML = '<span class="text-danger">Passwords do not match</span>';
+        }
+    }
+
+    // ── Role toggle: show/hide Company Name / Boss Username ──
+    const roleSelect = document.getElementById('id_role');
+    const bossField = document.getElementById('bossField');
+    const companyField = document.getElementById('companyField');
+    const bossInput = document.getElementById('id_pending_boss_username');
+    const companyInput = document.getElementById('id_company_name');
+
+    function toggleFields() {
+        if (roleSelect.value === 'staff') {
+            bossField.style.display = 'block';
+            bossInput.required = true;
+            companyField.style.display = 'none';
+            if (companyInput) companyInput.required = false;
+        } else if (roleSelect.value === 'owner') {
+            bossField.style.display = 'none';
+            bossInput.required = false;
+            companyField.style.display = 'block';
+            if (companyInput) companyInput.required = true;
+        } else {
+            bossField.style.display = 'none';
+            bossInput.required = false;
+            companyField.style.display = 'none';
+            if (companyInput) companyInput.required = false;
+        }
+    }
+    roleSelect.addEventListener('change', toggleFields);
+    toggleFields();
+
+    // ── Submit button: disable if username/email not unique ──
+    function updateSubmitBtn() {
+        const btn = document.getElementById('submitBtn');
+        if (!usernameOk || !emailOk) {
+            btn.disabled = true;
+            btn.classList.add('btn-secondary');
+            btn.classList.remove('btn-primary');
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('btn-secondary');
+            btn.classList.add('btn-primary');
+        }
+    }
+
+    // ── Prevent submit if not unique ──
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+        if (!usernameOk || !emailOk) {
+            e.preventDefault();
+            if (!usernameOk) {
+                document.getElementById('id_username').focus();
+            } else {
+                document.getElementById('id_email').focus();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

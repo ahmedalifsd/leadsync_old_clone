@@ -1,0 +1,368 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Dashboard - LeadSync{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card rounded-3 bg-white mb-4">
+            <div class="card-body">
+                <div class="mb-3 d-flex justify-content-between flex-wrap w-100">
+                    <h4 class="mb-0">
+                        Custom Fields
+                    </h4>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#addFieldModal">
+                        <i class="fas fa-plus me-1"></i>New Field
+                    </button>
+                </div>
+                {% if custom_fields %}
+                <div class="basic-table table-responsive">
+                    <table class="table text-nowrap table-sm">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Scope</th>
+                            <th>Required</th>
+                            <th>Active</th>
+                            {% if is_super_admin %}
+                            <th>Owner</th>
+                            {% endif %}
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for field in custom_fields %}
+                        <tr class="{% if not field.is_active %}table-secondary{% endif %}">
+                            <td>
+                                <strong>{{ field.name }}</strong>
+                                {% if not field.is_active %}
+                                    <span class="badge bg-soft-warning text-dark ms-1">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-soft-secondary">{{ field.get_field_type_display }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-soft-info">{{ field.get_scope_display }}</span>
+                            </td>
+                            <td>
+                                {% if field.required %}
+                                    <span class="badge bg-soft-danger">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-soft-success">No</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if field.is_active %}
+                                    <span class="badge bg-soft-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-soft-warning text-dark">No</span>
+                                {% endif %}
+                            </td>
+                            {% if is_super_admin %}
+                                <td>{{ field.owner.username }}</td>
+                            {% endif %}
+                                <td>{{ field.created_at|date:"M d, Y" }}</td>
+                            <td >
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-icon btn-sm btn-soft-info rounded-pill me-2" data-bs-toggle="modal"
+                                            data-bs-target="#viewModal{{ field.id }}" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-icon btn-sm btn-soft-warning rounded-pill me-2" data-bs-toggle="modal"
+                                            data-bs-target="#editModal{{ field.id }}" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-icon btn-sm btn-soft-danger rounded-pill me-2" data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal{{ field.id }}" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-cog fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No custom fields created</h5>
+                    <p class="text-muted">Create your first custom field to collect additional information from
+                        leads.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Add Field Modal -->
+<div class="modal fade" id="addFieldModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Custom Field</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Field Name *</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="text-danger small">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Field Type *</label>
+                            {{ form.field_type }}
+                            {% if form.field_type.errors %}
+                            <div class="text-danger small">{{ form.field_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Choices (for Choice fields)</label>
+                        {{ form.choices }}
+                        {% if form.choices.errors %}
+                        <div class="text-danger small">{{ form.choices.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Separate choices with commas (e.g., "Option 1, Option 2, Option 3")</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Scope *</label>
+                        {{ form.scope }}
+                        {% if form.scope.errors %}
+                        <div class="text-danger small">{{ form.scope.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">Whether this field applies to all leads or per individual lead</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.required }}
+                            <label class="form-check-label" for="{{ form.required.id_for_label }}">
+                                Required Field
+                            </label>
+                        </div>
+                        {% if form.required.errors %}
+                        <div class="text-danger small">{{ form.required.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Field</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Modals for each field -->
+{% for field in custom_fields %}
+<div class="modal fade" id="viewModal{{ field.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-eye me-2"></i>View Custom Field</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th style="width: 40%;">Field Name</th>
+                        <td><strong>{{ field.name }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Field Type</th>
+                        <td><span class="badge bg-secondary">{{ field.get_field_type_display }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Scope</th>
+                        <td><span class="badge bg-info">{{ field.get_scope_display }}</span></td>
+                    </tr>
+                    {% if field.choices %}
+                    <tr>
+                        <th>Choices</th>
+                        <td>{{ field.choices }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Required</th>
+                        <td>
+                            {% if field.required %}
+                            <span class="badge bg-danger">Yes</span>
+                            {% else %}
+                            <span class="badge bg-success">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Active</th>
+                        <td>
+                            {% if field.is_active %}
+                            <span class="badge bg-success">Yes</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">No</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Leads with Data</th>
+                        <td>
+                            {% with data_count=field.lead_data_count %}
+                            {% if data_count > 0 %}
+                            <span class="badge bg-primary">{{ data_count }} lead{{ data_count|pluralize }}</span>
+                            {% else %}
+                            <span class="text-muted">No data</span>
+                            {% endif %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                    {% if is_super_admin %}
+                    <tr>
+                        <th>Owner</th>
+                        <td>{{ field.owner.username }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Created</th>
+                        <td>{{ field.created_at|date:"M d, Y h:i A" }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Edit Modals for each field -->
+{% for field in custom_fields %}
+<div class="modal fade" id="editModal{{ field.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Custom Field</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'edit_custom_field' field.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <!-- Read-only info -->
+                    <div class="alert alert-light border mb-3">
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Field Type</small><br>
+                                <span class="badge bg-secondary">{{ field.get_field_type_display }}</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Scope</small><br>
+                                <span class="badge bg-info">{{ field.get_scope_display }}</span>
+                            </div>
+                        </div>
+                        {% if field.choices %}
+                        <div class="mt-2">
+                            <small class="text-muted">Choices</small><br>
+                            <span>{{ field.choices }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="mt-2">
+                            <small class="text-muted"><i class="fas fa-lock me-1"></i>Type, Scope and Choices cannot be changed to protect existing lead data.</small>
+                        </div>
+                    </div>
+
+                    <!-- Editable fields -->
+                    <div class="mb-3">
+                        <label class="form-label">Field Name *</label>
+                        <input type="text" name="name" value="{{ field.name }}" class="form-control" required>
+                        <div class="form-text">Renaming will automatically update all existing lead data.</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="required" class="form-check-input" id="edit_required_{{ field.id }}"
+                                   {% if field.required %}checked{% endif %}>
+                            <label class="form-check-label" for="edit_required_{{ field.id }}">
+                                Required Field
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" name="is_active" class="form-check-input" id="edit_active_{{ field.id }}"
+                                   {% if field.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="edit_active_{{ field.id }}">
+                                Active <small class="text-muted">(Inactive fields won't show on lead forms)</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Field</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Delete Modals for each field -->
+{% for field in custom_fields %}
+<div class="modal fade" id="deleteModal{{ field.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% with data_count=field.lead_data_count %}
+                {% if data_count > 0 %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Cannot delete!</strong> {{ data_count }} lead{{ data_count|pluralize }} have data for this field.
+                    <br><small>You can deactivate it instead using the Edit option.</small>
+                </div>
+                {% else %}
+                <p>Are you sure you want to delete the custom field "<strong>{{ field.name }}</strong>"?</p>
+                <p class="text-muted">This action cannot be undone.</p>
+                {% endif %}
+                {% endwith %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                {% with data_count=field.lead_data_count %}
+                {% if data_count == 0 %}
+                <a href="{% url 'delete_custom_field' field.id %}" class="btn btn-danger">Delete</a>
+                {% else %}
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
+                        onclick="setTimeout(function(){ var modal = new bootstrap.Modal(document.getElementById('editModal{{ field.id }}')); modal.show(); }, 300);">
+                    <i class="fas fa-edit me-1"></i>Edit / Deactivate Instead
+                </button>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

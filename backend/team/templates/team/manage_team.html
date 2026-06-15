@@ -1,0 +1,1398 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Team Management - LeadSync{% endblock %}
+
+{% block content %}
+<style>
+    .stat-card {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important; }
+    .stat-card .stat-icon {
+        width: 52px; height: 52px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+    }
+    .stat-card .stat-value { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+    .stat-card .stat-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+
+    .team-table th {
+        font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
+        font-weight: 700; color: #6b7280; border-bottom: 2px solid #e5e7eb; padding: 12px 16px;
+    }
+    .team-table td { padding: 14px 16px; vertical-align: middle; border-bottom: 1px solid #f3f4f6; }
+    .team-table tbody tr { transition: background 0.15s; }
+    .team-table tbody tr:hover { background: #f8fafc; }
+
+    .member-avatar {
+        width: 40px; height: 40px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.9rem; color: #fff;
+    }
+    .avatar-active { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+    .avatar-inactive { background: linear-gradient(135deg, #9ca3af, #6b7280); }
+
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+    }
+    .status-active { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .status-inactive { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+
+    .toggle-btn {
+        width: 26px; height: 16px; border-radius: 12px; border: none;
+        position: relative; cursor: pointer; transition: background 0.3s;
+    }
+    .toggle-btn.active { background: #10b981; }
+    .toggle-btn.inactive { background: #d1d5db; }
+    .toggle-btn::after {
+        content: ''; position: absolute; top: 3px;
+        width: 10px; height: 10px; border-radius: 50%; background: #fff;
+        transition: left 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle-btn.active::after { left: 14px; }
+    .toggle-btn.inactive::after { left: 3px; }
+
+    .pending-card {
+        border: 1px solid #fbbf24; border-radius: 16px; overflow: hidden;
+        background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    }
+    .pending-card .card-header { background: transparent; border-bottom: 1px solid rgba(251,191,36,0.3); }
+
+    .section-card { border: none; border-radius: 16px; box-shadow: 0 1px 10px rgba(0,0,0,0.06); overflow: hidden; }
+    .section-card .card-header { background: #fff; border-bottom: 1px solid #f3f4f6; padding: 18px 24px; }
+    .section-card .card-body { padding: 24px; }
+
+    .action-btn {
+        width: 34px; height: 34px; border-radius: 10px; padding: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.85rem; transition: all 0.2s;
+    }
+
+    .step-number {
+        width: 36px; height: 36px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
+    }
+
+    .progress-bar-custom {
+        height: 10px; border-radius: 5px; background: #e5e7eb; overflow: hidden;
+    }
+    .progress-bar-custom .fill {
+        height: 100%; border-radius: 5px; transition: width 0.6s ease;
+    }
+
+    .search-box { border-radius: 12px; border: 2px solid #e5e7eb; padding: 10px 16px; transition: border-color 0.2s; }
+    .search-box:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+
+    .member-details-modal .modal-content {
+        border-radius: 24px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #f8fbff 0%, #ffffff 44%);
+    }
+    .member-details-modal .modal-header {
+        padding: 1.25rem 1.5rem 0;
+    }
+    .member-modal-hero {
+        position: relative;
+        padding: 1.5rem;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #111827 0%, #1d4ed8 52%, #60a5fa 100%);
+        color: #fff;
+        overflow: hidden;
+    }
+    .member-modal-hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -30px -40px auto;
+        width: 160px;
+        height: 160px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        filter: blur(2px);
+    }
+    .member-modal-hero-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    .member-modal-profile {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        min-width: 0;
+    }
+    .member-modal-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        flex-shrink: 0;
+    }
+    .member-modal-name {
+        font-size: 1.35rem;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 0.35rem;
+        word-break: break-word;
+    }
+    .member-modal-subtitle {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.92rem;
+    }
+    .member-modal-pill-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        margin-top: 0.9rem;
+    }
+    .member-modal-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.45rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: #fff;
+    }
+    .member-modal-pill.status-live {
+        background: rgba(16, 185, 129, 0.18);
+        border-color: rgba(167, 243, 208, 0.45);
+    }
+    .member-modal-pill.status-offline {
+        background: rgba(148, 163, 184, 0.16);
+        border-color: rgba(203, 213, 225, 0.28);
+    }
+    .member-modal-stat {
+        position: relative;
+        z-index: 1;
+        min-width: 150px;
+        padding: 1rem 1.1rem;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(10px);
+    }
+    .member-modal-stat-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.72);
+        margin-bottom: 0.35rem;
+    }
+    .member-modal-stat-value {
+        font-size: 1.7rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+    }
+    .member-modal-stat-note {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.82rem;
+    }
+    .member-modal-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 1.25rem;
+    }
+    .member-info-card {
+        background: #fff;
+        border: 1px solid #e5eef9;
+        border-radius: 18px;
+        padding: 1rem;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+        height: 100%;
+    }
+    .member-info-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        color: #64748b;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        margin-bottom: 0.55rem;
+    }
+    .member-info-label i {
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #eff6ff;
+        color: #2563eb;
+    }
+    .member-info-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.35;
+        word-break: break-word;
+    }
+    .member-info-value.muted-value {
+        color: #475569;
+    }
+    .member-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        margin: 1.5rem 0 0.9rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 800;
+        color: #475569;
+    }
+    .member-section-title i {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #eff6ff;
+        color: #2563eb;
+        font-size: 0.8rem;
+    }
+    .member-leads-list {
+        display: grid;
+        gap: 0.75rem;
+    }
+    .member-lead-card {
+        display: block;
+        padding: 0.95rem 1rem;
+        border-radius: 16px;
+        background: #fff;
+        border: 1px solid #e5eef9;
+        text-decoration: none;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+    }
+    .member-lead-card:hover {
+        transform: translateY(-2px);
+        border-color: #bfdbfe;
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.12);
+    }
+    .member-lead-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.35rem;
+    }
+    .member-lead-name {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.35;
+    }
+    .member-lead-date {
+        font-size: 0.82rem;
+        color: #64748b;
+    }
+    @media (max-width: 767.98px) {
+        .member-modal-hero-content {
+            flex-direction: column;
+        }
+        .member-modal-stat {
+            width: 100%;
+            min-width: 0;
+        }
+        .member-modal-grid {
+            grid-template-columns: 1fr;
+        }
+        .member-modal-profile {
+            align-items: flex-start;
+        }
+        .member-details-modal .modal-body {
+            padding-top: 0.75rem;
+        }
+    }
+</style>
+
+
+<div class="page-header page-add-notes">
+    <div class="add-item d-flex">
+        <div class="page-title">
+            <h4>Team Management</h4>
+            <h6>Manage your team members, approve requests, and control access</h6>
+        </div>
+    </div>
+    <div class="d-flex flex-sm-row flex-column align-items-sm-center align-items-start">
+
+        {% if remaining_slots is None or remaining_slots > 0 %}
+        <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+            <i class="fas fa-user-plus me-1"></i>Add Employee
+        </button>
+        {% else %}
+        <button type="button" class="btn btn-primary me-2 disabled" title="Plan employee limit reached">
+            <i class="fas fa-user-plus me-1"></i>Add Employee
+        </button>
+        {% endif %}
+        <button type="button" class="btn btn-outline-success me-2" data-bs-toggle="modal" data-bs-target="#importEmployeesModal">
+            <i class="fas fa-file-excel me-1"></i>Import from Excel
+        </button>
+        <a href="{% url 'manage_roles' %}" class="btn btn-outline-primary px-3">
+            <i class="fa-solid fa-shield-halved me-1"></i>Roles
+        </a>
+    </div>
+</div>
+
+
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold"><i class="fas fa-user-plus me-2 text-primary"></i>Add Employee</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'create_employee' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="small text-muted mb-3">Create an employee account directly from here. The employee will be
+                        added to your team immediately.</p>
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        {{ employee_form.username }}
+                        <div id="employeeUsernameFeedback" class="small mt-1"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        {{ employee_form.email }}
+                        <div id="employeeEmailFeedback" class="small mt-1"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        {{ employee_form.phone_number }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        {{ employee_form.role }}
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Password</label>
+                            {{ employee_form.password1 }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Confirm Password</label>
+                            {{ employee_form.password2 }}
+                        </div>
+                    </div>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" id="showEmployeePassword">
+                        <label class="form-check-label small" for="showEmployeePassword">
+                            Show passwords
+                        </label>
+                    </div>
+                    <div class="alert alert-info border-0 rounded-3 mt-3 mb-0 small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Employee account will be created as inactive. Activate it from the team list when needed.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i>Create Employee
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="importEmployeesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-file-excel me-2 text-success"></i>Import Employees from Excel
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'import_employees' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="small text-muted mb-3">
+                        Upload an Excel file (.xlsx) with your employees. The first row should contain the column names:
+                        <strong>username</strong>, <strong>email</strong>, <strong>phone_number</strong>,
+                        and optional <strong>role</strong>, <strong>password</strong>.
+                        If password is blank, a secure random password will be generated.
+                    </p>
+                    <div class="mb-3">
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'download_employees_template' %}">
+                            <i class="fas fa-download me-1"></i>Download Template
+                        </a>
+                        <div class="small text-muted mt-2">
+                            Download the template and fill it, then upload here.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Excel File (.xlsx)</label>
+                        <input type="file" name="file" accept=".xlsx" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload me-1"></i>Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+            <!-- Card 3 · Pink · Donut -->
+            <div class="stat-card  d-flex flex-column justify-content-between h-100 card-pink"
+                 data-card="3">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Total Members</span>
+                        </div>
+                        <div class="card-number">{{ team_members.paginator.count }}</div>
+                    </div>
+                    <!--                    <div class="icon-box">-->
+                    <!--                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">-->
+                    <!--                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"-->
+                    <!--                                  stroke-width="1.8"/>-->
+                    <!--                        </svg>-->
+                    <!--                    </div>-->
+                </div>
+
+                <div class="mini-stats">
+                    <div>
+                        <div class="mini-stat-label">Active</div>
+                        <div class="mini-stat-val">{{ active_count }}</div>
+                    </div>
+                    <div>
+                        <div class="mini-stat-label">Inactive</div>
+                        <div class="mini-stat-val accent">{{ inactive_count }}</div>
+                    </div>
+                    <div>
+                        <div class="mini-stat-label">Pending Requests</div>
+                        <div class="mini-stat-val">{{ pending_staff.count }}</div>
+                    </div>
+                </div>
+                <!-- BAR CHART — colours from CSS vars -->
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <rect class="bar-rect" x="8" y="30" width="22" height="45" rx="4"/>
+                        <rect class="bar-rect" x="38" y="45" width="22" height="30" rx="4"/>
+                        <rect class="bar-rect" x="68" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect" x="98" y="38" width="22" height="37" rx="4"/>
+                        <rect class="bar-rect bright" x="128" y="10" width="22" height="65" rx="4"/>
+                        <rect class="bar-rect" x="158" y="25" width="22" height="50" rx="4"/>
+                        <rect class="bar-rect" x="188" y="15" width="22" height="60" rx="4"/>
+                        <rect class="bar-rect bright" x="218" y="5" width="22" height="70" rx="4"/>
+                        <rect class="bar-rect" x="248" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect bright" x="270" y="8" width="22" height="67" rx="4"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <div class="col-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+        <div class="card m-0 border-0 h-100">
+
+            <!-- Card 6 · Red · Declining Line -->
+            <div class="stat-card d-flex flex-column justify-content-between h-100 card-cyan"
+                 data-card="6">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Slots Available</span>
+                        </div>
+                        {% if remaining_slots is None %}
+
+                        <div class="card-number">Unlimited</div>
+                        {% elif remaining_slots > 0 %}
+                        <div class="card-number">{{ remaining_slots }}</div>
+                        {% else %}
+                        <div class="card-number">{{ remaining_slots }}</div>
+                        {% endif %}
+
+                    </div>
+                </div>
+                <div class="mini-stats">
+                    <div>
+                        <div class="mini-stat-label">Plan Limit</div>
+                        <div class="mini-stat-val">
+                            {% if subscription %}
+                                {{ subscription.effective_max_employees|default:"Unlimited" }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="mini-stat-label">Deleted Employees</div>
+                        <div class="mini-stat-val">{{ deleted_staff|length }}</div>
+                    </div>
+
+                </div>
+
+
+                <!-- DUAL LINE CHART — colours from CSS vars -->
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <path class="spark-path secondary"
+                              d="M0,55 C40,48 70,58 110,40 C150,22 170,45 210,30 C240,18 270,25 300,12"
+                              stroke-width="1.5" stroke-linecap="round"/>
+                        <path class="spark-path"
+                              d="M0,65 C30,58 60,68 100,52 C140,36 160,55 200,40 C230,28 265,35 300,20"
+                              stroke-width="2"
+                              stroke-linecap="round"/>
+                        <circle class="chart-dot" cx="300" cy="20" r="3"/>
+                        <circle class="chart-dot-dim" cx="300" cy="12" r="2"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <div class="col-lg-6 col-md-12 col-sm-12 col-12 mb-4">
+        <div class="card section-card shadow-sm h-100">
+
+            <div class="card-body pb-0">
+                <h6 class="mb-2 fw-bold">
+                    <i class="fas fa-lightbulb me-2 text-warning"></i>How to Add Staff
+                </h6>
+
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex align-items-start gap-2">
+                        <div class="step-number bg-primary text-white">1</div>
+                        <div>
+                            <div class="fw-semibold small">Add Directly or Share Username</div>
+                            <div class="text-muted small">
+                                You can create an employee from the <strong>Add Employee</strong> button, or tell staff
+                                to use <strong class="text-primary">{{ request.user.username }}</strong> during
+                                registration.
+                                <button class="btn btn-link btn-sm p-0 ms-1 text-primary" onclick="copyUsername()">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="step-number bg-primary text-white">2</div>
+                        <div>
+                            <div class="fw-semibold small">Staff Registers</div>
+                            <div class="text-muted small">They sign up as "Employee" and enter your username as "Boss
+                                Username".
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="step-number bg-primary text-white">3</div>
+                        <div>
+                            <div class="fw-semibold small">Approve Request</div>
+                            <div class="text-muted small">Their request appears above. Approve it and they join your
+                                team instantly!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<!--&lt;!&ndash; Team Usage Progress &ndash;&gt;-->
+<!--{% if subscription %}-->
+
+<!--<div class="d-flex align-items-center justify-content-between mb-2">-->
+<!--            <span class="small fw-semibold text-muted">-->
+<!--                 Team Usage-->
+<!--            </span>-->
+<!--    <span class="small fw-bold">-->
+<!--                {{ active_count }} / {{ subscription.effective_max_employees|default:"Unlimited" }}-->
+<!--            </span>-->
+<!--</div>-->
+<!--<div class="progress progress-lg mb-5 custom-progress-3 progress-animate" role="progressbar" aria-valuenow="50"-->
+<!--     aria-valuemin="0" aria-valuemax="100">-->
+<!--    <div class="progress-bar" style="width: 50%">-->
+<!--        <div class="progress-bar-value">50%</div>-->
+<!--    </div>-->
+<!--</div>-->
+<!--<div class="progress-bar-custom">-->
+<!--    {% if subscription.effective_max_employees is None %}-->
+<!--    <div class="fill bg-success" style="width: 100%;"></div>-->
+<!--    {% elif subscription.effective_max_employees > 0 %}-->
+<!--    <div class="fill {% if active_count >= subscription.effective_max_employees %}bg-danger{% elif active_count > subscription.effective_max_employees|add:'-3' %}bg-warning{% else %}bg-success{% endif %}"-->
+<!--         style="width: {% widthratio active_count subscription.effective_max_employees 100 %}%;"></div>-->
+<!--    {% else %}-->
+<!--    <div class="fill bg-secondary" style="width: 0%;"></div>-->
+<!--    {% endif %}-->
+<!--</div>-->
+<!--{% if subscription.effective_max_employees is not None and active_count >= subscription.effective_max_employees %}-->
+<!--<div class="mt-2 d-flex align-items-center gap-2">-->
+<!--    <span class="small text-danger fw-semibold"><i class="fas fa-exclamation-circle me-1"></i>Limit reached!</span>-->
+<!--    <a href="{% url 'my_plan' %}" class="small text-primary fw-bold">Upgrade Plan →</a>-->
+<!--</div>-->
+<!--{% endif %}-->
+<!--</div>-->
+
+<!--{% endif %}-->
+
+
+<!-- Pending Staff Requests -->
+{% if pending_staff %}
+<div class="pending-card mb-4">
+    <div class="card-header py-3 px-4 d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-bold text-warning">
+            <i class="fas fa-clock me-2"></i>Pending / Disapproved Employees
+        </h6>
+        <span class="badge bg-warning text-dark rounded-pill px-3">{{ pending_staff.count }} to approve</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table text-nowrap table-sm">
+                <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Requested</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for profile in pending_staff %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+<!--                            <div class="member-avatar" style="background: linear-gradient(135deg, #f59e0b, #d97706);">-->
+<!--                                {{ profile.user.username|make_list|first|upper }}-->
+<!--                            </div>-->
+                            <div>
+                                <div class="fw-semibold">{{ profile.user.username }}</div>
+                                <div class="small text-muted">{{ profile.company_name|default:"" }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="small">{{ profile.user.email }}</td>
+                    <td class="small">{{ profile.phone_number|default:"—" }}</td>
+                    <td class="small">{{ profile.created_at|date:"M d, Y" }}</td>
+                    <td class="text-end">
+                        {% if not subscription or subscription.effective_max_employees is None or active_count < subscription.effective_max_employees %}
+                        <form method="post" action="{% url 'approve_staff' profile.user.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 me-1">
+                                <i class="fas fa-check me-1"></i>Approve
+                            </button>
+                        </form>
+                        {% else %}
+                        <button class="btn btn-sm btn-success rounded-pill px-3 me-1 disabled"
+                                title="Team limit reached">
+                            <i class="fas fa-check me-1"></i>Approve
+                        </button>
+                        {% endif %}
+                        <button class="btn btn-sm btn-outline-danger rounded-pill px-3" data-bs-toggle="modal"
+                                data-bs-target="#rejectStaffModal{{ profile.user.id }}">
+                            <i class="fas fa-times me-1"></i>Reject
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modals -->
+{% for profile in pending_staff %}
+<div class="modal fade" id="rejectStaffModal{{ profile.user.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold"><i class="fas fa-user-times me-2 text-danger"></i>Reject Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to reject <strong>{{ profile.user.username }}</strong>'s request?</p>
+                <div class="alert alert-warning border-0 rounded-3 mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    This will permanently remove their registration.
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel
+                </button>
+                <form method="post" action="{% url 'reject_staff' profile.user.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger rounded-pill px-3">
+                        <i class="fas fa-times me-1"></i>Reject
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+
+<!-- Hidden form for bulk actions -->
+<form id="bulkActionForm" method="post" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="action" id="bulkAction" value="">
+    <div id="staffIdsContainer"></div>
+</form>
+
+<!-- Team Members Table -->
+<div class="card shadow-sm">
+    <div class="card-body ">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <h6 class="mb-0 fw-bold">
+             Team Members
+        </h6>
+        <div class="d-flex align-items-center gap-2">
+            {% if search_query %}
+            <span class="badge bg-soft-info bg-opacity-10 text-info border border-info border-opacity-25">
+                <i class="fas fa-search me-1"></i> "{{ search_query }}"
+            </span>
+            {% endif %}
+
+<!-- Search -->
+<form method="get" class="">
+    <div class="d-flex align-items-center gap-2">
+        <div class="flex-grow-1 position-relative">
+            <i class="fas fa-search position-absolute top-50 translate-middle-y text-muted" style="left: 16px;"></i>
+            <input type="text" class="form-control form-control-sm search-box ps-5" name="search"
+                   placeholder="Search by name, email, or phone..." value="{{ search_query }}">
+        </div>
+        <select class="form-select form-select-sm" name="per_page" style="width: 92px;">
+            <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+            <option value="15" {% if per_page == 15 %}selected{% endif %}>15</option>
+            <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+            <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+        </select>
+        <button class="btn btn-primary" type="submit">Search</button>
+        {% if search_query %}
+        <a href="{% url 'manage_team' %}?per_page={{ per_page }}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </div>
+</form>
+<!--            <span class="badge bg-soft-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill">-->
+<!--                {{ team_members.paginator.count }} member{{ team_members.paginator.count|pluralize }}-->
+<!--            </span>-->
+            <div class="dropdown">
+                <button class="btn btn-outline-success dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown">
+                     Filter
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item small" href="#" onclick="selectAll()"><i
+                            class="fas fa-check-double me-2 text-primary"></i>Select All</a></li>
+                    <li><a class="dropdown-item small" href="#" onclick="clearSelection()"><i
+                            class="fas fa-times me-2 text-muted"></i>Clear Selection</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item small text-danger" href="#" onclick="confirmBulkAction('remove')"><i
+                            class="fas fa-user-minus me-2"></i>Remove Selected</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+        {% if team_members %}
+        <div class="table-responsive mt-3">
+            <table class="table  text-nowrap table-sm">
+                <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" class="form-check-input" id="selectAllCheckbox"
+                               onchange="toggleAllCheckboxes(this)">
+                    </th>
+                    <th>Member</th>
+                    <th>Contact</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th>Leads</th>
+                    <th>Status</th>
+                    <th class="text-center" style="width: 140px;">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for member in team_members %}
+                <tr
+                {% if not member.is_active %} style="opacity: 0.65;"{% endif %}>
+                <td>
+                    <input type="checkbox" class="form-check-input member-checkbox" value="{{ member.staff.id }}">
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div>
+                            <div class="fw-semibold">{{ member.staff.username }}</div>
+                            <div class="small text-muted">{{ member.staff.get_full_name|default:"" }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="small">{{ member.staff.email }}</div>
+                    <div class="small text-muted">{{ member.staff.profile.phone_number|default:"" }}</div>
+                </td>
+                <td>
+                    {% if member.role %}
+                    <span class="badge bg-soft-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-2">
+                                <i class="fa-solid fa-shield-halved me-1" style="font-size:0.65rem;"></i>{{ member.role.name }}
+                            </span>
+                    {% else %}
+                    <span class="badge bg-soft-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2">
+                                No Role
+                            </span>
+                    {% endif %}
+                    <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal"
+                            data-bs-target="#assignRoleModal{{ member.staff.id }}" title="Change Role">
+                        <i class="fa-solid fa-pen-to-square text-muted" style="font-size: 0.7rem;"></i>
+                    </button>
+                </td>
+                <td class="small text-muted">{{ member.joined_date|date:"M d, Y" }}</td>
+                <td>
+                            <span class="badge bg-soft-info bg-opacity-10 text-info border border-info border-opacity-25">
+                                {{ member.staff.created_leads.count }}
+                            </span>
+                </td>
+                <td>
+                            <span class="status-badge {% if member.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                <i class="fas fa-circle" style="font-size: 6px;"></i>
+                                {% if member.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                </td>
+                <td class="text-center">
+                    <div class="d-flex align-items-center justify-content-center gap-1">
+                        <!-- Toggle Active/Inactive -->
+                        <form method="post" action="{% url 'toggle_staff_status' member.staff.id %}" class="d-inline"
+                              onsubmit="return confirm('{% if member.is_active %}Deactivate {{ member.staff.username }}?{% else %}Reactivate {{ member.staff.username }}?{% endif %}')">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="toggle-btn {% if member.is_active %}active{% else %}inactive{% endif %}"
+                                    title="{% if member.is_active %}Deactivate{% else %}Reactivate{% endif %}">
+                            </button>
+                        </form>
+
+                        <button class="action-btn btn me-2 btn-icon btn-sm rounded-pill btn btn-soft-info" data-bs-toggle="modal"
+                                data-bs-target="#viewModal{{ member.staff.id }}" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+
+                        <button class="action-btn btn me-2 btn-icon btn-sm rounded-pill btn btn-soft-warning" data-bs-toggle="modal"
+                                data-bs-target="#assignRoleModal{{ member.staff.id }}" title="Assign Role">
+                            <i class="fa-solid fa-user-tag"></i>
+                        </button>
+
+                        <button class="action-btn btn me-2 btn-icon btn-sm rounded-pill btn btn-soft-danger" data-bs-toggle="modal"
+                                data-bs-target="#removeModal{{ member.staff.id }}" title="Remove">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </td>
+                </tr>
+
+                <!-- View Modal -->
+                <div class="modal fade" id="viewModal{{ member.staff.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable member-details-modal">
+                        <div class="modal-content border-0 rounded-4 shadow">
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title fw-bold"><i class="fas fa-user me-2 text-primary"></i>Member
+                                    Details</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="d-none">
+                                    <div class="member-avatar mx-auto mb-3 {% if member.is_active %}avatar-active{% else %}avatar-inactive{% endif %}"
+                                         style="width:64px;height:64px;font-size:1.5rem;border-radius:18px;">
+                                        {{ member.staff.username|make_list|first|upper }}
+                                    </div>
+                                    <h5 class="fw-bold mb-1">{{ member.staff.username }}</h5>
+                                    <span class="status-badge {% if member.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                            <i class="fas fa-circle" style="font-size: 6px;"></i>
+                                            {% if member.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                </div>
+                                <div class="d-none">
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <div class="small text-muted">Email</div>
+                                            <div class="small fw-semibold">{{ member.staff.email }}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Phone</div>
+                                            <div class="small fw-semibold">{{
+                                                member.staff.profile.phone_number|default:"—" }}
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Joined</div>
+                                            <div class="small fw-semibold">{{ member.joined_date|date:"M d, Y" }}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Last Login</div>
+                                            <div class="small fw-semibold">{{ member.staff.last_login|date:"M d, Y
+                                                H:i"|default:"Never" }}
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Role</div>
+                                            <div class="small fw-semibold">{{ member.role.name|default:"No Role" }}
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="small text-muted">Leads Added</div>
+                                            <div class="small fw-semibold">{{ member.staff.created_leads.count }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="member-modal-hero">
+                                    <div class="member-modal-hero-content">
+                                        <div class="member-modal-profile">
+                                            <div class="member-modal-avatar {% if member.is_active %}avatar-active{% else %}avatar-inactive{% endif %}">
+                                                {{ member.staff.username|make_list|first|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="member-modal-name">{{ member.staff.username }}</div>
+                                                <p class="member-modal-subtitle">{{ member.staff.get_full_name|default:member.staff.email }}</p>
+                                                <div class="member-modal-pill-group">
+                                                    <span class="member-modal-pill {% if member.is_active %}status-live{% else %}status-offline{% endif %}">
+                                                        <i class="fas fa-circle" style="font-size: 6px;"></i>
+                                                        {% if member.is_active %}Active{% else %}Inactive{% endif %}
+                                                    </span>
+                                                    <span class="member-modal-pill">
+                                                        <i class="fas fa-user-tag"></i>
+                                                        {{ member.role.name|default:"No Role" }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="member-modal-stat">
+                                            <div class="member-modal-stat-label">Leads Added</div>
+                                            <div class="member-modal-stat-value">{{ member.staff.created_leads.count }}</div>
+                                            <div class="member-modal-stat-note">Created by this team member</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="member-section-title">
+                                    <i class="fas fa-address-card"></i>
+                                    Member Overview
+                                </div>
+                                <div class="member-modal-grid">
+                                    <div class="member-info-card">
+                                        <div class="member-info-label">
+                                            <i class="fas fa-envelope"></i>
+                                            Email
+                                        </div>
+                                        <div class="member-info-value">{{ member.staff.email }}</div>
+                                    </div>
+                                    <div class="member-info-card">
+                                        <div class="member-info-label">
+                                            <i class="fas fa-phone-alt"></i>
+                                            Phone
+                                        </div>
+                                        <div class="member-info-value muted-value">{{ member.staff.profile.phone_number|default:"--" }}</div>
+                                    </div>
+                                    <div class="member-info-card">
+                                        <div class="member-info-label">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            Joined
+                                        </div>
+                                        <div class="member-info-value">{{ member.joined_date|date:"M d, Y" }}</div>
+                                    </div>
+                                    <div class="member-info-card">
+                                        <div class="member-info-label">
+                                            <i class="fas fa-clock"></i>
+                                            Last Login
+                                        </div>
+                                        <div class="member-info-value muted-value">{{ member.staff.last_login|date:"M d, Y H:i"|default:"Never" }}</div>
+                                    </div>
+                                </div>
+
+                                {% with recent_leads=member.staff.created_leads.all|slice:":3" %}
+                                {% if recent_leads %}
+                                <div class="member-section-title">
+                                    <i class="fas fa-chart-line"></i>
+                                    Recent Leads
+                                </div>
+                                <div class="member-leads-list">
+                                    {% for lead in recent_leads %}
+                                    <a href="{% url 'edit_lead' lead.id %}"
+                                       class="member-lead-card">
+                                        <div class="member-lead-head">
+                                            <div class="member-lead-name">{{ lead.client_name }}</div>
+                                            <span class="badge rounded-pill bg-{{ lead.status }} bg-opacity-10 text-{{ lead.status }} small">{{ lead.get_status_display }}</span>
+                                        </div>
+                                        <div class="member-lead-date">{{ lead.created_at|date:"M d, Y" }}</div>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                {% endwith %}
+                            </div>
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="button" class="btn btn-secondary rounded-pill px-3"
+                                        data-bs-dismiss="modal">Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remove Modal -->
+                <div class="modal fade" id="removeModal{{ member.staff.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 rounded-4 shadow">
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title fw-bold"><i class="fas fa-user-minus me-2 text-danger"></i>Remove
+                                    Member</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Remove <strong>{{ member.staff.username }}</strong> from your team?</p>
+                                <div class="alert alert-warning border-0 rounded-3 mb-0">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <ul class="mb-0 mt-1 small">
+                                        <li>Account will be deactivated</li>
+                                        <li>Removed from your team</li>
+                                        <li>Their leads remain under your ownership</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="button" class="btn btn-secondary rounded-pill px-3"
+                                        data-bs-dismiss="modal">Cancel
+                                </button>
+                                <form method="post" action="{% url 'remove_staff' member.staff.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger rounded-pill px-3">
+                                        <i class="fas fa-trash-alt me-1"></i>Remove
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assign Role Modal -->
+                <div class="modal fade" id="assignRoleModal{{ member.staff.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 rounded-4 shadow">
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title fw-bold">
+                                    <i class="fa-solid fa-user-tag me-2 text-primary"></i>Assign Role
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form method="post" action="{% url 'assign_role' member.staff.id %}">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <p class="small text-muted">Assigning role to <strong>{{ member.staff.username
+                                        }}</strong></p>
+                                    <div class="mb-3">
+                                        <select name="role" class="form-select rounded-3">
+                                            <option value="">— No Role —</option>
+                                            {% for role in available_roles %}
+                                            <option value="{{ role.id }}" {% if member.role and member.role.id == role.id %}selected{% endif %}> {{ role.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <a href="{% url 'manage_roles' %}" class="text-primary small">
+                                        <i class="fa-solid fa-plus me-1"></i>Create a new role
+                                    </a>
+                                </div>
+                                <div class="modal-footer border-0 pt-0">
+                                    <button type="button" class="btn btn-secondary rounded-pill px-3"
+                                            data-bs-dismiss="modal">Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-primary rounded-pill px-3">
+                                        <i class="fa-solid fa-check me-1"></i>Save
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if team_members.has_other_pages %}
+        <div class="px-4 py-3 border-top">
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    {% if team_members.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link rounded-pill"
+                           href="?page={{ team_members.previous_page_number }}&per_page={{ per_page }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% for num in team_members.paginator.page_range %}
+                    {% if team_members.number == num %}
+                    <li class="page-item active"><span class="page-link rounded-pill">{{ num }}</span></li>
+                    {% elif num > team_members.number|add:'-3' and num < team_members.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link rounded-pill"
+                                    href="?page={{ num }}&per_page={{ per_page }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num
+                            }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    {% if team_members.has_next %}
+                    <li class="page-item">
+                        <a class="page-link rounded-pill"
+                           href="?page={{ team_members.next_page_number }}&per_page={{ per_page }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5 px-4">
+<!--            <div class="member-avatar avatar-inactive mx-auto mb-3"-->
+<!--                 style="width:64px;height:64px;font-size:1.5rem;border-radius:18px;">-->
+<!--                <i class="fas fa-users"></i>-->
+<!--            </div>-->
+            <h5 class="fw-semibold text-muted">No Team Members</h5>
+            {% if search_query %}
+            <p class="text-muted small">No results for "{{ search_query }}"</p>
+            <a href="{% url 'manage_team' %}" class="btn btn-outline-primary btn-sm rounded-pill">Clear Search</a>
+            {% else %}
+            <p class="text-muted small mb-3">Staff members who register with your username will appear here for
+                approval.</p>
+            <div class="d-inline-flex align-items-center gap-2 bg-light rounded-pill px-4 py-2">
+                <span class="small text-muted">Your username:</span>
+                <code class="fw-bold text-primary" id="bossUsername">{{ request.user.username }}</code>
+                <button class="btn btn-sm btn-outline-primary rounded-circle p-0" style="width:28px;height:28px;"
+                        onclick="copyUsername()" title="Copy">
+                    <i class="fas fa-copy" style="font-size:0.7rem;"></i>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<!-- Deleted Employees -->
+<div class="card section-card shadow-sm mt-4">
+        <div class="card-body">
+
+    <div class=" d-flex align-items-center justify-content-between">
+        <h6 class="mb-0 fw-bold text-danger">
+             Deleted Employees
+        </h6>
+        <span class="badge bg-soft-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">
+            {{ deleted_staff|length }} deleted
+        </span>
+    </div>
+        {% if deleted_staff %}
+        <div class="table-responsive">
+            <table class="table  text-nowrap table-sm">
+                <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Contact</th>
+                    <th>Role (Last)</th>
+                    <th>Deleted On</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for member in deleted_staff %}
+                <tr style="opacity:0.8;">
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+<!--                            <div class="member-avatar avatar-inactive">-->
+<!--                                {{ member.staff.username|make_list|first|upper }}-->
+<!--                            </div>-->
+                            <div>
+                                <div class="fw-semibold">{{ member.staff.username }}</div>
+                                <div class="small text-muted">{{ member.staff.get_full_name|default:"" }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="small">{{ member.staff.email }}</div>
+                        <div class="small text-muted">{{ member.staff.profile.phone_number|default:"" }}</div>
+                    </td>
+                    <td>
+                            <span class="badge bg-soft-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2">
+                                {{ member.role.name|default:"No Role" }}
+                            </span>
+                    </td>
+                    <td class="small text-muted">{{ member.removed_at|date:"M d, Y H:i"|default:"—" }}</td>
+                    <td>
+                            <span class="status-badge status-inactive">
+                                <i class="fas fa-lock" style="font-size: 10px;"></i>
+                                Permanently Inactive
+                            </span>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted small">
+            No deleted employees yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+</div>
+{% block extra_js %}
+<script>
+    function copyUsername() {
+        const u = "{{ request.user.username }}";
+        navigator.clipboard.writeText(u).then(() => {
+            const btn = event.target.closest('button') || event.target;
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check text-success"></i>';
+            setTimeout(() => btn.innerHTML = orig, 1500);
+        });
+    }
+
+    function toggleAllCheckboxes(source) {
+        document.querySelectorAll('.member-checkbox').forEach(cb => cb.checked = source.checked);
+    }
+
+    function selectAll() {
+        document.querySelectorAll('.member-checkbox').forEach(cb => cb.checked = true);
+        document.getElementById('selectAllCheckbox').checked = true;
+    }
+
+    function clearSelection() {
+        document.querySelectorAll('.member-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('selectAllCheckbox').checked = false;
+    }
+
+    function confirmBulkAction(action) {
+        const ids = [...document.querySelectorAll('.member-checkbox:checked')].map(cb => cb.value);
+        if (!ids.length) { alert('Please select at least one team member.'); return; }
+
+        const container = document.getElementById('staffIdsContainer');
+        container.innerHTML = '';
+        ids.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden'; input.name = 'staff_ids'; input.value = id;
+            container.appendChild(input);
+        });
+
+        if (action === 'remove' && confirm(`Remove ${ids.length} member(s) from team?`)) {
+            document.getElementById('bulkActionForm').action = '{% url "bulk_remove_staff" %}';
+            document.getElementById('bulkActionForm').submit();
+        }
+    }
+
+    function debounce(fn, delay) {
+        let t;
+        return function (...args) {
+            clearTimeout(t);
+            t = setTimeout(() => fn.apply(this, args), delay);
+        };
+    }
+
+    function setAvailabilityFeedback(el, ok, message) {
+        el.className = 'small mt-1 ' + (ok ? 'text-success' : 'text-danger');
+        el.textContent = message || '';
+    }
+
+    async function checkAvailability(field, value, feedbackEl) {
+        const trimmed = (value || '').trim();
+        if (!trimmed) {
+            setAvailabilityFeedback(feedbackEl, true, '');
+            return;
+        }
+
+        try {
+            const params = new URLSearchParams({ field: field, value: trimmed });
+            const res = await fetch(`/accounts/check-availability/?${params.toString()}`);
+            const data = await res.json();
+            setAvailabilityFeedback(feedbackEl, !!data.available, data.message || '');
+        } catch (e) {
+            setAvailabilityFeedback(feedbackEl, false, 'Unable to validate right now.');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const usernameInput = document.getElementById('id_username');
+        const emailInput = document.getElementById('id_email');
+        const usernameFeedback = document.getElementById('employeeUsernameFeedback');
+        const emailFeedback = document.getElementById('employeeEmailFeedback');
+
+        if (usernameInput && usernameFeedback) {
+            usernameInput.addEventListener('input', debounce(function (e) {
+                checkAvailability('username', e.target.value, usernameFeedback);
+            }, 350));
+        }
+
+        if (emailInput && emailFeedback) {
+            emailInput.addEventListener('input', debounce(function (e) {
+                checkAvailability('email', e.target.value, emailFeedback);
+            }, 350));
+        }
+
+        const toggle = document.getElementById('showEmployeePassword');
+        const p1 = document.getElementById('id_password1');
+        const p2 = document.getElementById('id_password2');
+        if (toggle && p1 && p2) {
+            toggle.addEventListener('change', function () {
+                const type = this.checked ? 'text' : 'password';
+                p1.type = type;
+                p2.type = type;
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

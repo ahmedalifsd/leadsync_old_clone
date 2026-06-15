@@ -1,0 +1,250 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}{{ action }} Role - LeadSync{% endblock %}
+
+{% block content %}
+
+<!-- Messages -->
+{% if messages %}
+<div class="mb-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3 mb-0">
+            <i class="fa-solid fa-shield-halved me-2"></i>{{ action }} Role
+        </h1>
+        <p class="text-muted mb-0">
+            {% if action == 'Create' %}
+            Define a new role with specific permissions for your employees
+            {% else %}
+            Update role permissions and details
+            {% endif %}
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'manage_roles' %}" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-1"></i>Back to Roles
+        </a>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="row">
+        <!-- Role Details -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fa-solid fa-info-circle me-2"></i>Role Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="id_name" class="form-label fw-semibold">Role Name <span class="text-danger">*</span></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label fw-semibold">Description</label>
+                        {{ form.description }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permissions -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fa-solid fa-key me-2"></i>Permissions</h5>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="selectAllPerms()">
+                            <i class="fa-solid fa-check-double me-1"></i>Select All
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllPerms()">
+                            <i class="fa-solid fa-xmark me-1"></i>Clear All
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Lead Permissions -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">
+                            <i class="fa-solid fa-address-book me-1"></i>Lead Management
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_view_leads }}
+                                    <label class="form-check-label" for="id_can_view_leads">
+                                        <i class="fa-solid fa-eye me-1 text-info"></i>View Leads
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_add_leads }}
+                                    <label class="form-check-label" for="id_can_add_leads">
+                                        <i class="fa-solid fa-plus me-1 text-success"></i>Add Leads
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_edit_leads }}
+                                    <label class="form-check-label" for="id_can_edit_leads">
+                                        <i class="fa-solid fa-pen-to-square me-1 text-warning"></i>Edit Leads
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_delete_leads }}
+                                    <label class="form-check-label" for="id_can_delete_leads">
+                                        <i class="fa-solid fa-trash me-1 text-danger"></i>Delete Leads
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_bulk_add_leads }}
+                                    <label class="form-check-label" for="id_can_bulk_add_leads">
+                                        <i class="fa-solid fa-layer-group me-1 text-primary"></i>Bulk Add Leads
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_csv_upload }}
+                                    <label class="form-check-label" for="id_can_csv_upload">
+                                        <i class="fa-solid fa-file-csv me-1 text-success"></i>CSV Upload
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lead Actions -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">
+                            <i class="fa-solid fa-arrows-rotate me-1"></i>Lead Actions
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_assign_leads }}
+                                    <label class="form-check-label" for="id_can_assign_leads">
+                                        <i class="fa-solid fa-user-plus me-1 text-primary"></i>Assign Leads
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_share_leads }}
+                                    <label class="form-check-label" for="id_can_share_leads">
+                                        <i class="fa-solid fa-share-nodes me-1 text-info"></i>Share Leads
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tools & Config -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">
+                            <i class="fa-solid fa-toolbox me-1"></i>Tools & Configuration
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_manage_templates }}
+                                    <label class="form-check-label" for="id_can_manage_templates">
+                                        <i class="fa-solid fa-file-lines me-1 text-info"></i>Manage Templates
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_manage_custom_fields }}
+                                    <label class="form-check-label" for="id_can_manage_custom_fields">
+                                        <i class="fa-solid fa-sliders me-1 text-warning"></i>Manage Custom Fields
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics & Reports -->
+                    <div class="mb-0">
+                        <h6 class="fw-bold text-uppercase text-muted border-bottom pb-2 mb-3">
+                            <i class="fa-solid fa-chart-pie me-1"></i>Analytics & Reports
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_view_analytics }}
+                                    <label class="form-check-label" for="id_can_view_analytics">
+                                        <i class="fa-solid fa-chart-line me-1 text-success"></i>View Analytics
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_view_activity_log }}
+                                    <label class="form-check-label" for="id_can_view_activity_log">
+                                        <i class="fa-solid fa-clock-rotate-left me-1 text-info"></i>View Activity Log
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check form-switch">
+                                    {{ form.can_view_deleted_leads }}
+                                    <label class="form-check-label" for="id_can_view_deleted_leads">
+                                        <i class="fa-solid fa-trash-can-arrow-up me-1 text-warning"></i>View Deleted Leads
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body d-flex justify-content-between">
+                    <a href="{% url 'manage_roles' %}" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-xmark me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-check me-1"></i>{{ action }} Role
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+function selectAllPerms() {
+    document.querySelectorAll('input[type="checkbox"][id^="id_can_"]').forEach(cb => cb.checked = true);
+}
+function clearAllPerms() {
+    document.querySelectorAll('input[type="checkbox"][id^="id_can_"]').forEach(cb => cb.checked = false);
+}
+</script>
+
+{% endblock %}

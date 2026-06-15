@@ -1,0 +1,12 @@
+Django
+Pillow
+python-decouple
+dj-database-url
+psycopg2-binary
+stripe
+google-api-python-client
+google-auth
+openpyxl
+djangorestframework
+django-cors-headers
+# django-ratelimit  # Uncomment for production deployment with proper cache backend

@@ -1,0 +1,324 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Activity Log - LeadSync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .activity-shell {
+        background: #ffffff;
+        border: 0;
+        border-radius: 16px;
+        box-shadow: none;
+        overflow: hidden;
+    }
+
+    .activity-table-wrap {
+        margin-top: 14px;
+    }
+
+    .activity-shell .card-body {
+        padding: 1.25rem;
+    }
+
+    .activity-title {
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .activity-subtitle {
+        color: #64748b;
+        font-size: 0.85rem;
+        margin-top: 4px;
+    }
+
+    .filter-panel {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        padding: 14px;
+        margin-bottom: 24px;
+    }
+
+    .filter-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.35px;
+        color: #64748b;
+        margin-bottom: 6px;
+    }
+
+    .filter-panel .form-select,
+    .filter-panel .form-control {
+        border-radius: 10px;
+        border: 1px solid #dbe3ee;
+        min-height: 40px;
+    }
+
+    .filter-panel .form-select:focus,
+    .filter-panel .form-control:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
+    }
+
+    .summary-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #eff6ff;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .activity-table thead th {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: #6b7280;
+        border-bottom: 2px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .activity-table tbody td {
+        border-bottom: 1px solid #edf2f7;
+        vertical-align: middle;
+    }
+
+    .activity-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .activity-user-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+
+<div class="page-header page-add-notes">
+    <div class="add-item d-flex">
+        <div class="page-title">
+                        <h4>Activity Log</h4>
+                        <h6>Track create, update, delete, import and view actions in one place</h6>
+                    </div>
+    </div>
+                    <div>
+<!--                        <h5 class="badge bg-soft-primary">{{ total_activity_count }} Records</h5>-->
+
+                   <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+    Filters
+  </button>
+
+
+
+                    </div>
+                </div>
+<div class="collapse" id="collapseExample">
+  <div class="card card-body">
+                <form method="get" class="filter-panel">
+                    <div class="row g-3">
+                        <div class="col-xl-2 col-lg-3 col-md-6">
+                            <label class="filter-label">Action</label>
+                            <select name="action" class="form-select">
+                                <option value="">All Actions</option>
+                                {% for action_value, action_label in action_choices %}
+                                    <option value="{{ action_value }}" {% if current_filters.action == action_value %}selected{% endif %}>{{ action_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-xl-2 col-lg-3 col-md-6">
+                            <label class="filter-label">Model</label>
+                            <select name="model" class="form-select">
+                                <option value="">All Models</option>
+                                {% for model in all_models %}
+                                    <option value="{{ model }}" {% if current_filters.model == model %}selected{% endif %}>{{ model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-xl-2 col-lg-3 col-md-6">
+                            <label class="filter-label">User</label>
+                            <select name="user" class="form-select">
+                                <option value="">All Users</option>
+                                {% for u in all_users %}
+                                    <option value="{{ u.id }}" {% if current_filters.user|stringformat:"s" == u.id|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-xl-2 col-lg-3 col-md-6">
+                            <label class="filter-label">From Date</label>
+                            <input type="date" name="date_from" class="form-control" value="{{ current_filters.date_from }}">
+                        </div>
+
+                        <div class="col-xl-2 col-lg-3 col-md-6">
+                            <label class="filter-label">To Date</label>
+                            <input type="date" name="date_to" class="form-control" value="{{ current_filters.date_to }}">
+                        </div>
+
+                        <div class="col-xl-2 col-lg-3 col-md-6">
+                            <label class="filter-label">Rows</label>
+                            <select name="per_page" class="form-select">
+                                <option value="10" {% if current_filters.per_page == 10 %}selected{% endif %}>10</option>
+                                <option value="15" {% if current_filters.per_page == 15 %}selected{% endif %}>15</option>
+                                <option value="25" {% if current_filters.per_page == 25 %}selected{% endif %}>25</option>
+                                <option value="50" {% if current_filters.per_page == 50 %}selected{% endif %}>50</option>
+                                <option value="100" {% if current_filters.per_page == 100 %}selected{% endif %}>100</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'activity_log' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear Filters
+                        </a>
+                    </div>
+                </form>
+
+  </div>
+</div>
+
+<div class="col-12">
+<div class="card">
+    <div class="card-body">
+
+                {% if page_obj %}
+                <div class="basic-table table-responsive activity-table-wrap">
+                    <table class="table text-nowrap table-sm">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Target</th>
+                                <th>Details</th>
+                                {% if user.profile.role == 'super_admin' %}
+                                <th>IP Address</th>
+                                {% endif %}
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in page_obj %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="activity-user-icon me-2">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="d-flex flex-column">
+                                            <div class="fw-bold">{{ activity.user.username }}</div>
+                                            <small class="text-muted">{{ activity.user.profile.get_role_display }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge
+                                        {% if activity.action == 'create' %}bg-soft-success
+                                        {% elif activity.action == 'update' %}bg-soft-primary
+                                        {% elif activity.action == 'delete' %}bg-soft-danger
+                                        {% elif activity.action == 'view' %}bg-soft-info
+                                        {% elif activity.action == 'import' %}bg-soft-warning text-dark
+                                        {% elif activity.action == 'export' %}bg-soft-secondary
+                                        {% else %}bg-soft-secondary{% endif %}">
+                                        {{ activity.get_action_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ activity.target_model }}</div>
+                                    {% if activity.target_name %}
+                                        <small class="text-muted">{{ activity.target_name }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ activity.details }}</small>
+                                </td>
+                                {% if user.profile.role == 'super_admin' %}
+                                <td class="">
+                                    {% if activity.ip_address %}
+                                        <code>{{ activity.ip_address }}</code>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                                <td>
+                                    <small class="text-muted  badge multi-badge">{{ activity.timestamp|date:"M d, Y H:i" }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if page_obj.has_other_pages %}
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                    <small class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</small>
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mb-0 mt-2">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Previous</a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No activities found</h5>
+                    <p class="text-muted">No user activities have been recorded yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

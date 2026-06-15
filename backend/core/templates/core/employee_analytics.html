@@ -1,0 +1,627 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Employee Analytics - LeadSync{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card-mini {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: none;
+        border-radius: 12px;
+    }
+    .stat-card-mini:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+    }
+    .employee-card {
+        transition: all 0.2s ease;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+    }
+    .employee-card:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border-color: #dee2e6;
+    }
+    .badge-role {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+    }
+    .progress-thin {
+        height: 6px;
+        border-radius: 3px;
+    }
+    .top-performer-badge {
+        position: absolute;
+        top: -8px;
+        right: 10px;
+        z-index: 1;
+    }
+    .mini-stat {
+        text-align: center;
+        padding: 8px 4px;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+    .mini-stat h5 {
+        margin-bottom: 2px;
+        font-weight: 700;
+    }
+    .mini-stat small {
+        font-size: 0.7rem;
+        color: #6c757d;
+    }
+    .table-employee th {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h4 mb-0">
+            <i class="fas fa-users-cog me-2"></i>Employee Analytics
+        </h1>
+        <p class="text-muted">Detailed performance report for your team members</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <span class="badge bg-light text-dark border px-3 py-2">
+            <i class="fas fa-user-friends me-1"></i> {{ total_employees }} Team Member{{ total_employees|pluralize }}
+        </span>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
+        <div class="card stat-card-mini bg-primary text-white h-100">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 opacity-75" style="font-size: 0.8rem;">Total Leads</p>
+                        <h3 class="mb-0 fw-bold">{{ grand_total_leads }}</h3>
+                    </div>
+                    <i class="fas fa-chart-bar fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
+        <div class="card stat-card-mini bg-success text-white h-100">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 opacity-75" style="font-size: 0.8rem;">Won Leads</p>
+                        <h3 class="mb-0 fw-bold">{{ grand_won }}</h3>
+                    </div>
+                    <i class="fas fa-trophy fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
+        <div class="card stat-card-mini bg-info text-white h-100">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 opacity-75" style="font-size: 0.8rem;">Conversion Rate</p>
+                        <h3 class="mb-0 fw-bold">{{ grand_conversion_rate }}%</h3>
+                    </div>
+                    <i class="fas fa-percentage fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
+        <div class="card stat-card-mini bg-danger text-white h-100">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-1 opacity-75" style="font-size: 0.8rem;">Overdue Follow-ups</p>
+                        <h3 class="mb-0 fw-bold">{{ grand_overdue }}</h3>
+                    </div>
+                    <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Performers Highlight -->
+{% if top_performer and total_employees > 1 %}
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card border-0 bg-white h-100" style="border-left: 4px solid #198754 !important;">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle bg-success me-3">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted">Most Leads Created</small>
+                        <h6 class="mb-0 fw-bold">{{ top_performer.username }}</h6>
+                        <span class="text-success fw-bold">{{ top_performer.total_leads }} leads</span>
+                        <span class="badge bg-light text-dark ms-1">{{ top_performer.role_name }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if best_converter and best_converter.conversion_rate > 0 %}
+    <div class="col-md-6 mb-3">
+        <div class="card border-0 bg-white h-100" style="border-left: 4px solid #0d6efd !important;">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle bg-primary me-3">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted">Best Conversion Rate</small>
+                        <h6 class="mb-0 fw-bold">{{ best_converter.username }}</h6>
+                        <span class="text-primary fw-bold">{{ best_converter.conversion_rate }}%</span>
+                        <span class="badge bg-light text-dark ms-1">{{ best_converter.won }} won / {{ best_converter.total_leads }} total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Bar Chart: Leads per Employee -->
+    <div class="col-lg-6 col-md-12 mb-3">
+        <div class="card border-0 bg-white h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-primary"></i>Leads per Employee</h6>
+                <div id="leadsPerEmployeeChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bar Chart: Won vs Lost -->
+    <div class="col-lg-6 col-md-12 mb-3">
+        <div class="card border-0 bg-white h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-balance-scale me-2 text-success"></i>Won vs Lost per Employee</h6>
+                <div id="wonLostChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Conversion Rate Chart -->
+    <div class="col-lg-6 col-md-12 mb-3">
+        <div class="card border-0 bg-white h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-percentage me-2 text-info"></i>Conversion Rate by Employee</h6>
+                <div id="conversionRateChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Last 30 Days Activity -->
+    <div class="col-lg-6 col-md-12 mb-3">
+        <div class="card border-0 bg-white h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-calendar-alt me-2 text-warning"></i>Last 30 Days - New Leads</h6>
+                <div id="last30Chart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Detail Cards -->
+<div class="row mb-3">
+    <div class="col-12">
+        <h5 class="fw-bold"><i class="fas fa-id-card me-2"></i>Individual Employee Performance</h5>
+    </div>
+</div>
+
+<div class="row">
+    {% for emp in employee_data %}
+    <div class="col-xl-6 col-lg-6 col-md-12 mb-4">
+        <div class="card employee-card bg-white h-100 position-relative">
+            {% if forloop.first and total_employees > 1 %}
+            <span class="top-performer-badge badge bg-warning text-dark">
+                <i class="fas fa-crown me-1"></i>Top Performer
+            </span>
+            {% endif %}
+            <div class="card-body">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-circle bg-{% cycle 'primary' 'success' 'info' 'warning' 'danger' 'secondary' %} me-3">
+                            {{ emp.username|make_list|first|upper }}
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">{{ emp.username }}</h6>
+                            <small class="text-muted">{{ emp.email|default:"No email" }}</small>
+                            <br>
+                            <span class="badge badge-role bg-light text-dark border mt-1">{{ emp.role_name }}</span>
+                            {% if emp.joined_date %}
+                            <small class="text-muted ms-1">Joined: {{ emp.joined_date|date:"M d, Y" }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <h4 class="mb-0 fw-bold text-primary">{{ emp.total_leads }}</h4>
+                        <small class="text-muted">Total Leads</small>
+                    </div>
+                </div>
+
+                <!-- Mini Stats Grid -->
+                <div class="row g-2 mb-3">
+                    <div class="col-3">
+                        <div class="mini-stat">
+                            <h5 class="text-primary">{{ emp.new }}</h5>
+                            <small>New</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="mini-stat">
+                            <h5 class="text-info">{{ emp.contacted }}</h5>
+                            <small>Contacted</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="mini-stat">
+                            <h5 class="text-success">{{ emp.won }}</h5>
+                            <small>Won</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="mini-stat">
+                            <h5 class="text-danger">{{ emp.lost }}</h5>
+                            <small>Lost</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-3">
+                        <div class="mini-stat">
+                            <h5 class="text-warning">{{ emp.qualified }}</h5>
+                            <small>Qualified</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="mini-stat">
+                            <h5 class="text-secondary">{{ emp.proposal }}</h5>
+                            <small>Proposal</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="mini-stat">
+                            <h5 class="text-dark">{{ emp.negotiation }}</h5>
+                            <small>Negotiation</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="mini-stat">
+                            <h5 class="text-success">{{ emp.converted }}</h5>
+                            <small>Converted</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conversion Rate Progress -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="fw-bold">Conversion Rate</small>
+                        <small class="fw-bold text-{% if emp.conversion_rate >= 50 %}success{% elif emp.conversion_rate >= 25 %}warning{% else %}danger{% endif %}">
+                            {{ emp.conversion_rate }}%
+                        </small>
+                    </div>
+                    <div class="progress progress-thin">
+                        <div class="progress-bar bg-{% if emp.conversion_rate >= 50 %}success{% elif emp.conversion_rate >= 25 %}warning{% else %}danger{% endif %}"
+                             role="progressbar" style="width: {{ emp.conversion_rate }}%">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Stats -->
+                <div class="d-flex justify-content-between text-muted" style="font-size: 0.8rem;">
+                    <span><i class="fas fa-calendar-week me-1"></i>Last 7 days: <strong>{{ emp.last_7_leads }}</strong></span>
+                    <span><i class="fas fa-calendar-alt me-1"></i>Last 30 days: <strong>{{ emp.last_30_leads }}</strong></span>
+                    <span>
+                        {% if emp.overdue_followups > 0 %}
+                        <span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Overdue: <strong>{{ emp.overdue_followups }}</strong></span>
+                        {% else %}
+                        <span class="text-success"><i class="fas fa-check-circle me-1"></i>No overdue</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="mt-2 text-muted" style="font-size: 0.8rem;">
+                    <span><i class="fas fa-bolt me-1"></i>Recent activities (7d): <strong>{{ emp.recent_activities }}</strong></span>
+                    {% if emp.today_followups > 0 %}
+                    <span class="ms-3 text-warning"><i class="fas fa-bell me-1"></i>Today's follow-ups: <strong>{{ emp.today_followups }}</strong></span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card border-0 bg-white">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No team members found</h5>
+                <p class="text-muted">Add staff members to start tracking employee performance.</p>
+                <a href="{% url 'manage_team' %}" class="btn btn-primary">
+                    <i class="fas fa-user-plus me-1"></i>Manage Team
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Detailed Table -->
+{% if employee_data %}
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card border-0 bg-white">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-table me-2"></i>Employee Comparison Table</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover table-employee align-middle">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Employee</th>
+                            <th>Role</th>
+                            <th class="text-center">Total</th>
+                            <th class="text-center">New</th>
+                            <th class="text-center">Contacted</th>
+                            <th class="text-center">Qualified</th>
+                            <th class="text-center">Won</th>
+                            <th class="text-center">Lost</th>
+                            <th class="text-center">Conv. Rate</th>
+                            <th class="text-center">30d Leads</th>
+                            <th class="text-center">Overdue</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for emp in employee_data %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <strong>{{ emp.username }}</strong>
+                                <br><small class="text-muted">{{ emp.email|default:"-" }}</small>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ emp.role_name }}</span></td>
+                            <td class="text-center fw-bold">{{ emp.total_leads }}</td>
+                            <td class="text-center"><span class="badge bg-primary">{{ emp.new }}</span></td>
+                            <td class="text-center"><span class="badge bg-info">{{ emp.contacted }}</span></td>
+                            <td class="text-center"><span class="badge bg-warning text-dark">{{ emp.qualified }}</span></td>
+                            <td class="text-center"><span class="badge bg-success">{{ emp.won }}</span></td>
+                            <td class="text-center"><span class="badge bg-danger">{{ emp.lost }}</span></td>
+                            <td class="text-center">
+                                <span class="fw-bold text-{% if emp.conversion_rate >= 50 %}success{% elif emp.conversion_rate >= 25 %}warning{% else %}danger{% endif %}">
+                                    {{ emp.conversion_rate }}%
+                                </span>
+                            </td>
+                            <td class="text-center">{{ emp.last_30_leads }}</td>
+                            <td class="text-center">
+                                {% if emp.overdue_followups > 0 %}
+                                <span class="badge bg-danger">{{ emp.overdue_followups }}</span>
+                                {% else %}
+                                <span class="badge bg-success">0</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        <!-- Grand Total Row -->
+                        <tr class="table-dark fw-bold">
+                            <td></td>
+                            <td>TOTAL</td>
+                            <td></td>
+                            <td class="text-center">{{ grand_total_leads }}</td>
+                            <td class="text-center">-</td>
+                            <td class="text-center">-</td>
+                            <td class="text-center">-</td>
+                            <td class="text-center">{{ grand_won }}</td>
+                            <td class="text-center">{{ grand_lost }}</td>
+                            <td class="text-center">{{ grand_conversion_rate }}%</td>
+                            <td class="text-center">{{ grand_last_30 }}</td>
+                            <td class="text-center">{{ grand_overdue }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const names = {{ chart_names|safe }};
+    const totalLeads = {{ chart_total|safe }};
+    const wonLeads = {{ chart_won|safe }};
+    const lostLeads = {{ chart_lost|safe }};
+    const newLeads = {{ chart_new|safe }};
+    const contactedLeads = {{ chart_contacted|safe }};
+    const convRates = {{ chart_conversion|safe }};
+    const last30 = {{ chart_last30|safe }};
+
+    // Chart 1: Leads per Employee (Stacked Bar)
+    if (document.getElementById('leadsPerEmployeeChart') && names.length > 0) {
+        var options1 = {
+            series: [
+                { name: 'New', data: newLeads },
+                { name: 'Contacted', data: contactedLeads },
+                { name: 'Won', data: wonLeads },
+                { name: 'Lost', data: lostLeads }
+            ],
+            chart: {
+                type: 'bar',
+                height: 350,
+                stacked: true,
+                toolbar: { show: false }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '55%',
+                    borderRadius: 4
+                }
+            },
+            xaxis: {
+                categories: names,
+                labels: {
+                    rotate: -45,
+                    style: { fontSize: '11px' }
+                }
+            },
+            colors: ['#0d6efd', '#0dcaf0', '#198754', '#dc3545'],
+            legend: { position: 'top' },
+            grid: { borderColor: '#f1f1f1' }
+        };
+        new ApexCharts(document.getElementById('leadsPerEmployeeChart'), options1).render();
+    }
+
+    // Chart 2: Won vs Lost
+    if (document.getElementById('wonLostChart') && names.length > 0) {
+        var options2 = {
+            series: [
+                { name: 'Won', data: wonLeads },
+                { name: 'Lost', data: lostLeads }
+            ],
+            chart: {
+                type: 'bar',
+                height: 350,
+                toolbar: { show: false }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    barHeight: '50%',
+                    borderRadius: 4
+                }
+            },
+            xaxis: {
+                categories: names,
+            },
+            colors: ['#198754', '#dc3545'],
+            legend: { position: 'top' },
+            grid: { borderColor: '#f1f1f1' }
+        };
+        new ApexCharts(document.getElementById('wonLostChart'), options2).render();
+    }
+
+    // Chart 3: Conversion Rate
+    if (document.getElementById('conversionRateChart') && names.length > 0) {
+        var options3 = {
+            series: [{
+                name: 'Conversion Rate',
+                data: convRates
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                toolbar: { show: false }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '45%',
+                    borderRadius: 6,
+                    dataLabels: {
+                        position: 'top'
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val) { return val + '%'; },
+                offsetY: -20,
+                style: { fontSize: '12px', colors: ['#304758'] }
+            },
+            xaxis: {
+                categories: names,
+                labels: {
+                    rotate: -45,
+                    style: { fontSize: '11px' }
+                }
+            },
+            yaxis: {
+                max: 100,
+                labels: {
+                    formatter: function(val) { return val + '%'; }
+                }
+            },
+            colors: ['#0dcaf0'],
+            grid: { borderColor: '#f1f1f1' }
+        };
+        new ApexCharts(document.getElementById('conversionRateChart'), options3).render();
+    }
+
+    // Chart 4: Last 30 days leads
+    if (document.getElementById('last30Chart') && names.length > 0) {
+        var options4 = {
+            series: [{
+                name: 'Leads (30 days)',
+                data: last30
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                toolbar: { show: false }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '45%',
+                    borderRadius: 6,
+                    dataLabels: {
+                        position: 'top'
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                offsetY: -20,
+                style: { fontSize: '12px', colors: ['#304758'] }
+            },
+            xaxis: {
+                categories: names,
+                labels: {
+                    rotate: -45,
+                    style: { fontSize: '11px' }
+                }
+            },
+            colors: ['#ffc107'],
+            grid: { borderColor: '#f1f1f1' }
+        };
+        new ApexCharts(document.getElementById('last30Chart'), options4).render();
+    }
+});
+</script>
+{% endblock %}

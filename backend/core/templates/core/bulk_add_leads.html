@@ -1,0 +1,770 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Bulk Add Leads - LeadSync{% endblock %}
+
+{% block extra_links %}
+<style>
+    .lead-entry-card.is-collapsed .lead-row-body {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .lead-row-actions .btn {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+
+
+<div class="page-header page-add-notes">
+    <div class="add-item d-flex">
+        <div class="page-title">
+            <h4>Bulk Add Leads</h4>
+            <h6>Add multiple leads at once with shared properties and individual customization</h6>
+        </div>
+    </div>
+</div>
+    <div class="">
+                    <form method="post" id="bulkLeadForm">
+                        {% csrf_token %}
+  <div class="card border-0">
+                <div class="stat-card d-flex flex-column justify-content-between h-100  pb-3 border"
+                             data-card="6">
+
+                        <!-- Shared Properties Section -->
+                        <h5 class="mb-4">
+                           Shared Properties (Apply to All Leads)
+                        </h5>
+
+                        <div class="row g-2">
+                            <div class="col-lg-3 col-md-6">
+                                <label class="form-label">{{ bulk_form.category_choice.label }}</label>
+                                {{ bulk_form.category_choice }}
+                                {% if bulk_form.category_choice.errors %}
+                                <div class="text-danger small">{{ bulk_form.category_choice.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-lg-3 col-md-6" id="category_other_div" style="display: none;">
+                                <label class="form-label">{{ bulk_form.category_other.label }} <span class="text-danger">*</span></label>
+                                {{ bulk_form.category_other }}
+                            </div>
+
+                            <div class="col-lg-3 col-md-6">
+                                <label class="form-label">{{ bulk_form.source_choice.label }}</label>
+                                {{ bulk_form.source_choice }}
+                                {% if bulk_form.source_choice.errors %}
+                                <div class="text-danger small">{{ bulk_form.source_choice.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-lg-3 col-md-6" id="source_other_div" style="display: none;">
+                                <label class="form-label">{{ bulk_form.source_other.label }} <span class="text-danger">*</span></label>
+                                {{ bulk_form.source_other }}
+                            </div>
+
+                            <div class="col-lg-3 col-md-6">
+                                <label class="form-label">{{ bulk_form.status.label }}</label>
+                                {{ bulk_form.status }}
+                            </div>
+
+                            <div class="col-lg-3 col-md-6">
+                                <label class="form-label">{{ bulk_form.follow_up_date.label }}</label>
+                                {{ bulk_form.follow_up_date }}
+                            </div>
+
+                            <div class="col-12 col-lg-6">
+                                <label class="form-label">{{ bulk_form.notes.label }}</label>
+                                {{ bulk_form.notes }}
+                            </div>
+
+                            {% if bulk_form.assigned_to %}
+                            <div class="col-lg-3">
+                                <label class="form-label">{{ bulk_form.assigned_to.label }}</label>
+                                {{ bulk_form.assigned_to }}
+                            </div>
+                            {% endif %}
+                        </div>
+                </div>
+  </div>
+
+                        <!-- Individual Leads Section -->
+<div class="page-header page-add-notes">
+    <div class="add-item d-flex">
+        <div class="page-title">
+            <h4 class="">Individual Leads   <span id="lead-count-badge" class="lead-count-badge badge bg-soft-primary m-0">0 Leads</span></h4>
+            <h6>You can override shared values in individual leads. Collapse rows for better overview when many leads are added.</h6>
+        </div>
+    </div>
+                        <div class="individual-leads-toolbar d-flex align-items-center justify-content-between flex-wrap">
+                             <div class="btn-group btn-group-sm">
+                                  <button type="button" id="add-lead-row" class="btn btn-primary btn-sm">
+                                    Add New Lead
+                                </button>
+                                <button type="button" id="expand-all-rows" class="btn btn-success btn-sm">
+                                    Expand All
+                                </button>
+                                <button type="button" id="collapse-all-rows" class="btn btn-secondary btn-sm">
+                                    Collapse All
+                                </button>
+                            </div>
+                        </div>
+
+</div>
+
+
+
+
+                        {{ lead_entries_formset.management_form }}
+
+                        <div id="leads-container">
+                            {% for form in lead_entries_formset %}
+                            <div class="lead-entry-card card mb-4">
+                                <div class="card-header lead-card-header d-flex align-items-center justify-content-between py-3 px-4">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="lead-row-number">{{ forloop.counter }}</span>
+                                        <h6 class="mb-0 fw-semibold text-dark lead-row-title">Lead {{ forloop.counter }}</h6>
+                                    </div>
+                                    <div class="lead-row-actions d-flex gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary toggle-row-collapse" title="Collapse/Expand" aria-expanded="true">
+                                            <i class="fas fa-chevron-up"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary add-row-below" title="Add Below">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-lead-row" title="Remove Lead">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body lead-row-body p-4">
+                                    <div class="row g-2">
+                                        <div class="col-md-3">
+                                            <label class="form-label">Client Name <span class="text-danger">*</span></label>
+                                            {{ form.client_name }}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Contact Number</label>
+                                            {{ form.contact_number }}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Email</label>
+                                            {{ form.email }}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Status (override)</label>
+                                            {{ form.status }}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Follow-up Date (override)</label>
+                                            {{ form.follow_up_date }}
+                                        </div>
+                                        {% if form.assigned_to %}
+                                        <div class="col-md-3">
+                                            <label class="form-label">Assign To (override)</label>
+                                            {{ form.assigned_to }}
+                                        </div>
+                                        {% endif %}
+
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">Requirement / Details</label>
+                                        {{ form.requirement }}
+                                    </div>
+
+
+
+                                    {% if form.errors %}
+                                    <div class="text-danger small mt-3">{{ form.errors }}</div>
+                                    {% endif %}
+
+                                    {% if custom_fields_each %}
+                                    <div class="custom-fields-section">
+                                        <h6 class="mb-3"> Per-Lead Custom Fields</h6>
+                                        <div class="custom-fields-container">
+                                            <div class="row mb-3">
+                                            {% for custom_field in custom_fields_each %}
+                                                <div class="col-md-3">
+                                                    <label class="form-label">{{ custom_field.name }}{% if custom_field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                                                    {% if custom_field.field_type == 'text' %}
+                                                    <input type="text" name="lead_{{ forloop.parentloop.counter0 }}_custom_{{ custom_field.id }}" class="form-control" {% if custom_field.required %}required{% endif %}>
+                                                    {% elif custom_field.field_type == 'number' %}
+                                                    <input type="number" name="lead_{{ forloop.parentloop.counter0 }}_custom_{{ custom_field.id }}" class="form-control" {% if custom_field.required %}required{% endif %}>
+                                                    {% elif custom_field.field_type == 'date' %}
+                                                    <input type="date" name="lead_{{ forloop.parentloop.counter0 }}_custom_{{ custom_field.id }}" class="form-control" {% if custom_field.required %}required{% endif %}>
+                                                    {% elif custom_field.field_type == 'boolean' %}
+                                                    <div class="form-check">
+                                                        <input type="checkbox" name="lead_{{ forloop.parentloop.counter0 }}_custom_{{ custom_field.id }}" class="form-check-input" id="id_lead_{{ forloop.parentloop.counter0 }}_custom_{{ custom_field.id }}" {% if custom_field.required %}required{% endif %}>
+                                                        <label class="form-check-label" for="id_lead_{{ forloop.parentloop.counter0 }}_custom_{{ custom_field.id }}">Yes</label>
+                                                    </div>
+                                                    {% elif custom_field.field_type == 'textarea' %}
+                                                    <textarea name="lead_{{ forloop.parentloop.counter0 }}_custom_{{ custom_field.id }}" class="form-control" rows="2" {% if custom_field.required %}required{% endif %}></textarea>
+                                                    {% elif custom_field.field_type == 'choice' %}
+                                                    <select name="lead_{{ forloop.parentloop.counter0 }}_custom_{{ custom_field.id }}" id="id_lead_{{ forloop.parentloop.counter0 }}_custom_{{ custom_field.id }}" class="form-select" {% if custom_field.required %}required{% endif %}>
+                                                        <option value="">Select...</option>
+                                                    </select>
+                                                    {% endif %}
+                                                </div>
+
+
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="profile-links-section mt-4">
+                                        <h6 class="mb-3">
+                                            <i class="fas fa-link me-2"></i>Profile / Social Links
+                                            <button type="button" class="btn btn-sm btn-outline-primary ms-3 add-profile-link-btn">
+                                                <i class="fas fa-plus me-1"></i>Add Link
+                                            </button>
+                                        </h6>
+                                        <div class="profile-links-container"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Custom Fields Configuration -->
+                        {% if custom_fields_all or custom_fields_each %}
+                        <div class="card border-0">
+                <div class="stat-card d-flex flex-column justify-content-between h-100 white-card-cyan pb-3"
+                             data-card="6">
+                                <h4 class="mb-2">Custom Fields Configuration</h4>
+
+                                <div class="alert alert-info mb-2">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Info:</strong> Fields marked "Apply to all" appear here. Per-lead fields appear inside each lead card.
+                                </div>
+
+                                {% if custom_fields_all %}
+                                <h6>Fields Applied to All Leads</h6>
+                                <div class="row g-2">
+                                    {% for field in bulk_form %}
+                                    {% if field.name|slice:":6" == "custom" %}
+                                    <div class="col-lg-4 col-md-6 col-sm-12 col-12">
+                                        <label class="form-label">{{ field.label }}</label><br>
+                                        {{ field }}
+                                        {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+
+                                {% if custom_fields_each %}
+                                <div class="mt-2">
+                                    <h6>Per-Lead Custom Fields (will appear in each lead)</h6>
+                                    <div class="d-flex flex-wrap">
+                                        {% for custom_field in custom_fields_each %}
+                                        <div class="mb-1 me-2">
+                                            <span class="badge bg-soft-cyan m-0">{{ custom_field.name }}</span>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="alert alert-info mt-2">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Shared properties act as defaults. Status, follow-up date, and assignment can be overridden per lead.
+                        </div>
+
+                        <div class="text-end my-4">
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-4 me-3">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-5 py-2">
+                                <i class="fas fa-save me-2"></i>Add Multiple Leads
+                            </button>
+                        </div>
+                        </div>
+                    </form>
+                </div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+{{ custom_field_choices|json_script:"custom-field-choices-data" }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('id_category_choice');
+    const categoryOtherDiv = document.getElementById('category_other_div');
+    const sourceSelect = document.getElementById('id_source_choice');
+    const sourceOtherDiv = document.getElementById('source_other_div');
+    const followUpInput = document.getElementById('id_follow_up_date');
+    const leadsContainer = document.getElementById('leads-container');
+    const addLeadBtn = document.getElementById('add-lead-row');
+    const expandAllBtn = document.getElementById('expand-all-rows');
+    const collapseAllBtn = document.getElementById('collapse-all-rows');
+    const leadCountBadge = document.getElementById('lead-count-badge');
+    const totalFormsInput = document.querySelector('[name="leads-TOTAL_FORMS"]');
+
+    if (!leadsContainer || !totalFormsInput) {
+        return;
+    }
+
+    let leadIndex = leadsContainer.querySelectorAll('.lead-entry-card').length;
+
+    let customFieldChoices = {};
+    const customChoicesScript = document.getElementById('custom-field-choices-data');
+    if (customChoicesScript && customChoicesScript.textContent) {
+        try {
+            customFieldChoices = JSON.parse(customChoicesScript.textContent);
+        } catch (err) {
+            customFieldChoices = {};
+        }
+    }
+
+    function updateLeadCountBadge() {
+        const total = leadsContainer.querySelectorAll('.lead-entry-card').length;
+        if (leadCountBadge) {
+            leadCountBadge.textContent = `${total} Lead${total === 1 ? '' : 's'}`;
+        }
+        totalFormsInput.value = total;
+    }
+
+    function syncCollapseButton(card) {
+        const button = card.querySelector('.toggle-row-collapse');
+        const body = card.querySelector('.lead-row-body');
+        if (!button || !body) {
+            return;
+        }
+
+        const collapsed = body.style.display === 'none';
+        card.classList.toggle('is-collapsed', collapsed);
+        button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        button.innerHTML = collapsed ? '<i class="fas fa-chevron-down"></i>' : '<i class="fas fa-chevron-up"></i>';
+    }
+
+    function setCardCollapsed(card, collapsed) {
+        const body = card.querySelector('.lead-row-body');
+        if (!body) {
+            return;
+        }
+        body.style.display = collapsed ? 'none' : 'block';
+        syncCollapseButton(card);
+    }
+
+    function populateChoiceFields(scopeEl) {
+        const selects = scopeEl.querySelectorAll('select[id*="_custom_"]');
+        selects.forEach(select => {
+            const match = select.id.match(/_custom_(\d+)$/);
+            if (!match) {
+                return;
+            }
+
+            const choices = customFieldChoices[match[1]] || [];
+            if (!choices.length) {
+                return;
+            }
+
+            select.innerHTML = '<option value="">Select...</option>';
+            choices.forEach(choice => {
+                const value = (choice || '').trim();
+                if (!value) {
+                    return;
+                }
+                const opt = document.createElement('option');
+                opt.value = value;
+                opt.textContent = value;
+                select.appendChild(opt);
+            });
+        });
+    }
+
+    function reindexLeadForms() {
+        const cards = Array.from(leadsContainer.querySelectorAll('.lead-entry-card'));
+        cards.forEach((card, index) => {
+            const numberEl = card.querySelector('.lead-row-number');
+            const titleEl = card.querySelector('.lead-row-title');
+            if (numberEl) {
+                numberEl.textContent = index + 1;
+            }
+            if (titleEl) {
+                titleEl.textContent = `Lead ${index + 1}`;
+            }
+
+            const fields = card.querySelectorAll('input, textarea, select');
+            fields.forEach(field => {
+                if (field.name) {
+                    field.name = field.name.replace(/leads-\d+-/, `leads-${index}-`);
+                    field.name = field.name.replace(/lead_\d+_custom_/, `lead_${index}_custom_`);
+                }
+                if (field.id) {
+                    field.id = field.id.replace(/id_leads-\d+-/, `id_leads-${index}-`);
+                    field.id = field.id.replace(/id_lead_\d+_custom_/, `id_lead_${index}_custom_`);
+                }
+            });
+        });
+
+        leadIndex = cards.length;
+        updateLeadCountBadge();
+    }
+
+    function createLeadRowHtml(index) {
+        let customHtml = `{% if custom_fields_each %}
+            <div class="custom-fields-section">
+                <h6 class="mb-3"><i class="fas fa-user-tag me-1"></i>Per-Lead Custom Fields</h6>
+                <div class="custom-fields-container">
+                <div class="row mb-3">
+                    {% for custom_field in custom_fields_each %}
+
+                        <div class="col-md-3">
+                            <label class="form-label">{{ custom_field.name|escapejs }}{% if custom_field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                            {% if custom_field.field_type == 'text' %}
+                            <input type="text" name="lead___INDEX___custom_{{ custom_field.id }}" class="form-control" {% if custom_field.required %}required{% endif %}>
+                            {% elif custom_field.field_type == 'number' %}
+                            <input type="number" name="lead___INDEX___custom_{{ custom_field.id }}" class="form-control" {% if custom_field.required %}required{% endif %}>
+                            {% elif custom_field.field_type == 'date' %}
+                            <input type="date" name="lead___INDEX___custom_{{ custom_field.id }}" class="form-control" {% if custom_field.required %}required{% endif %}>
+                            {% elif custom_field.field_type == 'boolean' %}
+                            <div class="form-check">
+                                <input type="checkbox" name="lead___INDEX___custom_{{ custom_field.id }}" class="form-check-input" id="id_lead___INDEX___custom_{{ custom_field.id }}" {% if custom_field.required %}required{% endif %}>
+                                <label class="form-check-label" for="id_lead___INDEX___custom_{{ custom_field.id }}">Yes</label>
+                            </div>
+                            {% elif custom_field.field_type == 'textarea' %}
+                            <textarea name="lead___INDEX___custom_{{ custom_field.id }}" class="form-control" rows="2" {% if custom_field.required %}required{% endif %}></textarea>
+                            {% elif custom_field.field_type == 'choice' %}
+                            <select name="lead___INDEX___custom_{{ custom_field.id }}" id="id_lead___INDEX___custom_{{ custom_field.id }}" class="form-select" {% if custom_field.required %}required{% endif %}>
+                                <option value="">Select...</option>
+                            </select>
+                            {% endif %}
+                        </div>
+
+                    {% endfor %}
+                </div>
+            </div>
+             </div>
+        {% endif %}`;
+
+        customHtml = customHtml.replace(/___INDEX___/g, index);
+
+        return `
+        <div class="lead-entry-card card mb-4" data-profile-link-counter="0">
+            <div class="card-header lead-card-header d-flex align-items-center justify-content-between py-3 px-4">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="lead-row-number">${index + 1}</span>
+                    <h6 class="mb-0 fw-semibold text-dark lead-row-title">Lead ${index + 1}</h6>
+                </div>
+                <div class="lead-row-actions d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary toggle-row-collapse" title="Collapse/Expand" aria-expanded="true">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary add-row-below" title="Add Below">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-lead-row" title="Remove Lead">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body lead-row-body p-4">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label">Client Name <span class="text-danger">*</span></label>
+                        <input type="text" name="leads-${index}-client_name" class="form-control" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Contact Number</label>
+                        <input type="text" name="leads-${index}-contact_number" class="form-control contact-number">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="leads-${index}-email" class="form-control">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Status (override)</label>
+                        <select name="leads-${index}-status" class="form-select">
+                            {% for value, label in lead_entries_formset.empty_form.status.field.choices %}
+                            <option value="{{ value }}">{{ label|escapejs }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Follow-up Date (override)</label>
+                        <input type="date" name="leads-${index}-follow_up_date" class="form-control">
+                    </div>
+                    {% if bulk_form.assigned_to %}
+                    <div class="col-md-3">
+                        <label class="form-label">Assign To (override)</label>
+                        <select name="leads-${index}-assigned_to" class="form-select">
+                            <option value="">Use shared assignment</option>
+                            {% for member in bulk_form.assigned_to.field.queryset %}
+                            <option value="{{ member.id }}">{{ member.username|escapejs }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+
+                <div class="col-md-3">
+                    <label class="form-label">Requirement / Details</label>
+                    <textarea name="leads-${index}-requirement" class="form-control" rows="3"></textarea>
+                </div>
+
+                </div>
+
+                ${customHtml}
+
+                <div class="profile-links-section mt-4">
+                    <h6 class="mb-3">
+                        <i class="fas fa-link me-2"></i>Profile / Social Links
+                        <button type="button" class="btn btn-sm btn-outline-primary ms-3 add-profile-link-btn">
+                            <i class="fas fa-plus me-1"></i>Add Link
+                        </button>
+                    </h6>
+                    <div class="profile-links-container"></div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function insertLeadRow(afterCard) {
+        const html = createLeadRowHtml(leadIndex);
+
+        if (afterCard) {
+            afterCard.insertAdjacentHTML('afterend', html);
+        } else {
+            leadsContainer.insertAdjacentHTML('afterbegin', html);
+        }
+
+        const cards = Array.from(leadsContainer.querySelectorAll('.lead-entry-card'));
+        const newCard = afterCard ? afterCard.nextElementSibling : cards[0];
+
+        if (newCard) {
+            populateChoiceFields(newCard);
+            setCardCollapsed(newCard, false);
+            const firstInput = newCard.querySelector('input[name*="client_name"]');
+            if (firstInput) {
+                firstInput.focus();
+            }
+            newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        reindexLeadForms();
+    }
+
+    function toggleOtherField(selectEl, wrapperEl) {
+        if (!selectEl || !wrapperEl) {
+            return;
+        }
+        const input = wrapperEl.querySelector('input');
+        const show = selectEl.value === 'other';
+        wrapperEl.style.display = show ? 'block' : 'none';
+        if (input) {
+            input.required = show;
+        }
+    }
+
+    if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+            toggleOtherField(categorySelect, categoryOtherDiv);
+        });
+        toggleOtherField(categorySelect, categoryOtherDiv);
+    }
+
+    if (sourceSelect) {
+        sourceSelect.addEventListener('change', function() {
+            toggleOtherField(sourceSelect, sourceOtherDiv);
+        });
+        toggleOtherField(sourceSelect, sourceOtherDiv);
+    }
+
+    if (followUpInput && !followUpInput.value) {
+        followUpInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    if (addLeadBtn) {
+        addLeadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            insertLeadRow(null);
+        });
+    }
+
+    if (expandAllBtn) {
+        expandAllBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            leadsContainer.querySelectorAll('.lead-entry-card').forEach(card => setCardCollapsed(card, false));
+        });
+    }
+
+    if (collapseAllBtn) {
+        collapseAllBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            leadsContainer.querySelectorAll('.lead-entry-card').forEach(card => setCardCollapsed(card, true));
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        const removeBtn = e.target.closest('.remove-lead-row');
+        if (removeBtn) {
+            e.preventDefault();
+            const card = removeBtn.closest('.lead-entry-card');
+            const total = leadsContainer.querySelectorAll('.lead-entry-card').length;
+            if (card && total > 1) {
+                card.remove();
+                reindexLeadForms();
+            }
+            return;
+        }
+
+        const addBelowBtn = e.target.closest('.add-row-below');
+        if (addBelowBtn) {
+            e.preventDefault();
+            const card = addBelowBtn.closest('.lead-entry-card');
+            insertLeadRow(card || null);
+            return;
+        }
+
+        const collapseBtn = e.target.closest('.toggle-row-collapse');
+        if (collapseBtn) {
+            e.preventDefault();
+            const card = collapseBtn.closest('.lead-entry-card');
+            const body = card ? card.querySelector('.lead-row-body') : null;
+            if (card && body) {
+                setCardCollapsed(card, body.style.display !== 'none');
+            }
+            return;
+        }
+
+        const addLinkBtn = e.target.closest('.add-profile-link-btn');
+        if (addLinkBtn) {
+            e.preventDefault();
+            const card = addLinkBtn.closest('.lead-entry-card');
+            if (!card) {
+                return;
+            }
+            const container = card.querySelector('.profile-links-container');
+            if (!container) {
+                return;
+            }
+
+            let leadIdx = 0;
+            const anyLeadField = card.querySelector('[name^="leads-"]');
+            if (anyLeadField && anyLeadField.name) {
+                const parts = anyLeadField.name.split('-');
+                if (parts.length > 1) {
+                    leadIdx = parseInt(parts[1], 10) || 0;
+                }
+            }
+
+            const linkCounter = parseInt(card.dataset.profileLinkCounter || '0', 10);
+            const profileHtml = `
+                <div class="profile-link-item">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Platform</label>
+                            <select name="lead_${leadIdx}_profile_links-${linkCounter}-platform" class="form-select profile-platform">
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="twitter">Twitter</option>
+                                <option value="youtube">YouTube</option>
+                                <option value="website">Website</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 custom-platform-div" style="display:none;">
+                            <label class="form-label">Custom Platform</label>
+                            <input type="text" name="lead_${leadIdx}_profile_links-${linkCounter}-custom_platform" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">URL</label>
+                            <input type="url" name="lead_${leadIdx}_profile_links-${linkCounter}-url" class="form-control" placeholder="https://">
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-profile-link">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+
+            container.insertAdjacentHTML('beforeend', profileHtml);
+            card.dataset.profileLinkCounter = String(linkCounter + 1);
+            return;
+        }
+
+        const removeLinkBtn = e.target.closest('.remove-profile-link');
+        if (removeLinkBtn) {
+            e.preventDefault();
+            const item = removeLinkBtn.closest('.profile-link-item');
+            if (item) {
+                item.remove();
+            }
+        }
+    });
+
+    document.addEventListener('input', function(e) {
+        if (!(e.target.classList.contains('contact-number') || e.target.matches('input[name*="contact_number"]'))) {
+            return;
+        }
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 3 && value.length <= 6) {
+            value = value.replace(/(\d{3})(\d+)/, '$1-$2');
+        } else if (value.length > 6) {
+            value = value.replace(/(\d{3})(\d{3})(\d{0,4})/, '$1-$2-$3');
+        }
+        e.target.value = value;
+    });
+
+    document.addEventListener('change', function(e) {
+        if (!e.target.classList.contains('profile-platform')) {
+            return;
+        }
+        const item = e.target.closest('.profile-link-item');
+        if (!item) {
+            return;
+        }
+        const customDiv = item.querySelector('.custom-platform-div');
+        const customInput = customDiv ? customDiv.querySelector('input') : null;
+        if (!customDiv || !customInput) {
+            return;
+        }
+
+        const show = e.target.value === 'other';
+        customDiv.style.display = show ? 'block' : 'none';
+        customInput.required = show;
+        if (!show) {
+            customInput.value = '';
+        }
+    });
+
+    leadsContainer.querySelectorAll('.lead-entry-card').forEach(card => {
+        if (!card.dataset.profileLinkCounter) {
+            card.dataset.profileLinkCounter = String(card.querySelectorAll('.profile-link-item').length);
+        }
+        populateChoiceFields(card);
+        setCardCollapsed(card, false);
+    });
+
+    if (!leadsContainer.querySelector('.lead-entry-card')) {
+        insertLeadRow(null);
+    } else {
+        reindexLeadForms();
+    }
+
+    const allCards = leadsContainer.querySelectorAll('.lead-entry-card');
+    if (allCards.length > 6) {
+        allCards.forEach((card, idx) => {
+            if (idx < allCards.length - 1) {
+                setCardCollapsed(card, true);
+            }
+        });
+    }
+
+});
+</script>
+{% endblock %}

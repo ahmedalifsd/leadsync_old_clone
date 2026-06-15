@@ -1,0 +1,1727 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Dashboard - LeadSync{% endblock %}
+
+{% block content %}
+
+{% load static %}
+
+<style>
+    /* Keep dashboard card tones aligned with the brighter new-design look. */
+    #pdf-content .card-cyan {
+        --c-bg: #043c73;
+    }
+
+    #pdf-content .card-pink {
+        --c-bg: #5b0a59;
+    }
+
+    #pdf-content .card-green {
+        --c-bg: #0a4a2c;
+    }
+
+    #pdf-content .card-amber {
+        --c-bg: #5a390a;
+    }
+
+    {% if print_mode %}
+    #pdf-content .card,
+    #pdf-content .stat-card,
+    #pdf-content .card-body {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    {% endif %}
+</style>
+
+<div class="page-header align-items-center">
+    <div class="add-item d-flex">
+        <div class="page-title">
+            <h4>Dashboard</h4>
+            <!--                    <h6>Manage your stock adjustment</h6>-->
+        </div>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-end flex-wrap">
+
+        <div>
+            <form method="get"
+                  class="d-flex justify-content-between align-items-center g-2 flex-wrap">
+                <div class="me-1 mb-2">
+                    {{ form.category }}
+                </div>
+                <div class="me-1 mb-2">
+                    {{ form.source }}
+                </div>
+                <div class="me-1 mb-2">
+                    {{ form.status }}
+                </div>
+                <button type="submit" class="btn btn-primary py-2 btn-sm me-1 mb-2">Apply Filters</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-sm mb-2 py-2 btn-secondary me-1">Clear
+                    Filters</a>
+            </form>
+        </div>
+
+        <div class="d-flex gap-2 my-1">
+            <a href="{% url 'bulk_add_leads' %}" class="btn btn-sm mb-2 py-2 btn-success">
+                Add Lead
+            </a>
+        </div>
+    </div>
+</div>
+
+<div id="pdf-content">
+    <div class="row donedanadona">
+
+        <!--dark cards start-->
+        <div class="col-lg-6 col-md-12 col-sm-12 col-12 h-100">
+            <div class="row">
+                <div class="col-6 col-lg-6 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+
+                        <!-- Card 6 · Red · Declining Line -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-cyan"
+                             data-card="6">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Today's Leads</span>
+                                    </div>
+                                    <div class="card-number">{{ today_total_leads }}</div>
+                                </div>
+                                <!--                    <div class="icon-box">-->
+                                <!--                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">-->
+                                <!--                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"-->
+                                <!--                                  stroke-width="1.8"/>-->
+                                <!--                            <line x1="12" y1="9" x2="12" y2="13" stroke-width="1.8" stroke-linecap="round"/>-->
+                                <!--                            <line x1="12" y1="17" x2="12.01" y2="17" stroke-width="1.8" stroke-linecap="round"/>-->
+                                <!--                        </svg>-->
+                                <!--                    </div>-->
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">Week</div>
+                                    <div class="mini-stat-val">+{{ total_mini_stats.week }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Month</div>
+                                    <div class="mini-stat-val accent">+{{ total_mini_stats.month }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Total</div>
+                                    <div class="mini-stat-val">+{{ total_mini_stats.total }}</div>
+                                </div>
+                            </div>
+                            <!-- DUAL LINE CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <path class="spark-path secondary"
+                                          d="M0,55 C40,48 70,58 110,40 C150,22 170,45 210,30 C240,18 270,25 300,12"
+                                          stroke-width="1.5" stroke-linecap="round"/>
+                                    <path class="spark-path"
+                                          d="M0,65 C30,58 60,68 100,52 C140,36 160,55 200,40 C230,28 265,35 300,20"
+                                          stroke-width="2"
+                                          stroke-linecap="round"/>
+                                    <circle class="chart-dot" cx="300" cy="20" r="3"/>
+                                    <circle class="chart-dot-dim" cx="300" cy="12" r="2"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-6 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+                        <!-- Card 3 · Pink · Donut -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-pink"
+                             data-card="3">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Today's New Leads</span>
+                                    </div>
+                                    <div class="card-number">{{ today_new_leads }}</div>
+                                </div>
+                                <!--                    <div class="icon-box">-->
+                                <!--                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">-->
+                                <!--                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"-->
+                                <!--                                  stroke-width="1.8"/>-->
+                                <!--                        </svg>-->
+                                <!--                    </div>-->
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">Week</div>
+                                    <div class="mini-stat-val">+{{ new_mini_stats.week }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Month</div>
+                                    <div class="mini-stat-val accent">+{{ new_mini_stats.month }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Total</div>
+                                    <div class="mini-stat-val">+{{ new_mini_stats.total }}</div>
+                                </div>
+                            </div>
+                            <!-- BAR CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <rect class="bar-rect" x="8" y="30" width="22" height="45" rx="4"/>
+                                    <rect class="bar-rect" x="38" y="45" width="22" height="30" rx="4"/>
+                                    <rect class="bar-rect" x="68" y="20" width="22" height="55" rx="4"/>
+                                    <rect class="bar-rect" x="98" y="38" width="22" height="37" rx="4"/>
+                                    <rect class="bar-rect bright" x="128" y="10" width="22" height="65" rx="4"/>
+                                    <rect class="bar-rect" x="158" y="25" width="22" height="50" rx="4"/>
+                                    <rect class="bar-rect" x="188" y="15" width="22" height="60" rx="4"/>
+                                    <rect class="bar-rect bright" x="218" y="5" width="22" height="70" rx="4"/>
+                                    <rect class="bar-rect" x="248" y="20" width="22" height="55" rx="4"/>
+                                    <rect class="bar-rect bright" x="270" y="8" width="22" height="67" rx="4"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-6 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+
+                        <!-- Card 5 · Green · Wave Sparkline -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-green"
+                             data-card="5">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Today's Won Leads</span>
+                                    </div>
+                                    <div class="card-number">{{ today_won_leads }}</div>
+                                </div>
+                                <!--                    <div class="icon-box">-->
+                                <!--                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">-->
+                                <!--                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-width="1.8"-->
+                                <!--                                  stroke-linecap="round"/>-->
+                                <!--                            <circle cx="9" cy="7" r="4" stroke-width="1.8"/>-->
+                                <!--                            <line x1="19" y1="8" x2="19" y2="14" stroke-width="1.8" stroke-linecap="round"/>-->
+                                <!--                            <line x1="16" y1="11" x2="22" y2="11" stroke-width="1.8" stroke-linecap="round"/>-->
+                                <!--                        </svg>-->
+                                <!--                    </div>-->
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">Week</div>
+                                    <div class="mini-stat-val">+{{ won_mini_stats.week }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Month</div>
+                                    <div class="mini-stat-val accent">+{{ won_mini_stats.month }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Total</div>
+                                    <div class="mini-stat-val">+{{ won_mini_stats.total }}</div>
+                                </div>
+                            </div>
+                            <!-- WAVE CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <path class="chart-fill"
+                                          d="M0,40 C20,30 30,50 60,35 C90,20 100,45 130,30 C160,15 170,40 200,25 C230,10 250,35 280,18 C290,13 295,10 300,8 L300,75 L0,75 Z"/>
+                                    <path class="spark-path"
+                                          d="M0,40 C20,30 30,50 60,35 C90,20 100,45 130,30 C160,15 170,40 200,25 C230,10 250,35 280,18 C290,13 295,10 300,8"
+                                          stroke-width="2" stroke-linecap="round"/>
+                                    <circle class="chart-dot" cx="300" cy="8" r="3"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-6 col-lg-6 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+
+
+                        <!-- Card 4 · Amber · Step Line -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-amber"
+                             data-card="4">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Today's Follow-ups</span>
+                                    </div>
+                                    <div class="card-number">{{ today_followups }}</div>
+                                </div>
+                                <!--                    <div class="icon-box">-->
+                                <!--                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">-->
+                                <!--                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-width="1.8"/>-->
+                                <!--                            <circle cx="12" cy="12" r="3" stroke-width="1.8"/>-->
+                                <!--                        </svg>-->
+                                <!--                    </div>-->
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">Week</div>
+                                    <div class="mini-stat-val">{{ followup_mini_stats.week }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Month</div>
+                                    <div class="mini-stat-val accent">{{ followup_mini_stats.month }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Total</div>
+                                    <div class="mini-stat-val">{{ followup_mini_stats.total }}</div>
+                                </div>
+                            </div>
+                            <!-- STEP LINE CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <path class="chart-fill"
+                                          d="M0,65 L40,65 L40,50 L80,50 L80,35 L120,35 L120,42 L160,42 L160,20 L200,20 L200,28 L240,28 L240,10 L300,10 L300,75 L0,75 Z"/>
+                                    <path class="step-path"
+                                          d="M0,65 L40,65 L40,50 L80,50 L80,35 L120,35 L120,42 L160,42 L160,20 L200,20 L200,28 L240,28 L240,10 L300,10"
+                                          stroke-width="2" stroke-linecap="square"/>
+                                    <circle class="chart-dot" cx="300" cy="10" r="3"/>
+                                </svg>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+        <!--dark cards end-->
+
+
+        <!--light cards start-->
+        <div class="col-lg-6 col-md-12 col-sm-12 col-12 h-100">
+            <div class="row">
+                <div class="col-6 col-lg-6 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+
+
+                        <!-- Card 6 · Red · Declining Line -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 white-card-cyan"
+                             data-card="6">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">FB Leads</span>
+                                    </div>
+                                    <div class="card-number">{{ fb_stats.today }}</div>
+                                </div>
+                                <div class="icon-box">
+                                    <img src="{% static 'assets/img/facebook.png' %}" alt="">
+                                </div>
+
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">Week</div>
+                                    <div class="mini-stat-val">+{{ fb_stats.week }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Month</div>
+                                    <div class="mini-stat-val accent">+{{ fb_stats.month }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Total</div>
+                                    <div class="mini-stat-val">+{{ fb_stats.total }}</div>
+                                </div>
+                            </div>
+                            <!-- DUAL LINE CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <path class="spark-path secondary"
+                                          d="M0,55 C40,48 70,58 110,40 C150,22 170,45 210,30 C240,18 270,25 300,12"
+                                          stroke-width="1.5" stroke-linecap="round"/>
+                                    <path class="spark-path"
+                                          d="M0,65 C30,58 60,68 100,52 C140,36 160,55 200,40 C230,28 265,35 300,20"
+                                          stroke-width="2"
+                                          stroke-linecap="round"/>
+                                    <circle class="chart-dot" cx="300" cy="20" r="3"/>
+                                    <circle class="chart-dot-dim" cx="300" cy="12" r="2"/>
+                                </svg>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+
+                <div class="col-6 col-lg-6 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+                        <!-- Card 3 · Pink · Donut -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 white-card-pink"
+                             data-card="3">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Insta Leads</span>
+                                    </div>
+                                    <div class="card-number">{{ insta_stats.today }}</div>
+                                </div>
+                                <div class="icon-box">
+                                    <img src="{% static 'assets/img/instagram.png' %}" alt="">
+                                </div>
+
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">Week</div>
+                                    <div class="mini-stat-val">+{{ insta_stats.week }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Month</div>
+                                    <div class="mini-stat-val accent">+{{ insta_stats.month }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Total</div>
+                                    <div class="mini-stat-val">+{{ insta_stats.total }}</div>
+                                </div>
+                            </div>
+                            <!-- BAR CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <rect class="bar-rect" x="8" y="30" width="22" height="45" rx="4"/>
+                                    <rect class="bar-rect" x="38" y="45" width="22" height="30" rx="4"/>
+                                    <rect class="bar-rect" x="68" y="20" width="22" height="55" rx="4"/>
+                                    <rect class="bar-rect" x="98" y="38" width="22" height="37" rx="4"/>
+                                    <rect class="bar-rect bright" x="128" y="10" width="22" height="65" rx="4"/>
+                                    <rect class="bar-rect" x="158" y="25" width="22" height="50" rx="4"/>
+                                    <rect class="bar-rect" x="188" y="15" width="22" height="60" rx="4"/>
+                                    <rect class="bar-rect bright" x="218" y="5" width="22" height="70" rx="4"/>
+                                    <rect class="bar-rect" x="248" y="20" width="22" height="55" rx="4"/>
+                                    <rect class="bar-rect bright" x="270" y="8" width="22" height="67" rx="4"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="col-6 col-lg-6 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+
+                        <!-- Card 5 · Green · Wave Sparkline -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 white-card-green"
+                             data-card="5">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Whatsapp Leads</span>
+                                    </div>
+                                    <div class="card-number">{{ whatsapp_stats.today }}</div>
+                                </div>
+                                <div class="icon-box">
+                                    <img src="{% static 'assets/img/whatsapp.png' %}" alt="">
+                                </div>
+
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">Week</div>
+                                    <div class="mini-stat-val">+{{ whatsapp_stats.week }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Month</div>
+                                    <div class="mini-stat-val accent">+{{ whatsapp_stats.month }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Total</div>
+                                    <div class="mini-stat-val">+{{ whatsapp_stats.total }}</div>
+                                </div>
+                            </div>
+                            <!-- WAVE CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <path class="chart-fill"
+                                          d="M0,40 C20,30 30,50 60,35 C90,20 100,45 130,30 C160,15 170,40 200,25 C230,10 250,35 280,18 C290,13 295,10 300,8 L300,75 L0,75 Z"/>
+                                    <path class="spark-path"
+                                          d="M0,40 C20,30 30,50 60,35 C90,20 100,45 130,30 C160,15 170,40 200,25 C230,10 250,35 280,18 C290,13 295,10 300,8"
+                                          stroke-width="2" stroke-linecap="round"/>
+                                    <circle class="chart-dot" cx="300" cy="8" r="3"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-6 col-lg-6 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+
+
+                        <!-- Card 4 · Amber · Step Line -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 white-card-indigo"
+                             data-card="4">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">LinkdIn Leads</span>
+                                    </div>
+                                    <div class="card-number">{{ linkedin_stats.today }}</div>
+                                </div>
+                                <div class="icon-box">
+                                    <img src="{% static 'assets/img/linkedin.png' %}" alt="">
+                                </div>
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">Week</div>
+                                    <div class="mini-stat-val">{{ linkedin_stats.week }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Month</div>
+                                    <div class="mini-stat-val accent">{{ linkedin_stats.month }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Total</div>
+                                    <div class="mini-stat-val">{{ linkedin_stats.total }}</div>
+                                </div>
+                            </div>
+                            <!-- STEP LINE CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <path class="chart-fill"
+                                          d="M0,65 L40,65 L40,50 L80,50 L80,35 L120,35 L120,42 L160,42 L160,20 L200,20 L200,28 L240,28 L240,10 L300,10 L300,75 L0,75 Z"/>
+                                    <path class="step-path"
+                                          d="M0,65 L40,65 L40,50 L80,50 L80,35 L120,35 L120,42 L160,42 L160,20 L200,20 L200,28 L240,28 L240,10 L300,10"
+                                          stroke-width="2" stroke-linecap="square"/>
+                                    <circle class="chart-dot" cx="300" cy="10" r="3"/>
+                                </svg>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+        <!--light cards end-->
+
+        <!--Charts card start-->
+        {% comment %}
+        <div class="col-lg-6 col-md-12 col-sm-12 col-12 h-100">
+            <!-- ============ LEADS & CONVERSIONS CHART ============ -->
+
+            <div class="card h-100 bg-white">
+                <div class="card-body">
+
+
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h6 class="mb-0 fw-semibold" id="chartTitle">Leads & Conversions (Last 7 Days)</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" id="tfDropdownBtn"
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-calendar-alt me-1"></i><span id="tfLabel">7 Days</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" id="tfDropdown">
+                                    <li><a class="dropdown-item small" href="#" data-tf="today">Today</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="week">This Week</a></li>
+                                    <li><a class="dropdown-item small active" href="#" data-tf="7d">Last 7 Days</a>
+                                    </li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="15d">Last 15 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="30d">Last 30 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="90d">Last 90 Days</a></li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" id="exportCsv"
+                                    title="Download Leads (CSV)">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3 mb-2">
+                        <span class="small text-muted"><i class="fas fa-circle text-primary me-1"
+                                                          style="font-size:8px;"></i>Leads: <strong
+                                id="chartTotalLeads">0</strong></span>
+                        <span class="small text-muted"><i class="fas fa-circle text-success me-1"
+                                                          style="font-size:8px;"></i>Won: <strong
+                                id="chartTotalWon">0</strong></span>
+                        <span class="small text-muted"><i class="fas fa-circle me-1"
+                                                          style="font-size:8px;color:#f59f00;"></i>New: <strong
+                                id="chartTotalNew">0</strong></span>
+                        <span class="small text-muted"><i class="fas fa-circle me-1"
+                                                          style="font-size:8px;color:#7c4dff;"></i>Contacted: <strong
+                                id="chartTotalContacted">0</strong></span>
+                    </div>
+                    <div id="leadsChart" style="min-height: 250px;"></div>
+                </div>
+            </div>
+        </div>
+        {% endcomment %}
+
+
+        <!-- ============ LEADS THIS WEEK ============ -->
+        <div class="col-lg-6 col-md-12 col-sm-12 col-12 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h6 class="mb-0 fw-semibold" id="chart1Title">Leads Trend (Last 7 Days)</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" id="tfDropdownBtnSecondary"
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-calendar-alt me-1"></i><span id="tfLabelSecondary">7 Days</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" id="tfDropdownSecondary">
+                                    <li><a class="dropdown-item small" href="#" data-tf="all">All</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="today">Today</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="week">This Week</a></li>
+                                    <li><a class="dropdown-item small active" href="#" data-tf="7d">Last 7 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="15d">Last 15 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="30d">Last 30 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="90d">Last 90 Days</a></li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" id="exportCsvSecondary"
+                                    title="Download Leads (CSV)">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                        </div>
+                    </div>
+                    <div id="chart1"></div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-lg-6 col-md-12 col-sm-12 col-12 mb-3">
+            <div class="card bg-white h-100">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h6 class="mb-0 fw-semibold" id="chartpie1Title">Lead Status Breakdown (Last 7 Days)</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" id="tfDropdownBtnPie"
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-calendar-alt me-1"></i><span id="tfLabelPie">7 Days</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" id="tfDropdownPie">
+                                    <li><a class="dropdown-item small" href="#" data-tf="all">All</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="today">Today</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="week">This Week</a></li>
+                                    <li><a class="dropdown-item small active" href="#" data-tf="7d">Last 7 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="15d">Last 15 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="30d">Last 30 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="90d">Last 90 Days</a></li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" id="exportCsvPie"
+                                    title="Download Leads (CSV)">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                        </div>
+                    </div>
+                    <div id="chartpie1" style="min-height: 285px;"></div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-lg-12 col-md-12 col-sm-12 col-12 mb-3">
+            <div class="card bg-white h-100">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h6 class="mb-0 fw-semibold" id="chartcol1Title">Team Status Stacked (Last 7 Days)</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" id="colTfBtn"
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-calendar-alt me-1"></i><span id="colTfLabel">7 Days</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" id="colTfDropdown">
+                                    <li><a class="dropdown-item small" href="#" data-tf="all">All</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="today">Today</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="week">This Week</a></li>
+                                    <li><a class="dropdown-item small active" href="#" data-tf="7d">Last 7 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="15d">Last 15 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="30d">Last 30 Days</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-tf="90d">Last 90 Days</a></li>
+                                </ul>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" id="colSortBtn"
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-sort me-1"></i><span id="colSortLabel">Total Leads</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" id="colSortDropdown">
+                                    <li><a class="dropdown-item small active" href="#" data-sort="total">Total Leads</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="new">Most New</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="not_contacted">Most Not Contacted</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="contacted">Most Contacted</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="no_response">Most No Response</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="interested">Most Interested</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="not_interested">Most Not Interested</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="won">Most Won</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="lost">Most Lost</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="name">Name (A-Z)</a></li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" id="exportCsvCol"
+                                    title="Download Team Status CSV">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                        </div>
+                    </div>
+                    <div id="chartcol1" style="min-height: 250px;"></div>
+                    <div class="d-flex align-items-center justify-content-between mt-2">
+                        <span class="small text-muted" id="chartcolPageInfo"></span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary" id="chartcolPrev" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" id="chartcolNext" disabled>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% comment %}
+        <!-- ============ TEAM LEAD PERFORMANCE ============ -->
+        <div class="col-lg-12 col-md-12 col-sm-12 col-12 mb-3">
+            <div class="card bg-white h-100">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h6 class="mb-0 fw-semibold">Team Lead Performance</h6>
+                        <div class="d-flex gap-2">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" id="teamSortBtn"
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-sort me-1"></i><span id="teamSortLabel">Total Leads</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" id="teamSortDropdown">
+                                    <li><a class="dropdown-item small active" href="#" data-sort="total">Total Leads</a>
+                                    </li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="won">Most Wins</a></li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="contacted">Most Contacted</a>
+                                    </li>
+                                    <li><a class="dropdown-item small" href="#" data-sort="name">Name (A-Z)</a></li>
+                                </ul>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle"
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-download me-1"></i>Export
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item small"
+                                           href="{% url 'export_team_report' %}?type=summary"><i
+                                            class="fas fa-table me-2 text-success"></i>Team Summary</a></li>
+                                    <li><a class="dropdown-item small"
+                                           href="{% url 'export_team_report' %}?type=detailed"><i
+                                            class="fas fa-list me-2 text-primary"></i>All Employee Leads</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="employeeLeadsChart" style="min-height: 260px;"></div>
+                    <div class="d-flex align-items-center justify-content-between mt-2">
+                        <span class="small text-muted" id="teamPageInfo"></span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary" id="teamPrev" disabled><i
+                                    class="fas fa-chevron-left"></i></button>
+                            <button class="btn btn-outline-secondary" id="teamNext" disabled><i
+                                    class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endcomment %}
+        <!--Charts card end-->
+
+        <!--table start-->
+        <div class="col-lg-12 col-md-12 col-sm-12 col-12 mb-3">
+
+            <!-- Recent Leads -->
+            <div class="card bg-white shadow-sm rounded">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between mb-3">
+                        <h5 class="mb-0">Recent Leads</h5>
+                        <a href="{% url 'lead_list' %}" class="btn btn-sm btn-primary">
+                            View All <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+
+                    {% if leads %}
+                    <div class="table-responsive">
+                        <table class="table text-nowrap table-sm">
+                            <thead>
+                            <tr class="bg-white">
+                                <th>Client Name</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Category</th>
+                                <th>Source</th>
+                                <th>Follow-up</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for lead in leads %}
+                            <tr class="bg-white">
+                                <td>{{ lead.client_name }}</td>
+                                <td>{{ lead.contact_number }}</td>
+                                <td>
+                            <span class="badge status-badge status-{{ lead.status }}">
+                                {{ lead.get_status_display }}
+                            </span>
+                                </td>
+                                <td>{{ lead.get_category_display_name }}</td>
+                                <td>{{ lead.get_source_display_name }}</td>
+
+                                <td>
+                                    {% if lead.follow_up_date %}
+                                    <span class="badge multi-badge">
+                                    {{ lead.follow_up_date }}
+                                </span>
+                                    {% else %}
+                                    <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No leads found. Add your first lead!</p>
+                        <a href="{% url 'bulk_add_leads' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Add First Lead
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!--table end-->
+
+
+    </div>
+    <!-- end pdf-content -->
+
+    {% comment %}
+    <div class="col-3 col-lg-3 col-md-4 col-sm-12 col-12 mb-4">
+        <div class="card border-0 h-100">
+
+            <!-- Card 1 · Purple · Sparkline -->
+            <div class="stat-card d-flex flex-column justify-content-between h-100 card-purple" data-card="1">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Active Users</span>
+                        </div>
+                        <div class="card-number">{{ active_simple_users }}</div>
+                    </div>
+                    <div class="icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-width="1.8"
+                                  stroke-linecap="round"/>
+                            <circle cx="9" cy="7" r="4" stroke-width="1.8"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke-width="1.8"
+                                  stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="badge">
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                        <polyline points="1,9 4,5 7,7 11,2" stroke-width="1.6" stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+                    </svg>
+                    <span>+12.4% this month</span>
+                </div>
+                <div class="mini-stats">
+                    <div>
+                        <div class="mini-stat-label">Today</div>
+                        <div class="mini-stat-val">+48</div>
+                    </div>
+                    <div>
+                        <div class="mini-stat-label">Week</div>
+                        <div class="mini-stat-val">+214</div>
+                    </div>
+                    <div>
+                        <div class="mini-stat-label">Month</div>
+                        <div class="mini-stat-val accent">+340</div>
+                    </div>
+                </div>
+                <!-- SPARKLINE CHART — colours come 100% from CSS vars -->
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <path class="chart-fill"
+                              d="M0,62 C25,56 40,52 60,46 C80,40 90,48 110,37 C130,26 140,33 160,23 C180,13 190,19 215,15 C240,11 255,17 275,10 C290,5 295,7 300,4 L300,75 L0,75 Z"/>
+                        <path class="spark-path"
+                              d="M0,62 C25,56 40,52 60,46 C80,40 90,48 110,37 C130,26 140,33 160,23 C180,13 190,19 215,15 C240,11 255,17 275,10 C290,5 295,7 300,4"
+                              stroke-width="2" stroke-linecap="round"/>
+                        <circle class="chart-dot" cx="300" cy="4" r="3"/>
+                    </svg>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <div class="col-3 col-lg-3 col-md-4 col-sm-12 col-12 mb-4">
+        <div class="card border-0 h-100">
+
+            <!-- Card 2 · Cyan · Bar Chart -->
+            <div class="stat-card d-flex flex-column justify-content-between h-100 card-red" data-card="2">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Total Posts</span>
+                        </div>
+                        <div class="card-number">{{ total_posts }}</div>
+                    </div>
+                    <div class="icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="1.8"/>
+                            <path d="M8 12h8M8 8h8M8 16h5" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="badge">
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                        <polyline points="1,9 4,5 7,7 11,2" stroke-width="1.6" stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+                    </svg>
+                    <span>+8.7% this month</span>
+                </div>
+                <div class="mini-stats">
+                    <div>
+                        <div class="mini-stat-label">Today</div>
+                        <div class="mini-stat-val">+127</div>
+                    </div>
+                    <div>
+                        <div class="mini-stat-label">Week</div>
+                        <div class="mini-stat-val">+890</div>
+                    </div>
+                    <div>
+                        <div class="mini-stat-label">Month</div>
+                        <div class="mini-stat-val accent">+3.2k</div>
+                    </div>
+                </div>
+                <!-- BAR CHART — colours from CSS vars -->
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <rect class="bar-rect" x="8" y="30" width="22" height="45" rx="4"/>
+                        <rect class="bar-rect" x="38" y="45" width="22" height="30" rx="4"/>
+                        <rect class="bar-rect" x="68" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect" x="98" y="38" width="22" height="37" rx="4"/>
+                        <rect class="bar-rect bright" x="128" y="10" width="22" height="65" rx="4"/>
+                        <rect class="bar-rect" x="158" y="25" width="22" height="50" rx="4"/>
+                        <rect class="bar-rect" x="188" y="15" width="22" height="60" rx="4"/>
+                        <rect class="bar-rect bright" x="218" y="5" width="22" height="70" rx="4"/>
+                        <rect class="bar-rect" x="248" y="20" width="22" height="55" rx="4"/>
+                        <rect class="bar-rect bright" x="270" y="8" width="22" height="67" rx="4"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <div class="col-3 col-lg-3 col-md-4 col-sm-12 col-12 mb-4">
+        <div class="card border-0 h-100">
+
+
+            <!-- Card 7 · Indigo · Dual Line -->
+            <div class="stat-card d-flex flex-column justify-content-between h-100 card-indigo" data-card="7">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Profile Visits</span>
+                        </div>
+                        <div class="card-number">{{ profile_visits }}</div>
+                    </div>
+                    <div class="icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-width="1.8"/>
+                            <polyline points="9 22 9 12 15 12 15 22" stroke-width="1.8"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="badge">
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                        <polyline points="1,9 4,5 7,7 11,2" stroke-width="1.6" stroke-linecap="round"
+                                  stroke-linejoin="round"/>
+                    </svg>
+                    <span>+9.6% this month</span>
+                </div>
+                <div class="mini-stats">
+                    <div>
+                        <div class="mini-stat-label">Today</div>
+                        <div class="mini-stat-val">1.2k</div>
+                    </div>
+                    <div>
+                        <div class="mini-stat-label">Week</div>
+                        <div class="mini-stat-val">7.8k</div>
+                    </div>
+                    <div>
+                        <div class="mini-stat-label">Month</div>
+                        <div class="mini-stat-val accent">31k</div>
+                    </div>
+                </div>
+                <!-- DUAL LINE CHART — colours from CSS vars -->
+                <div class="chart-area">
+                    <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                        <path class="spark-path secondary"
+                              d="M0,55 C40,48 70,58 110,40 C150,22 170,45 210,30 C240,18 270,25 300,12"
+                              stroke-width="1.5" stroke-linecap="round"/>
+                        <path class="spark-path"
+                              d="M0,65 C30,58 60,68 100,52 C140,36 160,55 200,40 C230,28 265,35 300,20" stroke-width="2"
+                              stroke-linecap="round"/>
+                        <circle class="chart-dot" cx="300" cy="20" r="3"/>
+                        <circle class="chart-dot-dim" cx="300" cy="12" r="2"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+    {% endcomment %}
+
+{% block extra_js %}
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        // =============== STAT CARDS PERIOD DROPDOWNS ===============
+        var statPeriodCounts = JSON.parse('{{ stat_period_counts_json|escapejs }}');
+        var todayStatValues = {
+            total: Number('{{ today_total_leads|default:0 }}') || 0,
+            new: Number('{{ today_new_leads|default:0 }}') || 0,
+            won: Number('{{ today_won_leads|default:0 }}') || 0,
+            followups: Number('{{ today_followups|default:0 }}') || 0
+        };
+
+        function applyStatRange(metric, range, label) {
+            var valueNode = document.querySelector('[data-stat-value="' + metric + '"]');
+            var pctNode = document.querySelector('[data-stat-pct="' + metric + '"]');
+            var buttonNode = document.querySelector('.stat-period-btn[data-metric="' + metric + '"]');
+            var metricData = statPeriodCounts[metric] || {};
+            var value = metricData[range] || 0;
+            var todayValue = todayStatValues[metric] || 0;
+            var pct = value > 0 ? ((todayValue / value) * 100) : 0;
+            pct = Math.max(0, Math.min(100, Math.round(pct * 10) / 10));
+
+            if (valueNode) {
+                valueNode.textContent = value;
+            }
+
+            if (pctNode) {
+                pctNode.textContent = pct + '%';
+            }
+
+            if (buttonNode) {
+                buttonNode.textContent = label;
+            }
+
+            document.querySelectorAll('.stat-period-option[data-metric="' + metric + '"]').forEach(function(opt) {
+                opt.classList.toggle('active', opt.getAttribute('data-range') === range);
+            });
+        }
+
+        document.querySelectorAll('.stat-period-option').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                var metric = this.getAttribute('data-metric');
+                var range = this.getAttribute('data-range');
+                var label = this.getAttribute('data-label');
+                applyStatRange(metric, range, label);
+            });
+        });
+
+        ['total', 'new', 'won', 'followups'].forEach(function(metric) {
+            applyStatRange(metric, '30d', 'Last 30 Days');
+        });
+
+        // =============== DASHBOARD CHARTS (INDEPENDENT FILTERS) ===============
+        var currentTimeframeLine = '{{ dashboard_line_tf|escapejs }}';
+        var currentTimeframePie = '{{ dashboard_pie_tf|escapejs }}';
+
+        var tfLabels = {
+            'all': 'All', 'today': 'Today', 'week': 'This Week', '7d': '7 Days',
+            '15d': '15 Days', '30d': '30 Days', '90d': '90 Days'
+        };
+
+        var newDesignChartInstance = null;
+        var statusPieInstance = null;
+        var stackedColChartInstance = null;
+
+        function renderStatusPie(statusBreakdown, label) {
+            var target = document.querySelector('#chartpie1');
+            if (!target) { return; }
+            if (statusPieInstance) { statusPieInstance.destroy(); }
+
+            var filtered = (statusBreakdown || []).filter(function(item) {
+                return Number(item.count || 0) > 0;
+            });
+
+            var labels = filtered.map(function(item) { return item.label; });
+            var series = filtered.map(function(item) { return Number(item.count || 0); });
+            var hasData = series.length > 0;
+
+            var donutColors = ['#0d6efd', '#20c997', '#ffc107', '#fd7e14', '#6f42c1', '#dc3545', '#6610f2'];
+
+            statusPieInstance = new ApexCharts(target, {
+                series: hasData ? series : [0],
+                chart: { type: 'pie', height: 285, fontFamily: 'inherit' },
+                labels: hasData ? labels : ['No leads in ' + label],
+                colors: hasData ? donutColors.slice(0, series.length) : ['#e9ecef'],
+                dataLabels: {
+                    enabled: hasData,
+                    formatter: function (val, opts) {
+                        return opts.w.globals.labels[opts.seriesIndex] + ': ' + val.toFixed(1) + '%';
+                    },
+                    style: { fontSize: '11px' }
+                },
+                legend: { position: 'bottom', fontSize: '12px' },
+                stroke: { colors: ['#fff'] },
+                tooltip: { y: { formatter: function(v) { return v + ' leads'; } } }
+            });
+
+            statusPieInstance.render();
+        }
+
+        function renderNewDesignAreaChart(dates, leads, conversions, newLeads, contactedLeads, xFormat, isToday) {
+            var target = document.querySelector("#chart1");
+            if (!target) { return; }
+            if (newDesignChartInstance) { newDesignChartInstance.destroy(); }
+
+            var xaxisConfig = isToday
+                ? { type: 'category', categories: dates.map(function(d) { return d.split('T')[1].substring(0,5); }),
+                    labels: { style: { colors: '#6c757d', fontSize: '11px' }, rotate: -45 }, tickAmount: 12 }
+                : { type: 'datetime', categories: dates,
+                    labels: { style: { colors: '#6c757d', fontSize: '11px' }, format: xFormat } };
+
+            var opts = {
+                series: [
+                    { name: 'Leads', data: leads },
+                    { name: 'Won', data: conversions },
+                    { name: 'New', data: newLeads },
+                    { name: 'Contacted', data: contactedLeads }
+                ],
+                chart: {
+                    type: 'area', height: 320, fontFamily: 'inherit',
+                    toolbar: { show: false },
+                    zoom: { enabled: false }
+                },
+                dataLabels: { enabled: false },
+                stroke: { curve: 'smooth', width: 2.5 },
+                fill: {
+                    type: 'gradient',
+                    gradient: { shadeIntensity: 1, opacityFrom: 0.28, opacityTo: 0.04, stops: [0, 90, 100] }
+                },
+                colors: ['#FF5733', '#33B5FF', '#28A745', '#FFC107'],
+                xaxis: xaxisConfig,
+                yaxis: { labels: { style: { colors: '#6c757d' } }, min: 0 },
+                tooltip: isToday ? { theme: 'light' } : { theme: 'light', x: { format: 'dd MMM yyyy' } },
+                legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px' },
+                grid: { borderColor: '#f1f1f1' },
+                noData: { text: 'No data for this period', style: { fontSize: '14px', color: '#adb5bd' } }
+            };
+
+            newDesignChartInstance = new ApexCharts(target, opts);
+            newDesignChartInstance.render();
+        }
+
+        function fetchChartData(tf) {
+            return fetch('{% url "dashboard_chart_data" %}?timeframe=' + tf).then(r => r.json());
+        }
+
+        function loadLineChartData(tf) {
+            currentTimeframeLine = tf;
+            fetch('{% url "dashboard_chart_data" %}?timeframe=' + tf)
+                .then(r => r.json())
+                .then(data => {
+                    var chart1TitleNode = document.getElementById('chart1Title');
+                    if (chart1TitleNode) {
+                        chart1TitleNode.textContent = 'Leads Trend (' + data.label + ')';
+                    }
+                    var tfLabelSecondaryNode = document.getElementById('tfLabelSecondary');
+                    if (tfLabelSecondaryNode) {
+                        tfLabelSecondaryNode.textContent = tfLabels[tf] || tf;
+                    }
+                    renderNewDesignAreaChart(
+                        data.dates,
+                        data.leads,
+                        data.conversions,
+                        data.new_leads || [],
+                        data.contacted_leads || [],
+                        data.xFormat,
+                        tf === 'today'
+                    );
+                    document.querySelectorAll('#tfDropdownSecondary .dropdown-item').forEach(a => {
+                        a.classList.toggle('active', a.dataset.tf === tf);
+                    });
+                });
+        }
+
+        function loadPieChartData(tf) {
+            currentTimeframePie = tf;
+            fetchChartData(tf).then(function(data) {
+                var chartpie1TitleNode = document.getElementById('chartpie1Title');
+                if (chartpie1TitleNode) {
+                    chartpie1TitleNode.textContent = 'Lead Status Breakdown (' + data.label + ')';
+                }
+                var tfLabelPieNode = document.getElementById('tfLabelPie');
+                if (tfLabelPieNode) {
+                    tfLabelPieNode.textContent = tfLabels[tf] || tf;
+                }
+                renderStatusPie(data.status_breakdown || [], data.label || 'selected period');
+                document.querySelectorAll('#tfDropdownPie .dropdown-item').forEach(function(a) {
+                    a.classList.toggle('active', a.dataset.tf === tf);
+                });
+            });
+        }
+
+        var colTf = '{{ dashboard_col_tf|escapejs }}';
+        var colSort = '{{ dashboard_col_sort|escapejs }}';
+        var colPage = 1;
+        var colPerPage = 6;
+        var colSortLabels = {
+            total: 'Total Leads',
+            new: 'Most New',
+            not_contacted: 'Most Not Contacted',
+            contacted: 'Most Contacted',
+            no_response: 'Most No Response',
+            interested: 'Most Interested',
+            not_interested: 'Most Not Interested',
+            won: 'Most Won',
+            lost: 'Most Lost',
+            name: 'Name (A-Z)'
+        };
+
+        function loadStackedColData() {
+            var url = '{% url "dashboard_team_stacked_data" %}' +
+                '?timeframe=' + encodeURIComponent(colTf) +
+                '&sort=' + encodeURIComponent(colSort) +
+                '&page=' + encodeURIComponent(colPage) +
+                '&per_page=' + encodeURIComponent(colPerPage);
+
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (stackedColChartInstance) { stackedColChartInstance.destroy(); }
+
+                    var members = data.members || [];
+                    var statuses = data.statuses || [];
+                    var categories = members.map(function(m) { return m.name; });
+                    var series = statuses.map(function(status) {
+                        return {
+                            name: status.label,
+                            data: members.map(function(m) {
+                                return (m.statuses && m.statuses[status.key]) ? m.statuses[status.key] : 0;
+                            })
+                        };
+                    });
+
+                    // Keep a fixed number of visible bars per page (same UX as old team chart).
+                    while (categories.length < colPerPage) {
+                        categories.push('');
+                        series.forEach(function(item) {
+                            item.data.push(null);
+                        });
+                    }
+
+                    stackedColChartInstance = new ApexCharts(document.querySelector('#chartcol1'), {
+                        series: series,
+                        chart: {
+                            type: 'bar',
+                            height: 320,
+                            stacked: true,
+                            toolbar: { show: false },
+                            zoom: { enabled: false },
+                            fontFamily: 'inherit'
+                        },
+                        colors: statuses.map(function(status) { return status.color; }),
+                        plotOptions: {
+                            bar: {
+                                horizontal: false,
+                                columnWidth: '40px',
+                                borderRadius: 14,
+                                borderRadiusApplication: 'end',
+                                borderRadiusWhenStacked: 'last',
+                                endingShape: 'rounded',
+                                dataLabels: {
+                                    total: {
+                                        enabled: true,
+                                        style: {
+                                            fontSize: '12px',
+                                            fontWeight: 700
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: function (val) {
+                                var n = Number(val || 0);
+                                return n > 0 ? String(Math.round(n)) : '';
+                            },
+                            style: {
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                colors: ['#ffffff']
+                            }
+                        },
+                        stroke: { width: 0 },
+                        xaxis: {
+                            categories: categories,
+                            labels: { style: { colors: '#6c757d', fontSize: '11px' }, rotate: -45, maxHeight: 80 },
+                            min: 0,
+                            max: Math.max(0, colPerPage - 1)
+                        },
+                        yaxis: {
+                            labels: { style: { colors: '#6c757d' } },
+                            min: 0
+                        },
+                        legend: { position: 'right', offsetY: 40, fontSize: '12px' },
+                        grid: { borderColor: '#f1f1f1' },
+                        tooltip: { y: { formatter: function(v) { return (v === null ? 0 : v) + ' leads'; } } },
+                        noData: { text: 'No team data in selected period', style: { fontSize: '14px', color: '#adb5bd' } }
+                    });
+                    stackedColChartInstance.render();
+
+                    var titleNode = document.getElementById('chartcol1Title');
+                    if (titleNode) {
+                        titleNode.textContent = 'Team Status Stacked (' + (data.label || 'Last 7 Days') + ')';
+                    }
+                    var tfNode = document.getElementById('colTfLabel');
+                    if (tfNode) {
+                        tfNode.textContent = tfLabels[colTf] || colTf;
+                    }
+                    var sortNode = document.getElementById('colSortLabel');
+                    if (sortNode) {
+                        sortNode.textContent = colSortLabels[colSort] || 'Total Leads';
+                    }
+
+                    document.querySelectorAll('#colTfDropdown .dropdown-item').forEach(function(a) {
+                        a.classList.toggle('active', a.dataset.tf === colTf);
+                    });
+                    document.querySelectorAll('#colSortDropdown .dropdown-item').forEach(function(a) {
+                        a.classList.toggle('active', a.dataset.sort === colSort);
+                    });
+
+                    var pageInfoNode = document.getElementById('chartcolPageInfo');
+                    if (pageInfoNode) {
+                        if ((data.total_pages || 1) > 1) {
+                            pageInfoNode.textContent = (data.page || 1) + ' / ' + (data.total_pages || 1);
+                        } else {
+                            var totalMembers = data.total_members || 0;
+                            pageInfoNode.textContent = totalMembers + ' member' + (totalMembers !== 1 ? 's' : '') + ' • showing up to ' + colPerPage;
+                        }
+                    }
+
+                    var prevBtn = document.getElementById('chartcolPrev');
+                    var nextBtn = document.getElementById('chartcolNext');
+                    if (prevBtn) { prevBtn.disabled = (data.page || 1) <= 1; }
+                    if (nextBtn) { nextBtn.disabled = (data.page || 1) >= (data.total_pages || 1); }
+                    colPage = data.page || 1;
+                });
+        }
+
+        document.querySelectorAll('#tfDropdownSecondary .dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                loadLineChartData(this.dataset.tf);
+            });
+        });
+
+        document.querySelectorAll('#tfDropdownPie .dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                loadPieChartData(this.dataset.tf);
+            });
+        });
+
+        document.querySelectorAll('#colTfDropdown .dropdown-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                colTf = this.dataset.tf;
+                colPage = 1;
+                loadStackedColData();
+            });
+        });
+
+        document.querySelectorAll('#colSortDropdown .dropdown-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                colSort = this.dataset.sort;
+                colPage = 1;
+                loadStackedColData();
+            });
+        });
+
+        var colPrevBtn = document.getElementById('chartcolPrev');
+        if (colPrevBtn) {
+            colPrevBtn.addEventListener('click', function() {
+                if (colPage > 1) {
+                    colPage -= 1;
+                    loadStackedColData();
+                }
+            });
+        }
+
+        var colNextBtn = document.getElementById('chartcolNext');
+        if (colNextBtn) {
+            colNextBtn.addEventListener('click', function() {
+                colPage += 1;
+                loadStackedColData();
+            });
+        }
+
+        // Initial load (independent charts)
+        loadLineChartData(currentTimeframeLine);
+        loadPieChartData(currentTimeframePie);
+
+        var exportSecondaryNode = document.getElementById('exportCsvSecondary');
+        if (exportSecondaryNode) {
+            exportSecondaryNode.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '{% url "dashboard_chart_export" %}?timeframe=' + currentTimeframeLine;
+            });
+        }
+
+        var exportPieNode = document.getElementById('exportCsvPie');
+        if (exportPieNode) {
+            exportPieNode.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '{% url "dashboard_chart_export" %}?timeframe=' + currentTimeframePie;
+            });
+        }
+
+        var exportColNode = document.getElementById('exportCsvCol');
+        if (exportColNode) {
+            exportColNode.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '{% url "dashboard_team_stacked_export" %}' +
+                    '?timeframe=' + encodeURIComponent(colTf) + '&sort=' + encodeURIComponent(colSort);
+            });
+        }
+
+        loadStackedColData();
+
+        // =============== LEADS THIS WEEK DONUT ===============
+        var weekLabels = JSON.parse('{{ week_day_labels_json|escapejs }}');
+        var weekData = JSON.parse('{{ week_leads_data_json|escapejs }}');
+        var hasWeekData = weekData.some(v => v > 0);
+
+        var filteredLabels = [], filteredData = [], filteredColors = [];
+        var dayColors = ['#0d6efd', '#20c997', '#ffc107', '#fd7e14', '#6f42c1', '#dc3545', '#6610f2'];
+        for (var i = 0; i < weekData.length; i++) {
+            if (weekData[i] > 0) {
+                filteredLabels.push(weekLabels[i]);
+                filteredData.push(weekData[i]);
+                filteredColors.push(dayColors[i]);
+            }
+        }
+
+        var leadsPieTarget = document.querySelector("#leadsPieChart");
+        if (leadsPieTarget) {
+            new ApexCharts(leadsPieTarget, {
+                series: hasWeekData ? filteredData : [0],
+                chart: { type: 'donut', height: 260, fontFamily: 'inherit' },
+                labels: hasWeekData ? filteredLabels : ['No leads this week'],
+                colors: hasWeekData ? filteredColors : ['#e9ecef'],
+                dataLabels: {
+                    enabled: hasWeekData,
+                    formatter: function (val, opts) {
+                        return opts.w.globals.labels[opts.seriesIndex] + ': ' + val.toFixed(1) + '%';
+                    },
+                    style: { fontSize: '11px' }
+                },
+                legend: { position: 'bottom', fontSize: '12px' },
+                plotOptions: {
+                    pie: { donut: { size: '65%', labels: { show: true, total: { show: true, label: 'Total',
+                        formatter: function(w) { return w.globals.seriesTotals.reduce((a, b) => a + b, 0); }
+                    }}}}
+                },
+                stroke: { colors: ['#fff'] },
+                tooltip: { y: { formatter: v => v + ' leads' } }
+            }).render();
+        }
+
+        /*
+        // =============== TEAM LEAD PERFORMANCE (OLD - COMMENTED) ===============
+        var teamChart = null;
+        var teamPage = 1, teamPerPage = 6, teamSort = 'total';
+
+        var sortLabels = { total: 'Total Leads', won: 'Most Wins', contacted: 'Most Contacted', name: 'Name (A-Z)' };
+
+        function loadTeamData() {
+            fetch('{% url "dashboard_team_data" %}?page=' + teamPage + '&per_page=' + teamPerPage + '&sort=' + teamSort)
+                .then(r => r.json())
+                .then(data => {
+                    if (teamChart) { teamChart.destroy(); }
+
+                    var names = data.members.map(m => m.name);
+                    var totals = data.members.map(m => m.total);
+                    var contacted = data.members.map(m => m.contacted);
+                    var won = data.members.map(m => m.won);
+                    var conv = data.members.map(m => m.conversion || 0);
+
+                    while (names.length < 6) {
+                        names.push('');
+                        totals.push(null);
+                        contacted.push(null);
+                        won.push(null);
+                        conv.push(null);
+                    }
+
+                    teamChart = new ApexCharts(document.querySelector("#employeeLeadsChart"), {
+                        series: [
+                            { name: 'Total Leads', data: totals },
+                            { name: 'Contacted', data: contacted },
+                            { name: 'Won', data: won },
+                            { name: 'Conv. Rate %', data: conv }
+                        ],
+                        chart: { type: 'bar', height: 300, toolbar: { show: false }, fontFamily: 'inherit' },
+                        plotOptions: { bar: { horizontal: false, columnWidth: '40px', borderRadius: 5 } },
+                        dataLabels: { enabled: false },
+                        stroke: { show: true, width: 2, colors: ['transparent'] },
+                        colors: ['#0d6efd', '#ffc107', '#198754', '#0dcaf0'],
+                        xaxis: {
+                            categories: names,
+                            labels: { style: { colors: '#6c757d', fontSize: '11px' }, rotate: -45, maxHeight: 80, trim: true },
+                            min: 0, max: 5
+                        },
+                        yaxis: {
+                            title: { text: 'Leads / %', style: { color: '#6c757d', fontSize: '12px' } },
+                            labels: { style: { colors: '#6c757d' } }, min: 0
+                        },
+                        grid: { borderColor: '#f1f1f1' },
+                        legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px' },
+                        tooltip: { y: { formatter: (v, opts) => { if (opts.seriesIndex === 3) return (v === null ? 0 : v) + '%'; return (v === null ? 0 : v) + ' leads'; } } },
+                        noData: { text: 'No team members', style: { fontSize: '14px', color: '#adb5bd' } }
+                    });
+                    teamChart.render();
+
+                    var info = data.total_pages > 1
+                        ? (data.page + ' / ' + data.total_pages)
+                        : (data.total_members + ' member' + (data.total_members !== 1 ? 's' : ''));
+                    document.getElementById('teamPageInfo').textContent = info;
+                    document.getElementById('teamPrev').disabled = data.page <= 1;
+                    document.getElementById('teamNext').disabled = data.page >= data.total_pages;
+                    teamPage = data.page;
+                });
+        }
+
+        document.querySelectorAll('#teamSortDropdown .dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                teamSort = this.dataset.sort;
+                teamPage = 1;
+                document.getElementById('teamSortLabel').textContent = sortLabels[teamSort];
+                document.querySelectorAll('#teamSortDropdown .dropdown-item').forEach(a => {
+                    a.classList.toggle('active', a.dataset.sort === teamSort);
+                });
+                loadTeamData();
+            });
+        });
+
+        document.getElementById('teamPrev').addEventListener('click', function() {
+            if (teamPage > 1) { teamPage--; loadTeamData(); }
+        });
+        document.getElementById('teamNext').addEventListener('click', function() {
+            teamPage++; loadTeamData();
+        });
+
+        loadTeamData();
+        */
+    });
+</script>
+
+<!-- chartpie1 is rendered from loadPieChartData() using backend status_breakdown -->
+
+
+<script>
+        // #chart1 is now rendered from the main dashboard chart loader using backend data.
+</script>
+
+{% if print_mode %}
+<script>
+    window.addEventListener('load', function () {
+        setTimeout(function () {
+            window.print();
+        }, 2200);
+    });
+</script>
+{% endif %}
+
+<style>
+    @media print {
+        /* Hide elements that shouldn't appear in PDF */
+        #generatePdf, .layout-menu, .navbar, .fixed-bottom,
+        .dropdown-toggle, .dropdown-menu, .btn {
+            display: none !important;
+        }
+
+        /* Ensure proper spacing */
+        .content-wrapper {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* Improve print styling */
+        .card {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+        }
+
+        .row {
+            page-break-inside: avoid;
+        }
+
+        /* Make sure all text is black for better print contrast */
+        body, h1, h2, h3, h4, h5, h6, p, span, div {
+            color: #000000 !important;
+        }
+
+        /* Ensure background colors are visible */
+        .card {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+
+    /* Style for PDF content */
+    .pdf-title {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .pdf-date {
+        text-align: center;
+        color: #7f8c8d;
+        margin-bottom: 30px;
+    }
+
+
+  table, tr, td, th {
+    page-break-inside: avoid !important;
+  }
+
+  .table-responsive {
+    page-break-inside: avoid !important;
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+
+  .card {
+    page-break-inside: avoid !important;
+
+}
+
+
+</style>
+<!-- Add html2pdf library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<!-- PDF Generation Button & Script -->
+<button id="generatePdf" class="btn btn-primary" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+    <i class="ti ti-download"></i> Export as PDF
+</button>
+
+
+<script>
+    document.getElementById('generatePdf').addEventListener('click', async function () {
+        const element = document.querySelector('.donedanadona');
+        const containers = document.querySelectorAll(".table-responsive");
+        const originalStyles = [];
+        const originalScroll = window.scrollY;
+
+        // 1. Scroll to top before capturing
+        window.scrollTo(0, 0);
+
+        // 2. Expand all tables
+        containers.forEach((el, i) => {
+            originalStyles[i] = {
+                maxHeight: el.style.maxHeight,
+                overflow: el.style.overflow
+            };
+            el.style.maxHeight = "none";
+            el.style.overflow = "visible";
+        });
+
+        // 3. Lock the body to avoid accidental shifts
+        document.body.style.overflow = "hidden";
+
+        // 4. Configure PDF options
+        const opt = {
+            margin: 10,
+            filename: 'inventory-dashboard-report.pdf',
+            image: {type: 'jpeg', quality: 0.98},
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                scrollY: 0, // <-- Important!
+                windowWidth: document.documentElement.scrollWidth,
+                windowHeight: document.documentElement.scrollHeight
+            },
+             pagebreak: {
+        mode: ['avoid-all', 'css', 'legacy'] // <-- Important!
+    },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+
+        // 5. Generate PDF
+        await html2pdf().set(opt).from(element).save();
+
+        // 6. Restore table styles
+        containers.forEach((el, i) => {
+            el.style.maxHeight = originalStyles[i].maxHeight;
+            el.style.overflow = originalStyles[i].overflow;
+        });
+
+        // 7. Unlock body and restore scroll
+        document.body.style.overflow = "";
+        window.scrollTo(0, originalScroll);
+    });
+
+</script>
+
+<!-- chartcol1 is rendered from loadStackedColData() using dashboard_team_stacked_data -->
+{% endblock %}
+
+{% endblock %}

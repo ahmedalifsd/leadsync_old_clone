@@ -1,0 +1,121 @@
+{% extends 'core/public_base.html' %}
+{% load billing_tags %}
+{% load humanize %}
+
+{% block page_title %}My Plans - LeadSync{% endblock %}
+
+{% block content %}
+<div class="container pb-4">
+    <style>
+        .public-billing-nav {
+            min-width: 170px;
+            border: 1px solid rgba(59, 130, 246, 0.22);
+            border-radius: 14px;
+            padding: 10px;
+            background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        }
+        .public-billing-nav .btn {
+            width: 100%;
+            border-radius: 10px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .public-billing-nav .btn + .btn { margin-top: 8px; }
+    </style>
+
+    <div class="premium-card card mb-4">
+        <div class="card-body p-4 p-lg-5">
+            <div class="d-flex flex-wrap align-items-start gap-3">
+                <div>
+                    <span class="badge bg-primary-subtle text-primary mb-2">My Plans</span>
+                    <h2 class="mb-2">Choose the perfect LeadSync plan</h2>
+                    <p class="text-muted mb-0">Start free and upgrade as your team and lead volume grow.</p>
+                </div>
+                <div class="public-billing-nav ms-lg-auto" id="publicPlansBillingToggle">
+                    <button type="button" class="btn btn-primary active" data-cycle="monthly" onclick="switchPublicPlansBilling('monthly')">
+                        <i class="fa-solid fa-calendar-day me-2"></i>Monthly
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" data-cycle="yearly" onclick="switchPublicPlansBilling('yearly')">
+                        <i class="fa-solid fa-calendar-week me-2"></i>Yearly <span class="badge bg-warning text-dark ms-1">Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for plan in plans %}
+        <div class="col-lg-4 col-md-6">
+            <div class="premium-card card h-100 {% if forloop.first %}border border-primary{% endif %}">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h4 class="mb-0">{{ plan.name }}</h4>
+                        {% if plan.name|lower == 'business' %}<span class="badge bg-primary">Popular</span>{% endif %}
+                    </div>
+                    <div class="public-price-monthly">
+                        {% if plan.monthly_campaign_discount > 0 %}
+                        <div class="mb-1">
+                            <div class="text-muted text-decoration-line-through small">Main: {{ currency_symbol }}{{ plan.monthly_price|clean_price }}/month</div>
+                            <div class="text-success small"><i class="fa-solid fa-bolt me-1"></i>{{ plan.active_campaign_name|default:"Discount" }} (-{{ currency_symbol }}{{ plan.monthly_campaign_discount|clean_price }}) -> {{ currency_symbol }}{{ plan.display_monthly_price|clean_price }}</div>
+                            <h3 class="mb-0">{{ currency_symbol }}{{ plan.display_monthly_price|clean_price }}<small class="text-muted fs-6">/month</small></h3>
+                        </div>
+                        {% else %}
+                        <h3 class="mb-1">{{ currency_symbol }}{{ plan.display_monthly_price|clean_price }}<small class="text-muted fs-6">/month</small></h3>
+                        {% endif %}
+                    </div>
+
+                    <div class="public-price-yearly" style="display:none;">
+                        <div class="small text-muted text-decoration-line-through">Main Yearly: {{ currency_symbol }}{{ plan.yearly_base_price|clean_price }}</div>
+                        {% if plan.yearly_base_discount_amount > 0 %}
+                        <div class="small text-success">Yearly Discount ({{ plan.yearly_discount|clean_price }}% | -{{ currency_symbol }}{{ plan.yearly_base_discount_amount|clean_price }}) -> {{ currency_symbol }}{{ plan.yearly_price|clean_price }}</div>
+                        {% endif %}
+                        {% if plan.yearly_campaign_discount > 0 %}
+                        <div class="small text-success"><i class="fa-solid fa-bolt me-1"></i>{{ plan.active_campaign_name|default:"Discount" }} (-{{ currency_symbol }}{{ plan.yearly_campaign_discount|clean_price }}) -> {{ currency_symbol }}{{ plan.display_yearly_price|clean_price }}</div>
+                        <h3 class="mb-0">{{ currency_symbol }}{{ plan.display_yearly_price|clean_price }}<small class="text-muted fs-6">/year</small></h3>
+                        {% else %}
+                        <h3 class="mb-1">{{ currency_symbol }}{{ plan.display_yearly_price|clean_price }}<small class="text-muted fs-6">/year</small></h3>
+                        {% endif %}
+                    </div>
+                    <ul class="list-unstyled mb-4 flex-grow-1">
+                        <li class="mb-2 public-monthly-leads"><i class="fa-solid fa-check text-success me-2"></i>{{ plan.monthly_max_leads|intcomma|default:"Unlimited" }} monthly leads</li>
+                        <li class="mb-2 public-yearly-leads" style="display:none;"><i class="fa-solid fa-check text-success me-2"></i>{{ plan.yearly_max_leads|intcomma|default:"Unlimited" }} yearly leads</li>
+                        <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Up to {{ plan.max_employees }} team members</li>
+                        {% if plan.features %}
+                        {% for feature in plan.features.splitlines %}
+                        {% if feature.strip %}<li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>{{ feature }}</li>{% endif %}
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'my_plan' %}" class="btn btn-primary w-100">Manage My Subscription</a>
+                    {% else %}
+                    <a href="{% url 'signup' %}" class="btn btn-primary w-100">Get Started</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12"><div class="alert alert-info mb-0">No plans available at the moment.</div></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function switchPublicPlansBilling(cycle) {
+    document.querySelectorAll('#publicPlansBillingToggle button').forEach(btn => {
+        const active = btn.dataset.cycle === cycle;
+        btn.classList.toggle('btn-primary', active);
+        btn.classList.toggle('active', active);
+        btn.classList.toggle('btn-outline-primary', !active);
+    });
+
+    document.querySelectorAll('.public-price-monthly').forEach(el => el.style.display = cycle === 'monthly' ? '' : 'none');
+    document.querySelectorAll('.public-price-yearly').forEach(el => el.style.display = cycle === 'yearly' ? '' : 'none');
+    document.querySelectorAll('.public-monthly-leads').forEach(el => el.style.display = cycle === 'monthly' ? '' : 'none');
+    document.querySelectorAll('.public-yearly-leads').forEach(el => el.style.display = cycle === 'yearly' ? '' : 'none');
+}
+</script>
+{% endblock %}

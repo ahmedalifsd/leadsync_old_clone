@@ -1,0 +1,363 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Dashboard - LeadSync{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card rounded-3 bg-white mb-4">
+            <div class="card-body">
+                <div class="mb-3 d-flex justify-content-between flex-wrap w-100">
+                    <h4 class="mb-0">
+                        Lead Templates
+                    </h4>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#addTemplateModal">
+                        <i class="fas fa-plus me-1"></i>New Template
+                    </button>
+                </div>
+                {% if templates %}
+                <div class="basic-table table-responsive">
+                    <table class="table text-nowrap table-sm">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Category</th>
+                            <th>Source</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for template in templates %}
+                        <tr>
+                            <td>{{ template.name }}</td>
+                            <td>
+                                <span class="badge
+                                {% if template.status == 'new' %} bg-soft-neutral
+                                {% elif template.status == 'contacted' %} bg-soft-cyan
+                                {% elif template.status == 'qualified' %} bg-soft-purple
+                                {% elif template.status == 'not_contacted' %} bg-soft-secondary
+                                {% elif template.status == 'no_response' %} bg-soft-danger
+                                {% elif template.status == 'interested' %} bg-soft-success
+                                {% elif template.status == 'not_interested' %} bg-soft-warning
+                                {% elif template.status == 'proposal' %} bg-soft-warning
+                                {% elif template.status == 'negotiation' %} bg-soft-success
+                                {% elif template.status == 'won' %} bg-soft-purple
+                                {% elif template.status == 'lost' %} bg-soft-danger
+                                {% endif %}
+                                ">
+                                    {{ template.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ template.category.name|default:"-" }}</td>
+                            <td>{{ template.source.name|default:"-" }}</td>
+
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-icon btn-sm btn-soft-info rounded-pill me-2" data-bs-toggle="modal"
+                                            data-bs-target="#viewTemplateModal{{ template.id }}" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-icon btn-sm btn-soft-warning rounded-pill me-2" data-bs-toggle="modal"
+                                            data-bs-target="#editTemplateModal{{ template.id }}" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <a href="{% url 'bulk_add_leads' %}?template={{ template.id }}"
+                                       class="btn btn-icon btn-sm bg-soft-purple rounded-pill me-2" title="Apply Template">
+                                        <i class="fas fa-bolt"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-icon btn-sm btn-soft-danger rounded-pill me-2 delete-template"
+                                            data-template-id="{{ template.id }}"
+                                            data-template-name="{{ template.name }}" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No templates found. Create your first template!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Add Template Modal -->
+<div class="modal fade" id="addTemplateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Template Name *</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="not_contacted">Not Contacted</option>
+                                <option value="no_response">No Response</option>
+                                <option value="interested">Interested</option>
+                                <option value="not_interested">Not Interested</option>
+                                <option value="qualified">Qualified</option>
+                                <option value="proposal">Proposal Sent</option>
+                                <option value="negotiation">Negotiation</option>
+                                <option value="won">Won</option>
+                                <option value="lost">Lost</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Category</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                            <div class="text-danger small">{{ form.category.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Source</label>
+                            {{ form.source }}
+                            {% if form.source.errors %}
+                            <div class="text-danger small">{{ form.source.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Default Notes</label>
+                        <textarea name="notes" class="form-control" rows="3"
+                                  placeholder="Default notes for all leads using this template"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Template</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Modals for each template -->
+{% for template in templates %}
+<div class="modal fade" id="viewTemplateModal{{ template.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">View Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table text-nowrap table-sm">
+                    <tr>
+                        <th>Template Name</th>
+                        <td>{{ template.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Category</th>
+                        <td>
+                            {% if template.category %}
+                                <span class="badge bg-soft-secondary">{{ template.category.name }}</span>
+                            {% else %}
+                                <span class="text-muted">Not set</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Source</th>
+                        <td>
+                            {% if template.source %}
+                                <span class="badge bg-soft-secondary">
+                                    {{ template.source.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Not set</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            <span class="badge
+                                {% if template.status == 'new' %} bg-soft-neutral
+                                {% elif template.status == 'contacted' %} bg-soft-cyan
+                                {% elif template.status == 'qualified' %} bg-soft-purple
+                                {% elif template.status == 'not_contacted' %} bg-soft-secondary
+                                {% elif template.status == 'no_response' %} bg-soft-danger
+                                {% elif template.status == 'interested' %} bg-soft-success
+                                {% elif template.status == 'not_interested' %} bg-soft-warning
+                                {% elif template.status == 'proposal' %} bg-soft-warning
+                                {% elif template.status == 'negotiation' %} bg-soft-success
+                                {% elif template.status == 'won' %} bg-soft-purple
+                                {% elif template.status == 'lost' %} bg-soft-danger
+                                {% endif %}
+                                ">
+                                {{ template.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Notes</th>
+                        <td>{{ template.notes|default:"No notes"|linebreaksbr }}</td>
+                    </tr>
+                    <tr>
+                        <th>Created</th>
+                        <td>{{ template.created_at|date:"M d, Y h:i A" }}</td>
+                    </tr>
+                    {% if template.updated_at %}
+                    <tr>
+                        <th>Last Updated</th>
+                        <td>{{ template.updated_at|date:"M d, Y h:i A" }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{% url 'bulk_add_leads' %}?template={{ template.id }}" class="btn btn-success">
+                    <i class="fas fa-bolt me-1"></i>Apply Template
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Edit Modals for each template -->
+{% for template in templates %}
+<div class="modal fade" id="editTemplateModal{{ template.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'edit_template' template.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Template Name *</label>
+                            <input type="text" name="name" value="{{ template.name }}" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="new" {% if template.status == 'new' %}selected{% endif %}>New</option>
+                                <option value="contacted" {% if template.status == 'contacted' %}selected{% endif %}>Contacted</option>
+                                <option value="not_contacted" {% if template.status == 'not_contacted' %}selected{% endif %}>Not Contacted</option>
+                                <option value="no_response" {% if template.status == 'no_response' %}selected{% endif %}>No Response</option>
+                                <option value="interested" {% if template.status == 'interested' %}selected{% endif %}>Interested</option>
+                                <option value="not_interested" {% if template.status == 'not_interested' %}selected{% endif %}>Not Interested</option>
+                                <option value="qualified" {% if template.status == 'qualified' %}selected{% endif %}>Qualified</option>
+                                <option value="proposal" {% if template.status == 'proposal' %}selected{% endif %}>Proposal Sent</option>
+                                <option value="negotiation" {% if template.status == 'negotiation' %}selected{% endif %}>Negotiation</option>
+                                <option value="won" {% if template.status == 'won' %}selected{% endif %}>Won</option>
+                                <option value="lost" {% if template.status == 'lost' %}selected{% endif %}>Lost</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="">Select Category (optional)</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if template.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Source</label>
+                            <select name="source" class="form-select">
+                                <option value="">Select Source (optional)</option>
+                                {% for source in sources %}
+                                <option value="{{ source.id }}" {% if template.source_id == source.id %}selected{% endif %}>{{ source.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Default Notes</label>
+                        <textarea name="notes" class="form-control" rows="3"
+                                  placeholder="Default notes for all leads using this template">{{ template.notes }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Template</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Confirmation Modal for Delete -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="confirmDeleteForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Are you sure you want to delete template "<span id="templateNameToDelete"></span>"?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Delete template functionality
+        document.querySelectorAll('.delete-template').forEach(button => {
+            button.addEventListener('click', function() {
+                const templateId = this.getAttribute('data-template-id');
+                const templateName = this.getAttribute('data-template-name');
+                document.getElementById('templateNameToDelete').textContent = templateName;
+                document.getElementById('confirmDeleteForm').action = `{% url 'delete_template' 0 %}`.replace('0', templateId);
+                new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show();
+            });
+        });
+
+        // Apply template functionality
+        document.querySelectorAll('.apply-template').forEach(button => {
+            button.addEventListener('click', function() {
+                const templateId = this.getAttribute('data-template-id');
+                // Redirect to bulk add leads page with template applied
+                window.location.href = `{% url 'bulk_add_leads' %}?template=${templateId}`;
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

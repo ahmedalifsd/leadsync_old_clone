@@ -1,0 +1,155 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Staff Requests - LeadSync{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h2 mb-0">
+            <i class="fas fa-user-friends me-2"></i>Staff Approval Requests
+        </h1>
+        <p class="text-muted">Approve or reject staff requests to join your team</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="card bg-light">
+            <div class="card-body py-2">
+                <small class="text-muted">Team Limit:</small>
+                <span class="fw-bold">{{ current_staff_count }}/{{ subscription.effective_max_employees|default:"Unlimited" }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if subscription.effective_max_employees is not None and subscription.effective_max_employees <= current_staff_count %}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>Team limit reached!</strong> You cannot approve more staff members. 
+    <a href="{% url 'my_plan' %}" class="alert-link">Upgrade your plan</a> to add more team members.
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Pending Staff Requests</h5>
+        <span class="badge bg-primary">{{ pending_staff.count }} pending</span>
+    </div>
+    <div class="card-body">
+        {% if pending_staff %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Request Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in pending_staff %}
+                    <tr>
+                        <td>{{ profile.user.username }}</td>
+                        <td>{{ profile.user.email }}</td>
+                        <td>{{ profile.phone_number|default:"-" }}</td>
+                        <td>{{ profile.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            {% if subscription.effective_max_employees is None or current_staff_count < subscription.effective_max_employees %}
+                            <a href="{% url 'approve_staff' profile.user.id %}" class="btn btn-sm btn-success">
+                                <i class="fas fa-check me-1"></i>Approve
+                            </a>
+                            {% else %}
+                            <button class="btn btn-sm btn-success disabled" title="Limit reached">
+                                <i class="fas fa-check me-1"></i>Approve
+                            </button>
+                            {% endif %}
+                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ profile.user.id }}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Reject Modal -->
+                    <div class="modal fade" id="rejectModal{{ profile.user.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Reject Staff Request</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Are you sure you want to reject {{ profile.user.username }}'s request to join your team?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <form method="post" action="{% url 'reject_staff' profile.user.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Reject</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No pending staff requests!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>How to Add Staff
+                </h6>
+            </div>
+            <div class="card-body">
+                <ol class="mb-0">
+                    <li>Tell your staff to register as "Employee"</li>
+                    <li>They must enter your username as "Boss Username"</li>
+                    <li>Approve their request here</li>
+                    <li>They'll be added to your team automatically</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Team Statistics
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if subscription.effective_max_employees is None %}
+                <div class="progress mb-2" style="height: 25px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%">
+                        {{ current_staff_count }} / Unlimited
+                    </div>
+                </div>
+                <p class="small text-success mb-0">Unlimited staff slots</p>
+                {% else %}
+                <div class="progress mb-2" style="height: 25px;">
+                    <div class="progress-bar" role="progressbar" 
+                         style="width: {% widthratio current_staff_count subscription.effective_max_employees 100 %}%">
+                        {{ current_staff_count }}/{{ subscription.effective_max_employees }}
+                    </div>
+                </div>
+                <p class="small text-muted mb-0">
+                    {{ subscription.effective_max_employees|add:"-current_staff_count" }} staff slots remaining
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

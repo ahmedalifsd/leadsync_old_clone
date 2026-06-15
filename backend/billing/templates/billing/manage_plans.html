@@ -1,0 +1,1091 @@
+{% extends 'layout/layout.html' %}
+{% load billing_tags %}
+{% load humanize %}
+
+{% block title %}Dashboard - LeadSync{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+
+
+<div class="page-header page-add-notes">
+    <div class="add-item d-flex">
+        <div class="page-title">
+            <h4>Manage Subscription Plans</h4>
+            <h6>Create and manage plans for business owners</h6>
+        </div>
+    </div>
+ </div>
+
+
+
+<div class="row mt-2">
+
+
+    <!-- Manual Payment Requests -->
+    <div class="col-12 mb-3">
+        <div class="card rounded-3 bg-white">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0"><i class="fas fa-file-invoice-dollar me-2 text-primary"></i>Manual Payment Requests</h5>
+                    <small class="text-muted">Review customer requests in modal, approve/reject, manually activate plans, or stop active plans.</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark">{{ pending_payments|length }} pending</span>
+                    <button type="button" class="btn btn-primary btn-sm" id="openPendingRequests" data-bs-toggle="modal" data-bs-target="#pendingRequestsModal">
+                        <i class="fas fa-eye me-1"></i>View Requests
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="pendingRequestsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-file-invoice-dollar me-2 text-primary"></i>Pending Payment Requests & Manual Actions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-lg-7">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body">
+                                    <h6 class="mb-2"><i class="fas fa-bolt me-2 text-success"></i>Manual Plan Activation</h6>
+                                    <small class="text-muted d-block mb-3">Activate plan directly without waiting for a request.</small>
+                                    <form method="post" enctype="multipart/form-data" class="row g-2">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="manual_activate_plan" value="1">
+
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-1">Business Owner</label>
+                                            <select class="form-select form-select-sm" name="owner_id" required>
+                                                <option value="">Select owner</option>
+                                                {% for owner in owner_profiles %}
+                                                <option value="{{ owner.user.id }}">{{ owner.user.username }} ({{ owner.user.email }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label small mb-1">Plan</label>
+                                            <select class="form-select form-select-sm" name="activation_plan_id" required>
+                                                {% for plan in plans %}
+                                                {% if plan.is_active %}
+                                                <option value="{{ plan.id }}">{{ plan.name }}</option>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-1">Cycle</label>
+                                            <select class="form-select form-select-sm" name="activation_billing_cycle" required>
+                                                <option value="monthly">Monthly</option>
+                                                <option value="yearly">Yearly</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <label class="form-label small mb-1">Activation Type</label>
+                                            <select class="form-select form-select-sm" name="activation_mode" required>
+                                                <option value="fresh">Fresh Start (Start today)</option>
+                                                <option value="renewal">Renewal (Extend current plan)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="activation_auto_renew" value="1" id="manualActivationAutoRenew" checked>
+                                                <label class="form-check-label small" for="manualActivationAutoRenew">Auto renew</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <input type="text" class="form-control form-control-sm" name="transaction_id" placeholder="Transaction ID / Ref No (optional)">
+                                        </div>
+
+                                        <div class="col-12">
+                                            <input type="file" class="form-control form-control-sm" name="payment_proof" accept="image/*">
+                                            <small class="text-muted">Upload payment proof image (optional)</small>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <input type="text" class="form-control form-control-sm" name="admin_note" placeholder="Admin note (optional)">
+                                        </div>
+
+                                        <div class="col-12 text-end">
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="fas fa-check-circle me-1"></i>Activate Plan Manually
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-5">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="mb-2"><i class="fas fa-stop-circle me-2 text-danger"></i>Stop Active Plan</h6>
+                                    <small class="text-muted d-block mb-3">Immediately deactivate selected owner's active plan.</small>
+                                    <form method="post" class="row g-2 mt-auto">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="stop_active_plan" value="1">
+
+                                        <div class="col-12">
+                                            <label class="form-label small mb-1">Business Owner</label>
+                                            <select class="form-select form-select-sm" name="owner_id" required>
+                                                <option value="">Select owner</option>
+                                                {% for owner in owner_profiles %}
+                                                <option value="{{ owner.user.id }}">{{ owner.user.username }} ({{ owner.user.email }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="col-12 text-end mt-3">
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-ban me-1"></i>Stop Active Plan
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if pending_payments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Requested Plan</th>
+                                    <th>Amount</th>
+                                    <th>Contact</th>
+                                    <th>Requested On</th>
+                                    <th>Approve</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in pending_payments %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">{{ payment.user.username }}</div>
+                                        <small class="text-muted">{{ payment.user.email }}</small>
+                                    </td>
+                                    <td>
+                                        {% if payment.subscription.is_custom_plan %}
+                                        <span class="badge bg-primary">Custom Plan</span>
+                                        {% else %}
+                                        <span class="fw-semibold">{{ payment.subscription.plan.name }}</span>
+                                        {% endif %}
+                                        <div><small class="text-muted">{{ payment.subscription.get_billing_cycle_display }}{% if payment.is_renewal %} • Renewal{% endif %}</small></div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">{{ currency_symbol }}{{ payment.amount|clean_price }}</span>
+                                        {% if payment.discount_amount > 0 %}
+                                        <div><small class="text-success">Discount {{ currency_symbol }}{{ payment.discount_amount|clean_price }}</small></div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div><small><strong>Name:</strong> {{ payment.payer_name|default:'-' }}</small></div>
+                                        <div><small><strong>Phone:</strong> {{ payment.payer_phone|default:'-' }}</small></div>
+                                        <div><small><strong>Email:</strong> {{ payment.payer_email|default:'-' }}</small></div>
+                                        
+                                        <div class="mt-2 border-top pt-1">
+                                            <div class="small fw-bold text-primary">Submitted Info:</div>
+                                            <div><small><strong>TX ID:</strong> <code class="text-dark">{{ payment.transaction_id|default:'Not provided' }}</code></small></div>
+                                            {% if payment.payment_proof %}
+                                            <div class="mt-1"><small><strong>Proof:</strong> <a href="{{ payment.payment_proof_access_url|default:payment.payment_proof.url }}" target="_blank" class="badge bg-info text-white text-decoration-none">View Screenshot</a></small></div>
+                                            {% else %}
+                                            <div class="mt-1"><small><strong>Proof:</strong> <span class="text-danger">No screenshot</span></small></div>
+                                            {% endif %}
+                                        </div>
+
+                                        {% if payment.contact_note %}
+                                        <div class="mt-2 bg-white p-1 rounded border small text-muted italic">
+                                            <i class="fas fa-quote-left me-1 small"></i>{{ payment.contact_note }}
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div>{{ payment.created_at|date:"M d, Y" }}</div>
+                                        <small class="text-muted">Due {{ payment.due_date|date:"M d, Y" }}</small>
+                                    </td>
+                                    <td style="min-width: 290px;">
+                                        <form method="post" enctype="multipart/form-data" class="row g-2">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="approve_manual_payment" value="1">
+                                            <input type="hidden" name="payment_id" value="{{ payment.id }}">
+
+                                            <div class="col-12">
+                                                <label class="form-label small mb-1">Plan</label>
+                                                <select class="form-select form-select-sm" name="activation_plan_id" required>
+                                                    {% for plan in plans %}
+                                                    <option value="{{ plan.id }}" {% if payment.subscription.plan.id == plan.id %}selected{% endif %}>{{ plan.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+
+                                            <div class="col-6">
+                                                <label class="form-label small mb-1">Cycle</label>
+                                                <select class="form-select form-select-sm" name="activation_billing_cycle" required>
+                                                    <option value="monthly" {% if payment.subscription.billing_cycle == 'monthly' %}selected{% endif %}>Monthly</option>
+                                                    <option value="yearly" {% if payment.subscription.billing_cycle == 'yearly' %}selected{% endif %}>Yearly</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-6">
+                                                <label class="form-label small mb-1">Method</label>
+                                                <select class="form-select form-select-sm" name="payment_method">
+                                                    <option value="bank_transfer" {% if payment.payment_method == 'bank_transfer' %}selected{% endif %}>Bank Transfer</option>
+                                                    <option value="jazzcash" {% if payment.payment_method == 'jazzcash' %}selected{% endif %}>JazzCash</option>
+                                                    <option value="manual" {% if payment.payment_method == 'manual' %}selected{% endif %}>Manual</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <input type="text" class="form-control form-control-sm" name="transaction_id" placeholder="Transaction ID / Ref No" value="{{ payment.transaction_id|default:'' }}">
+                                            </div>
+
+                                            <div class="col-12">
+                                                <input type="file" class="form-control form-control-sm" name="payment_proof" accept="image/*">
+                                                {% if payment.payment_proof %}
+                                                <small class="text-success">Existing proof: <a href="{{ payment.payment_proof_access_url|default:payment.payment_proof.url }}" target="_blank">View</a></small>
+                                                {% endif %}
+                                            </div>
+
+                                            <div class="col-12">
+                                                <input type="text" class="form-control form-control-sm" name="admin_note" placeholder="Admin note (optional)">
+                                            </div>
+
+                                            <div class="col-12 d-flex justify-content-between align-items-center">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="activation_auto_renew" value="1" id="autoRenew{{ payment.id }}" {% if payment.subscription.auto_renew %}checked{% endif %}>
+                                                    <label class="form-check-label small" for="autoRenew{{ payment.id }}">Auto renew</label>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#rejectBox{{ payment.id }}" aria-expanded="false" aria-controls="rejectBox{{ payment.id }}">
+                                                        <i class="fas fa-times me-1"></i>Reject
+                                                    </button>
+                                                    <button type="submit" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-check me-1"></i>Approve
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+
+                                        <div class="collapse mt-2" id="rejectBox{{ payment.id }}">
+                                            <div class="card card-body border-danger-subtle bg-danger bg-opacity-10">
+                                                <form method="post">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="reject_manual_payment" value="1">
+                                                    <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                                                    <label class="form-label small">Rejection Reason <span class="text-danger">*</span></label>
+                                                    <textarea class="form-control form-control-sm" name="rejection_reason" rows="2" placeholder="Explain why this payment request is being rejected..." required></textarea>
+                                                    <div class="text-end mt-2">
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-ban me-1"></i>Reject Request
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-light border mb-0">No pending manual payment requests.</div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Plan -->
+    <div class="col-12 mb-3">
+        <div class="card rounded-3 bg-white">
+            <div class="card-body">
+                <h5 class="mb-0">Add New Plan</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="add_plan" value="1">
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Plan Name *</label>
+                            <input type="text" name="name" class="form-control" required
+                                   placeholder="e.g., Premium">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Monthly Price *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">{{ currency_symbol }}</span>
+                                <input type="number" name="monthly_price" class="form-control" required
+                                       step="0.01" min="0" placeholder="0.00" id="addMonthlyPrice">
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Yearly Discount (%)</label>
+                            <div class="input-group">
+                                <input type="number" name="yearly_discount" class="form-control"
+                                       step="0.01" min="0" max="100" placeholder="0" value="0" id="addYearlyDiscount">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Yearly Price (Auto)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">{{ currency_symbol }}</span>
+                                <input type="text" class="form-control bg-light" id="addYearlyPricePreview" readonly
+                                       placeholder="0.00">
+                            </div>
+                            <small class="text-muted" id="addYearlySavings"></small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Max Employees *</label>
+                            <input type="number" name="max_employees" class="form-control" required
+                                   min="1" value="1">
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Monthly Leads Limit</label>
+                            <div class="input-group">
+                                <input type="number" name="monthly_max_leads" id="addMonthlyMaxLeads" class="form-control"
+                                       min="1" placeholder="e.g., 100">
+                                <div class="input-group-text">
+                                    <input type="checkbox" name="monthly_unlimited_leads" id="addMonthlyUnlimited"
+                                           class="form-check-input mt-0 unlimited-toggle" value="1"
+                                           data-target="addMonthlyMaxLeads">
+                                    <label class="form-check-label ms-1 small" for="addMonthlyUnlimited">Unlimited</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Yearly Leads Limit</label>
+                            <div class="input-group">
+                                <input type="number" name="yearly_max_leads" id="addYearlyMaxLeads" class="form-control"
+                                       min="1" placeholder="e.g., 500">
+                                <div class="input-group-text">
+                                    <input type="checkbox" name="yearly_unlimited_leads" id="addYearlyUnlimited"
+                                           class="form-check-input mt-0 unlimited-toggle" value="1"
+                                           data-target="addYearlyMaxLeads">
+                                    <label class="form-check-label ms-1 small" for="addYearlyUnlimited">Unlimited</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Features (One per line)</label>
+                            <textarea name="features" class="form-control" rows="2"
+                                      placeholder="Enter plan features, one per line"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Create Plan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Plans -->
+    <div class="col-12 mb-3">
+        <div class="card rounded-3 bg-white">
+            <div class="card-body">
+                <h5 class="mb-0">Existing Plans</h5>
+                <span class="badge bg-primary">{{ plans.count }} plans</span>
+
+                <div class="table-responsive">
+                    <table class="table text-nowrap table-sm">
+                        <thead>
+                            <tr>
+                                <th>Plan Name</th>
+                                <th>Monthly Price</th>
+                                <th>Yearly Discount</th>
+                                <th>Yearly Price</th>
+                                <th>Max Staff</th>
+                                <th>Monthly Leads</th>
+                                <th>Yearly Leads</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plan in plans %}
+                            <tr>
+                                <td>
+                                    <strong>{{ plan.name }}</strong>
+                                    {% if plan.is_default_signup_plan %}
+                                    <span class="badge bg-soft-info ms-1"><i class="fas fa-star me-1"></i>Default Signup</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ currency_symbol }}{{ plan.monthly_price|clean_price }}/mo</td>
+                                <td>
+                                    {% if plan.yearly_discount > 0 %}
+                                    <span class="badge bg-soft-warning text-dark">{{ plan.yearly_discount|clean_price }}% off</span>
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ currency_symbol }}{{ plan.yearly_price|clean_price }}/yr
+                                    {% if plan.yearly_discount > 0 %}
+                                    <br><small class="text-soft-success">Save {{ currency_symbol }}{{ plan.yearly_savings|clean_price }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ plan.max_employees }}</td>
+                                <td>
+                                    {% if plan.monthly_max_leads %}
+                                    <span class="badge bg-soft-info">{{ plan.monthly_max_leads|intcomma }}</span>
+                                    {% else %}
+                                    <span class="badge bg-soft-success">Unlimited</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if plan.yearly_max_leads %}
+                                    <span class="badge bg-soft-info">{{ plan.yearly_max_leads|intcomma }}</span>
+                                    {% else %}
+                                    <span class="badge bg-soft-success">Unlimited</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if plan.is_active %}
+                                    <span class="badge bg-soft-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-soft-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <form method="post" action="{% url 'set_default_plan' plan.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    class="btn me-2 btn-icon btn-sm rounded-pill btn btn-soft-{% if plan.is_default_signup_plan %}info{% else %}outline-info{% endif %}"
+                                                    title="{% if plan.is_default_signup_plan %}Remove as default signup plan{% else %}Set as default signup plan{% endif %}">
+                                                <i class="fas fa-star"></i>
+                                            </button>
+                                        </form>
+                                        <button class="btn me-2 btn-icon btn-sm rounded-pill btn btn-soft-success" data-bs-toggle="modal"
+                                                data-bs-target="#editPlanModal{{ plan.id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form method="post" action="{% url 'toggle_plan' plan.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn me-2 btn-icon btn-sm rounded-pill btn btn-soft-{% if plan.is_active %}warning{% else %}success{% endif %}">
+                                                <i class="fas fa-power-off"></i>
+                                            </button>
+                                        </form>
+                                        <button class="btn btn-icon btn-sm rounded-pill btn btn-danger" data-bs-toggle="modal"
+                                                data-bs-target="#deletePlanModal{{ plan.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Edit Plan Modal -->
+                            <div class="modal fade" id="editPlanModal{{ plan.id }}" tabindex="-1">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Edit Plan: {{ plan.name }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="update_plan" value="1">
+                                            <input type="hidden" name="plan_id" value="{{ plan.id }}">
+
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label">Plan Name *</label>
+                                                        <input type="text" name="name" class="form-control"
+                                                               value="{{ plan.name }}" required>
+                                                    </div>
+
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label">Monthly Price *</label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text">{{ currency_symbol }}</span>
+                                                            <input type="number" name="monthly_price" class="form-control edit-monthly-price"
+                                                                   value="{{ plan.monthly_price }}" step="0.01" min="0" required
+                                                                   data-plan-id="{{ plan.id }}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="form-label">Yearly Discount (%)</label>
+                                                        <div class="input-group">
+                                                            <input type="number" name="yearly_discount" class="form-control edit-yearly-discount"
+                                                                   value="{{ plan.yearly_discount }}" step="0.01" min="0" max="100"
+                                                                   data-plan-id="{{ plan.id }}">
+                                                            <span class="input-group-text">%</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="form-label">Yearly Price (Auto)</label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text">{{ currency_symbol }}</span>
+                                                            <input type="text" class="form-control bg-light" id="editYearlyPricePreview{{ plan.id }}" readonly
+                                                                   value="{{ plan.yearly_price }}">
+                                                        </div>
+                                                        <small class="text-success" id="editYearlySavings{{ plan.id }}">
+                                                            {% if plan.yearly_discount > 0 %}Save {{ currency_symbol }}{{ plan.yearly_savings|clean_price }}/year{% endif %}
+                                                        </small>
+                                                    </div>
+
+                                                    <div class="col-md-4 mb-3">
+                                                        <label class="form-label">Max Employees *</label>
+                                                        <input type="number" name="max_employees" class="form-control"
+                                                               value="{{ plan.max_employees }}" min="1" required>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label">Monthly Leads Limit</label>
+                                                        <div class="input-group">
+                                                            <input type="number" name="monthly_max_leads" id="editMonthlyMaxLeads{{ plan.id }}" class="form-control"
+                                                                   value="{% if plan.monthly_max_leads %}{{ plan.monthly_max_leads }}{% endif %}" min="1"
+                                                                   {% if not plan.monthly_max_leads %}disabled{% endif %}>
+                                                            <div class="input-group-text">
+                                                                <input type="checkbox" name="monthly_unlimited_leads" id="editMonthlyUnlimited{{ plan.id }}"
+                                                                       class="form-check-input mt-0 unlimited-toggle" value="1"
+                                                                       data-target="editMonthlyMaxLeads{{ plan.id }}"
+                                                                       {% if not plan.monthly_max_leads %}checked{% endif %}>
+                                                                <label class="form-check-label ms-1 small" for="editMonthlyUnlimited{{ plan.id }}">Unlimited</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label">Yearly Leads Limit</label>
+                                                        <div class="input-group">
+                                                            <input type="number" name="yearly_max_leads" id="editYearlyMaxLeads{{ plan.id }}" class="form-control"
+                                                                   value="{% if plan.yearly_max_leads %}{{ plan.yearly_max_leads }}{% endif %}" min="1"
+                                                                   {% if not plan.yearly_max_leads %}disabled{% endif %}>
+                                                            <div class="input-group-text">
+                                                                <input type="checkbox" name="yearly_unlimited_leads" id="editYearlyUnlimited{{ plan.id }}"
+                                                                       class="form-check-input mt-0 unlimited-toggle" value="1"
+                                                                       data-target="editYearlyMaxLeads{{ plan.id }}"
+                                                                       {% if not plan.yearly_max_leads %}checked{% endif %}>
+                                                                <label class="form-check-label ms-1 small" for="editYearlyUnlimited{{ plan.id }}">Unlimited</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-md-12 mb-3">
+                                                        <label class="form-label">Features (One per line)</label>
+                                                        <textarea name="features" class="form-control" rows="3">{{ plan.features }}</textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary">Update Plan</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Delete Plan Confirmation Modal -->
+                            <div class="modal fade" id="deletePlanModal{{ plan.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Delete Plan</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Are you sure you want to delete the <strong>"{{ plan.name }}"</strong> plan?</p>
+                                            <div class="alert alert-warning mb-0">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                This action cannot be undone. Plans with active subscriptions cannot be deleted.
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <form method="post" action="{% url 'delete_plan' plan.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="fas fa-trash me-1"></i>Delete Plan
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No plans created yet.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Pricing Configuration -->
+<div class="col-12 mb-3 mt-4">
+    <div class="card rounded-3 bg-white">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="mb-0"><i class="fas fa-sliders-h me-2 text-primary"></i>Custom Plan Builder Configuration</h5>
+                {% if pricing_config.is_active %}
+                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Active</span>
+                {% else %}
+                <span class="badge bg-secondary"><i class="fas fa-times me-1"></i>Disabled</span>
+                {% endif %}
+            </div>
+            <p class="text-muted mb-3">Configure pricing for the custom plan builder that business owners can use to build their own plans.</p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-medium">Price Per Employee (/month)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency_symbol }}</span>
+                            <input type="number" step="0.01" min="0" class="form-control" name="price_per_employee"
+                                   value="{{ pricing_config.price_per_employee|clean_price }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-medium">Price Per Lead Block (/month)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency_symbol }}</span>
+                            <input type="number" step="0.01" min="0" class="form-control" name="price_per_lead_block"
+                                   value="{{ pricing_config.price_per_lead_block|clean_price }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-medium">Lead Block Size</label>
+                        <input type="number" min="1" class="form-control" name="lead_block_size"
+                               value="{{ pricing_config.lead_block_size }}" required>
+                        <small class="text-muted">Leads per block (e.g., 100)</small>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-medium">Base Price (/month)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency_symbol }}</span>
+                            <input type="number" step="0.01" min="0" class="form-control" name="base_price"
+                                   value="{{ pricing_config.base_price|clean_price }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mt-3 mb-2"><i class="fas fa-infinity me-1 text-success"></i>Unlimited Pricing</h6>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-medium">Unlimited Employees (/month)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency_symbol }}</span>
+                            <input type="number" step="0.01" min="0" class="form-control" name="unlimited_employees_price"
+                                   value="{{ pricing_config.unlimited_employees_price|clean_price }}" required>
+                        </div>
+                        <small class="text-muted">Fixed price when user selects unlimited employees</small>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-medium">Unlimited Leads (/month)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency_symbol }}</span>
+                            <input type="number" step="0.01" min="0" class="form-control" name="unlimited_leads_price"
+                                   value="{{ pricing_config.unlimited_leads_price|clean_price }}" required>
+                        </div>
+                        <small class="text-muted">Fixed price when user selects unlimited leads</small>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-medium">Yearly Discount %</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" min="0" max="100" class="form-control" name="config_yearly_discount"
+                                   value="{{ pricing_config.yearly_discount|clean_price }}" required>
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mt-3 mb-2"><i class="fas fa-cogs me-1 text-info"></i>Range Limits</h6>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label fw-medium">Min Employees</label>
+                        <input type="number" min="1" class="form-control" name="min_employees"
+                               value="{{ pricing_config.min_employees }}" required>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label fw-medium">Max Employees</label>
+                        <input type="number" min="1" class="form-control" name="config_max_employees"
+                               value="{{ pricing_config.max_employees }}" required>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label fw-medium">Employee Step</label>
+                        <input type="number" min="1" class="form-control" name="employee_step"
+                               value="{{ pricing_config.employee_step }}" required>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label fw-medium">Min Leads</label>
+                        <input type="number" min="1" class="form-control" name="min_leads"
+                               value="{{ pricing_config.min_leads }}" required>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label fw-medium">Max Leads</label>
+                        <input type="number" min="1" class="form-control" name="max_leads"
+                               value="{{ pricing_config.max_leads }}" required>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label fw-medium">Lead Step</label>
+                        <input type="number" min="1" class="form-control" name="lead_step"
+                               value="{{ pricing_config.lead_step }}" required>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="pricing_is_active" id="pricingIsActive"
+                               {% if pricing_config.is_active %}checked{% endif %}>
+                        <label class="form-check-label fw-medium" for="pricingIsActive">
+                            Enable Custom Plan Builder for Business Owners
+                        </label>
+                    </div>
+                    <button type="submit" name="update_pricing_config" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Save Configuration
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Discount Campaigns and Coupons -->
+<div class="row mt-4">
+    <div class="col-lg-6 mb-3">
+        <div class="card rounded-3 bg-white h-100">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="fas fa-tags text-warning me-2"></i>Plan Discount Campaign</h5>
+                <form method="post" class="mb-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="add_discount_campaign" value="1">
+                    <div class="mb-2">
+                        <label class="form-label">Campaign Name</label>
+                        <input type="text" name="campaign_name" class="form-control" placeholder="Eid Sale" required>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Discount Type</label>
+                            <select name="campaign_discount_type" class="form-select">
+                                <option value="percent">Percentage</option>
+                                <option value="fixed">Fixed Amount</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Discount Value</label>
+                            <input type="number" step="0.01" min="0" name="campaign_discount_value" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" name="campaign_start_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">End Date</label>
+                            <input type="date" name="campaign_end_date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="campaignAllPlans" name="campaign_applies_all" checked>
+                        <label class="form-check-label" for="campaignAllPlans">Apply to all plans</label>
+                    </div>
+                    <div class="mt-2">
+                        <label class="form-label">Or select specific plans</label>
+                        <select name="campaign_plan_ids" class="form-select" multiple size="4">
+                            {% for plan in plans %}
+                            <option value="{{ plan.id }}">{{ plan.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="btn btn-warning text-dark mt-3" type="submit">
+                        <i class="fas fa-plus me-1"></i>Create Campaign
+                    </button>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Discount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for campaign in campaigns %}
+                            <tr>
+                                <td>{{ campaign.name }}</td>
+                                <td>
+                                    {% if campaign.discount_type == 'percent' %}
+                                    {{ campaign.discount_value|clean_price }}%
+                                    {% else %}
+                                    {{ currency_symbol }}{{ campaign.discount_value|clean_price }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if campaign.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}
+                                </td>
+                                <td>
+                                    <form method="post" action="{% url 'toggle_campaign' campaign.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-warning"><i class="fas fa-power-off"></i></button>
+                                    </form>
+                                    <form method="post" action="{% url 'delete_campaign' campaign.id %}" class="d-inline" onsubmit="return confirm('Delete this campaign?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-muted">No campaigns yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-3">
+        <div class="card rounded-3 bg-white h-100">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="fas fa-ticket-alt text-info me-2"></i>Coupon Codes</h5>
+                <form method="post" class="mb-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="add_coupon" value="1">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Coupon Code</label>
+                            <input type="text" name="coupon_code" class="form-control" placeholder="EID50" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Max Uses</label>
+                            <input type="number" min="1" name="coupon_max_uses" class="form-control" value="1" required>
+                        </div>
+                    </div>
+                    <div class="mb-2 mt-2">
+                        <label class="form-label">Description</label>
+                        <input type="text" name="coupon_description" class="form-control" placeholder="Optional note">
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Discount Type</label>
+                            <select name="coupon_discount_type" class="form-select">
+                                <option value="percent">Percentage</option>
+                                <option value="fixed">Fixed Amount</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Discount Value</label>
+                            <input type="number" step="0.01" min="0" name="coupon_discount_value" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" name="coupon_start_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">End Date</label>
+                            <input type="date" name="coupon_end_date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="couponAllPlans" name="coupon_applies_all" checked>
+                        <label class="form-check-label" for="couponAllPlans">Apply to all plans</label>
+                    </div>
+                    <div class="mt-2">
+                        <label class="form-label">Or select specific plans</label>
+                        <select name="coupon_plan_ids" class="form-select" multiple size="4">
+                            {% for plan in plans %}
+                            <option value="{{ plan.id }}">{{ plan.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="btn btn-info mt-3" type="submit">
+                        <i class="fas fa-plus me-1"></i>Create Coupon
+                    </button>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Discount</th>
+                                <th>Used</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for coupon in coupons %}
+                            <tr>
+                                <td><span class="badge bg-dark">{{ coupon.code }}</span></td>
+                                <td>
+                                    {% if coupon.discount_type == 'percent' %}
+                                    {{ coupon.discount_value|clean_price }}%
+                                    {% else %}
+                                    {{ currency_symbol }}{{ coupon.discount_value|clean_price }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ coupon.used_count }}/{{ coupon.max_uses }}</td>
+                                <td>
+                                    <form method="post" action="{% url 'toggle_coupon' coupon.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-info"><i class="fas fa-power-off"></i></button>
+                                    </form>
+                                    <form method="post" action="{% url 'delete_coupon' coupon.id %}" class="d-inline" onsubmit="return confirm('Delete this coupon?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-muted">No coupons yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info mt-4">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Note:</strong> Plan changes affect new subscriptions only. Existing users will continue with their current plan until they upgrade/downgrade.
+</div>
+
+<script>
+const CS = '{{ currency_symbol }}';
+// Remove trailing zeros: 1000.00 → 1000, 1000.50 → 1000.50
+function cleanPrice(val) {
+    let num = parseFloat(val);
+    if (isNaN(num)) return val;
+    return num % 1 === 0 ? num.toFixed(0) : parseFloat(num.toFixed(2)).toString();
+}
+
+// === Add Plan: Yearly Price Calculator ===
+function calculateAddYearlyPrice() {
+    const monthlyPrice = parseFloat(document.getElementById('addMonthlyPrice').value) || 0;
+    const discount = parseFloat(document.getElementById('addYearlyDiscount').value) || 0;
+    const totalYearly = monthlyPrice * 12;
+    const discountAmount = totalYearly * (discount / 100);
+    const yearlyPrice = cleanPrice(totalYearly - discountAmount);
+    const savings = cleanPrice(discountAmount);
+
+    document.getElementById('addYearlyPricePreview').value = yearlyPrice;
+    const savingsEl = document.getElementById('addYearlySavings');
+    if (discount > 0 && monthlyPrice > 0) {
+        savingsEl.innerHTML = '<span class="text-success">Save ' + CS + savings + '/year</span>';
+    } else {
+        savingsEl.innerHTML = '';
+    }
+}
+document.getElementById('addMonthlyPrice').addEventListener('input', calculateAddYearlyPrice);
+document.getElementById('addYearlyDiscount').addEventListener('input', calculateAddYearlyPrice);
+
+// === Unlimited Leads toggle (works for all unlimited checkboxes) ===
+document.querySelectorAll('.unlimited-toggle').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+        const targetId = this.getAttribute('data-target');
+        const leadsInput = document.getElementById(targetId);
+        if (this.checked) {
+            leadsInput.value = '';
+            leadsInput.disabled = true;
+            leadsInput.placeholder = 'Unlimited';
+        } else {
+            leadsInput.disabled = false;
+            leadsInput.placeholder = 'e.g., 100';
+            leadsInput.focus();
+        }
+    });
+});
+
+// === Edit Plan: Yearly Price Calculator ===
+function setupEditYearlyCalc(planId) {
+    const monthlyInput = document.querySelector('.edit-monthly-price[data-plan-id="' + planId + '"]');
+    const discountInput = document.querySelector('.edit-yearly-discount[data-plan-id="' + planId + '"]');
+    const previewInput = document.getElementById('editYearlyPricePreview' + planId);
+    const savingsEl = document.getElementById('editYearlySavings' + planId);
+
+    function calc() {
+        const monthlyPrice = parseFloat(monthlyInput.value) || 0;
+        const discount = parseFloat(discountInput.value) || 0;
+        const totalYearly = monthlyPrice * 12;
+        const discountAmount = totalYearly * (discount / 100);
+        const yearlyPrice = cleanPrice(totalYearly - discountAmount);
+
+        previewInput.value = yearlyPrice;
+        if (discount > 0 && monthlyPrice > 0) {
+            savingsEl.innerHTML = 'Save ' + CS + cleanPrice(discountAmount) + '/year';
+        } else {
+            savingsEl.innerHTML = '';
+        }
+    }
+
+    monthlyInput.addEventListener('input', calc);
+    discountInput.addEventListener('input', calc);
+}
+
+// Initialize for all edit modals
+document.querySelectorAll('.edit-monthly-price').forEach(function(el) {
+    setupEditYearlyCalc(el.getAttribute('data-plan-id'));
+});
+
+const autoOpenPendingRequestsModal = "{{ auto_open_pending_requests_modal|yesno:'true,false' }}" === 'true';
+if (autoOpenPendingRequestsModal) {
+    const pendingRequestsModalEl = document.getElementById('pendingRequestsModal');
+    if (pendingRequestsModalEl) {
+        const pendingRequestsModal = new bootstrap.Modal(pendingRequestsModalEl);
+        pendingRequestsModal.show();
+    }
+}
+</script>
+{% endblock %}

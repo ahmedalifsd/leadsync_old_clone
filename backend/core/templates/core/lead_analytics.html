@@ -1,0 +1,732 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Analytics - LeadSync{% endblock %}
+
+{% block content %}
+<style>
+    .a-stat { border:none; border-radius:14px; overflow:hidden; }
+    .a-stat .card-body { padding: 1.1rem 1.25rem; }
+    .a-stat h3 { font-size:1.6rem; }
+    .avatar-sm {
+        width:36px; height:36px; border-radius:50%;
+        display:flex; align-items:center; justify-content:center;
+        font-weight:700; font-size:.85rem; color:#fff;
+    }
+    .progress-thin { height:6px; border-radius:3px; }
+    {% if print_mode %}
+    #pdf-content .card,
+    #pdf-content .card-body {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    {% endif %}
+</style>
+
+<div class="page-header page-add-notes">
+    <div class="add-item d-flex">
+        <div class="page-title">
+            <h4>Analytics</h4>
+            <h6>Lead performance &amp; team insights</h6>
+        </div>
+
+    </div>
+    <div class="d-flex flex-sm-row flex-column align-items-sm-center align-items-start">
+        {% if show_team %}
+
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                Export Reports
+            </button>
+            <ul class="dropdown-menu" style="">
+                <li><a class="dropdown-item fw-bold" href="#">Team Reports</a></li>
+                <li><a class="dropdown-item" href="{% url 'export_team_report' %}?type=summary">Team Summary (CSV)</a>
+                </li>
+                <li><a class="dropdown-item" href="{% url 'export_team_report' %}?type=detailed">Employee Leads Detail
+                    (CSV)</a></li>
+            </ul>
+        </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+<div id="pdf-content">
+
+<!-- ========== STAT CARDS ========== -->
+<div class="row g-3 mb-4">
+    <div class="col-2 col-lg-2 col-md-4 col-sm-12 col-12 mb-4">
+        <div class="card border-0 h-100">
+
+            <!-- Card 1 · Purple · Sparkline -->
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 white-card-cyan"
+                 data-card="1">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Total Leads</span>
+                        </div>
+                        <div class="card-number">{{ total_leads }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-2 col-lg-2 col-md-4 col-sm-12 col-12 mb-4">
+        <div class="card border-0 h-100">
+
+            <!-- Card 1 · Purple · Sparkline -->
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 white-card-green"
+                 data-card="1">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Won</span>
+                        </div>
+                        <div class="card-number">{{ won_leads }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-2 col-lg-2 col-md-4 col-sm-12 col-12 mb-4">
+        <div class="card border-0 h-100">
+
+            <!-- Card 1 · Purple · Sparkline -->
+            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 white-card-red"
+                 data-card="1">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Lost</span>
+                        </div>
+                        <div class="card-number">{{ lost_leads }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-2 col-lg-2 col-md-4 col-sm-12 col-12 mb-4">
+        <div class="card border-0 h-100">
+
+            <!-- Card 1 · Purple · Sparkline -->
+            <div class="stat-card d-flex flex-column justify-content-between h-100 card-purple" data-card="1">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Conv. Rate</span>
+                        </div>
+                        <div class="card-number">{{ conversion_rate }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-2 col-lg-2 col-md-4 col-sm-12 col-12 mb-4">
+        <div class="card border-0 h-100">
+
+            <!-- Card 1 · Purple · Sparkline -->
+            <div class="stat-card d-flex flex-column justify-content-between h-100 card-pink" data-card="1">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Loss Rate</span>
+                        </div>
+                        <div class="card-number">{{ loss_rate }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-2 col-lg-2 col-md-4 col-sm-12 col-12 mb-4">
+        <div class="card border-0 h-100">
+
+            <!-- Card 1 · Purple · Sparkline -->
+            <div class="stat-card d-flex flex-column justify-content-between h-100 card-amber" data-card="1">
+                <div class="card-header-row">
+                    <div>
+                        <div class="card-label-row">
+                            <div class="live-dot"></div>
+                            <span class="card-label">Overdue</span>
+                        </div>
+                        <div class="card-number">{{ overdue_followups }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<!-- ========== CHARTS ROW 1 ========== -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8 col-md-12">
+        <div class="card bg-white h-100">
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <h6 class="mb-0 fw-bold" id="monthlyTitle"><i class="fas fa-chart-area me-2 text-primary"></i>Monthly Lead Trends (Last 12 Months)</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" id="monthlyTfBtn" data-bs-toggle="dropdown">
+                                <i class="fas fa-calendar-alt me-1"></i><span id="monthlyTfLabel">12 Months</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" id="monthlyTfDropdown">
+                                <li><a class="dropdown-item small" href="#" data-tf="6m">Last 6 Months</a></li>
+                                <li><a class="dropdown-item small active" href="#" data-tf="12m">Last 12 Months</a></li>
+                                <li><a class="dropdown-item small" href="#" data-tf="24m">Last 24 Months</a></li>
+                                <li><a class="dropdown-item small" href="#" data-tf="all">All Time</a></li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" id="monthlyExportBtn" title="Download Monthly Trends CSV">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+                <div id="monthlyChart" style="min-height:280px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-12">
+        <div class="card bg-white h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-chart-pie me-2 text-info"></i>Status Distribution</h6>
+                <div id="statusChart" style="min-height:280px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== CHARTS ROW 2 ========== -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6 col-md-12">
+        <div class="card bg-white h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-bullhorn me-2 text-success"></i>Top Lead Sources</h6>
+                {% if top_sources %}
+                <div id="sourceChart" style="min-height:250px;"></div>
+                {% else %}
+                <p class="text-muted text-center my-5">No source data yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-12">
+        <div class="card bg-white h-100">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-tags me-2 text-warning"></i>Top Categories</h6>
+                {% if top_categories %}
+                <div id="categoryChart" style="min-height:250px;"></div>
+                {% else %}
+                <p class="text-muted text-center my-5">No category data yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== FOLLOW-UP SUMMARY ========== -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-4 col-md-12 col-sm-12 col-12">
+        <div class="card h-100 bg-white">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-calendar-check me-2 text-primary"></i>Follow-up Overview</h6>
+                <div class="row row-cols-lg-1 row-cols-md-2 row-cols-sm-1 row-cols-1  g-3 text-center">
+                    <div class="col mb-2">
+                        <div class="card border-0 h-100">
+                            <!-- Card 1 · Purple · Sparkline -->
+                            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 white-card-red"
+                                 data-card="1">
+                                <div class="card-header-row">
+                                    <div>
+                                        <div class="card-label-row">
+                                            <div class="live-dot"></div>
+                                            <span class="card-label">Overdue</span>
+                                        </div>
+                                        <div class="card-number">{{ overdue_followups }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col mb-2">
+                        <div class="card border-0 h-100">
+                            <!-- Card 1 · Purple · Sparkline -->
+                            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 white-card-indigo"
+                                 data-card="1">
+                                <div class="card-header-row">
+                                    <div>
+                                        <div class="card-label-row">
+                                            <div class="live-dot"></div>
+                                            <span class="card-label">Today</span>
+                                        </div>
+                                        <div class="card-number">{{ today_followups }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col mb-2">
+                        <div class="card border-0 h-100">
+                            <!-- Card 1 · Purple · Sparkline -->
+                            <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 white-card-cyan"
+                                 data-card="1">
+                                <div class="card-header-row">
+                                    <div>
+                                        <div class="card-label-row">
+                                            <div class="live-dot"></div>
+                                            <span class="card-label">Upcoming</span>
+                                        </div>
+                                        <div class="card-number">{{ upcoming_followups }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8 col-md-12 col-sm-12 col-12">
+
+        <div class="card h-100 bg-white">
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <h6 class="mb-0 fw-bold" id="aTeamTitle"><i class="fas fa-users-cog me-2 text-primary"></i>Team Status Stacked (Last 7 Days)</h6>
+                    <div class="d-flex gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" id="aTfBtn" data-bs-toggle="dropdown">
+                                <i class="fas fa-calendar-alt me-1"></i><span id="aTfLabel">7 Days</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" id="aTfDropdown">
+                                <li><a class="dropdown-item small" href="#" data-tf="all">All</a></li>
+                                <li><a class="dropdown-item small" href="#" data-tf="today">Today</a></li>
+                                <li><a class="dropdown-item small" href="#" data-tf="week">This Week</a></li>
+                                <li><a class="dropdown-item small active" href="#" data-tf="7d">Last 7 Days</a></li>
+                                <li><a class="dropdown-item small" href="#" data-tf="15d">Last 15 Days</a></li>
+                                <li><a class="dropdown-item small" href="#" data-tf="30d">Last 30 Days</a></li>
+                                <li><a class="dropdown-item small" href="#" data-tf="90d">Last 90 Days</a></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-sort me-1"></i><span id="aSortLabel">Total Leads</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" id="aSortDropdown">
+                                <li><a class="dropdown-item small active" href="#" data-sort="total">Total Leads</a>
+                                </li>
+                                <li><a class="dropdown-item small" href="#" data-sort="new">Most New</a></li>
+                                <li><a class="dropdown-item small" href="#" data-sort="not_contacted">Most Not Contacted</a></li>
+                                <li><a class="dropdown-item small" href="#" data-sort="contacted">Most Contacted</a></li>
+                                <li><a class="dropdown-item small" href="#" data-sort="no_response">Most No Response</a></li>
+                                <li><a class="dropdown-item small" href="#" data-sort="interested">Most Interested</a></li>
+                                <li><a class="dropdown-item small" href="#" data-sort="not_interested">Most Not Interested</a></li>
+                                <li><a class="dropdown-item small" href="#" data-sort="won">Most Won</a></li>
+                                <li><a class="dropdown-item small" href="#" data-sort="lost">Most Lost</a></li>
+                                <li><a class="dropdown-item small" href="#" data-sort="name">Name (A-Z)</a></li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" id="aExportBtn" title="Download Team Status CSV">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+                <div id="aTeamChart" style="min-height:320px;"></div>
+                <div class="d-flex align-items-center justify-content-between mt-2">
+                    <span class="small text-muted" id="aPageInfo"></span>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" id="aPrev" disabled><i
+                                class="fas fa-chevron-left"></i></button>
+                        <button class="btn btn-outline-secondary" id="aNext" disabled><i
+                                class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== TEAM ANALYTICS ========== -->
+{% if show_team and employee_data %}
+
+
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card bg-white">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3"><i class="fas fa-table me-2"></i>Employee Breakdown</h6>
+                <div class="table-responsive">
+                    <table class="table text-nowrap table-sm">
+                        <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th class="text-center">Total</th>
+                            <th class="text-center">New</th>
+                            <th class="text-center">Contacted</th>
+                            <th class="text-center">Won</th>
+                            <th class="text-center">Lost</th>
+                            <th class="text-center">Conv.</th>
+                            <th class="text-center">7 Days</th>
+                            <th class="text-center">30 Days</th>
+                            <th class="text-center">Overdue</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for emp in employee_data %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-{% cycle 'primary' 'success' 'info' 'warning' 'danger' 'secondary' %} me-2">
+                                        {{ emp.username|make_list|first|upper }}
+                                    </div>
+                                    <div>
+                                        <strong class="d-block" style="font-size:.85rem">{{ emp.username }}</strong>
+                                        <small class="text-muted">{{ emp.role_name }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center fw-bold">{{ emp.total }}</td>
+                            <td class="text-center"><span class="badge bg-soft-neutral">{{ emp.new }}</span></td>
+                            <td class="text-center"><span class="badge bg-soft-cyan">{{ emp.contacted }}</span></td>
+                            <td class="text-center"><span class="badge bg-soft-success">{{ emp.won }}</span></td>
+                            <td class="text-center"><span class="badge bg-soft-danger">{{ emp.lost }}</span></td>
+                            <td class="text-center">
+                                <span class="fw-bold text-{% if emp.conversion_rate >= 50 %}success{% elif emp.conversion_rate >= 25 %}warning{% else %}muted{% endif %}">{{ emp.conversion_rate }}%</span>
+                                <div class="progress progress-thin mt-1 mx-auto" style="width:60px;">
+                                    <div class="progress-bar bg-{% if emp.conversion_rate >= 50 %}success{% elif emp.conversion_rate >= 25 %}warning{% else %}secondary{% endif %}"
+                                         style="width:{{ emp.conversion_rate }}%"></div>
+                                </div>
+                            </td>
+                            <td class="text-center">{{ emp.last_7 }}</td>
+                            <td class="text-center">{{ emp.last_30 }}</td>
+                            <td class="text-center">
+                                {% if emp.overdue > 0 %}
+                                <span class="badge bg-danger">{{ emp.overdue }}</span>
+                                {% else %}
+                                <span class="text-success"><i class="fas fa-check-circle"></i></span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+</div>
+
+<!-- ========== ALL CHARTS JS (inside content block) ========== -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var tfLabels = {
+            'all': 'All',
+            'today': 'Today',
+            'week': 'This Week',
+            '7d': '7 Days',
+            '15d': '15 Days',
+            '30d': '30 Days',
+            '90d': '90 Days',
+            '6m': '6 Months',
+            '12m': '12 Months',
+            '24m': '24 Months'
+        };
+
+        // Monthly Trends
+        var monthlyChart = null;
+        var monthlyTf = '{{ analytics_monthly_tf|escapejs }}';
+
+        function renderMonthlyChart(labels, totals, won, newLeads, contacted) {
+            var target = document.querySelector('#monthlyChart');
+            if (!target) { return; }
+            if (monthlyChart) { monthlyChart.destroy(); }
+
+            monthlyChart = new ApexCharts(target, {
+                series: [
+                    { name: 'Total Leads', data: totals || [] },
+                    { name: 'Won', data: won || [] },
+                    { name: 'New', data: newLeads || [] },
+                    { name: 'Contacted', data: contacted || [] }
+                ],
+                chart: { type: 'area', height: 280, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit' },
+                dataLabels: { enabled: false },
+                stroke: { curve: 'smooth', width: 2.5 },
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.32, opacityTo: 0.05 } },
+                colors: ['#FF5733', '#33B5FF', '#28A745', '#FFC107'],
+                xaxis: { categories: labels || [], labels: { style: { fontSize: '11px', colors: '#6c757d' }, rotate: -45 } },
+                yaxis: { labels: { style: { colors: '#6c757d' } }, min: 0 },
+                legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px' },
+                grid: { borderColor: '#f1f1f1' },
+                tooltip: { theme: 'light' },
+                noData: { text: 'No data yet', style: { fontSize: '14px', color: '#adb5bd' } }
+            });
+            monthlyChart.render();
+        }
+
+        function loadMonthlyTrend(tf) {
+            monthlyTf = tf;
+            fetch('{% url "analytics_monthly_chart_data" %}?timeframe=' + encodeURIComponent(tf))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    renderMonthlyChart(data.labels || [], data.totals || [], data.won || [], data.new || [], data.contacted || []);
+                    var titleNode = document.getElementById('monthlyTitle');
+                    if (titleNode) {
+                        titleNode.innerHTML = '<i class="fas fa-chart-area me-2 text-primary"></i>Monthly Lead Trends (' + (data.label || 'Last 12 Months') + ')';
+                    }
+                    var tfNode = document.getElementById('monthlyTfLabel');
+                    if (tfNode) {
+                        tfNode.textContent = tfLabels[tf] || tf;
+                    }
+                    document.querySelectorAll('#monthlyTfDropdown .dropdown-item').forEach(function(a) {
+                        a.classList.toggle('active', a.dataset.tf === tf);
+                    });
+                });
+        }
+
+        document.querySelectorAll('#monthlyTfDropdown .dropdown-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                loadMonthlyTrend(this.dataset.tf);
+            });
+        });
+
+        var monthlyExportNode = document.getElementById('monthlyExportBtn');
+        if (monthlyExportNode) {
+            monthlyExportNode.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '{% url "analytics_monthly_chart_export" %}?timeframe=' + encodeURIComponent(monthlyTf);
+            });
+        }
+
+        loadMonthlyTrend(monthlyTf);
+
+        // Status Donut
+        var sLabels = JSON.parse('{{ status_labels_json|escapejs }}');
+        var sCounts = JSON.parse('{{ status_counts_json|escapejs }}');
+
+        if (sLabels.length > 0 && document.querySelector('#statusChart')) {
+            new ApexCharts(document.querySelector('#statusChart'), {
+                series: sCounts,
+                chart: { type: 'donut', height: 280, fontFamily: 'inherit' },
+                labels: sLabels,
+                colors: ['#4e73df', '#36b9cc', '#f6c23e', '#1cc88a', '#e74a3b', '#6f42c1', '#fd7e14', '#858796'],
+                plotOptions: { pie: { donut: { size: '60%', labels: { show: true, total: { show: true, label: 'Total', formatter: function(w) { return w.globals.seriesTotals.reduce(function(a,b){return a+b;},0); } } } } } },
+                legend: { position: 'bottom', fontSize: '12px' },
+                stroke: { colors: ['#fff'] },
+                dataLabels: { enabled: true, formatter: function(v) { return v.toFixed(1) + '%'; }, style: { fontSize: '11px' } }
+            }).render();
+        }
+
+        // Top Sources
+        var srcLabels = JSON.parse('{{ source_labels_json|escapejs }}');
+        var srcCounts = JSON.parse('{{ source_counts_json|escapejs }}');
+
+        if (srcLabels.length > 0 && document.querySelector('#sourceChart')) {
+            new ApexCharts(document.querySelector('#sourceChart'), {
+                series: [{ data: srcCounts }],
+                chart: { type: 'bar', height: 250, toolbar: { show: false }, fontFamily: 'inherit' },
+                plotOptions: { bar: { horizontal: true, barHeight: '50%', borderRadius: 6, dataLabels: { position: 'center' } } },
+                colors: ['#1cc88a'],
+                xaxis: { categories: srcLabels },
+                grid: { borderColor: '#f1f1f1' },
+                dataLabels: { enabled: true, formatter: function(v) { return v; }, style: { fontSize: '12px', colors: ['#fff'] } },
+                tooltip: { y: { formatter: function(v) { return v + ' leads'; } } }
+            }).render();
+        }
+
+        // Top Categories
+        var catLabels = JSON.parse('{{ cat_labels_json|escapejs }}');
+        var catCounts = JSON.parse('{{ cat_counts_json|escapejs }}');
+
+        if (catLabels.length > 0 && document.querySelector('#categoryChart')) {
+            new ApexCharts(document.querySelector('#categoryChart'), {
+                series: [{ data: catCounts }],
+                chart: { type: 'bar', height: 250, toolbar: { show: false }, fontFamily: 'inherit' },
+                plotOptions: { bar: { horizontal: true, barHeight: '50%', borderRadius: 6, dataLabels: { position: 'center' } } },
+                colors: ['#f6c23e'],
+                xaxis: { categories: catLabels },
+                grid: { borderColor: '#f1f1f1' },
+                dataLabels: { enabled: true, formatter: function(v) { return v; }, style: { fontSize: '12px', colors: ['#333'] } },
+                tooltip: { y: { formatter: function(v) { return v + ' leads'; } } }
+            }).render();
+        }
+
+        // Team Performance (Dashboard new stacked version)
+        var aChart = null;
+        var aPage = 1;
+        var aPerPage = 6;
+        var aSort = '{{ analytics_team_sort|escapejs }}';
+        var aTf = '{{ analytics_team_tf|escapejs }}';
+        var aSortMap = {
+            total: 'Total Leads',
+            new: 'Most New',
+            not_contacted: 'Most Not Contacted',
+            contacted: 'Most Contacted',
+            no_response: 'Most No Response',
+            interested: 'Most Interested',
+            not_interested: 'Most Not Interested',
+            won: 'Most Won',
+            lost: 'Most Lost',
+            name: 'Name (A-Z)'
+        };
+
+        function loadAnalyticsTeam() {
+            var url = '{% url "dashboard_team_stacked_data" %}' +
+                '?timeframe=' + encodeURIComponent(aTf) +
+                '&sort=' + encodeURIComponent(aSort) +
+                '&page=' + encodeURIComponent(aPage) +
+                '&per_page=' + encodeURIComponent(aPerPage);
+
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (aChart) { aChart.destroy(); }
+
+                    var members = data.members || [];
+                    var statuses = data.statuses || [];
+                    var names = members.map(function(m) { return m.name; });
+                    var series = statuses.map(function(status) {
+                        return {
+                            name: status.label,
+                            data: members.map(function(m) {
+                                return (m.statuses && m.statuses[status.key]) ? m.statuses[status.key] : 0;
+                            })
+                        };
+                    });
+
+                    while (names.length < 6) {
+                        names.push('');
+                        series.forEach(function(item) {
+                            item.data.push(null);
+                        });
+                    }
+
+                    aChart = new ApexCharts(document.querySelector('#aTeamChart'), {
+                        series: series,
+                        chart: { type: 'bar', height: 320, stacked: true, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit' },
+                        plotOptions: {
+                            bar: {
+                                horizontal: false,
+                                columnWidth: '40px',
+                                borderRadius: 14,
+                                borderRadiusApplication: 'end',
+                                borderRadiusWhenStacked: 'last',
+                                endingShape: 'rounded',
+                                dataLabels: {
+                                    total: {
+                                        enabled: true,
+                                        style: { fontSize: '12px', fontWeight: 700 }
+                                    }
+                                }
+                            }
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: function(val) {
+                                var n = Number(val || 0);
+                                return n > 0 ? String(Math.round(n)) : '';
+                            },
+                            style: { fontSize: '12px', fontWeight: '600', colors: ['#ffffff'] }
+                        },
+                        stroke: { width: 0 },
+                        colors: statuses.map(function(status) { return status.color; }),
+                        xaxis: { categories: names, labels: { style: { colors: '#6c757d', fontSize: '11px' }, rotate: -45, maxHeight: 80 }, min: 0, max: 5 },
+                        yaxis: { labels: { style: { colors: '#6c757d' } }, min: 0 },
+                        grid: { borderColor: '#f1f1f1' },
+                        legend: { position: 'right', offsetY: 40, fontSize: '12px' },
+                        tooltip: { y: { formatter: function(v) { return (v === null ? 0 : v) + ' leads'; } } },
+                        noData: { text: 'No team data in selected period', style: { fontSize: '14px', color: '#adb5bd' } }
+                    });
+                    aChart.render();
+
+                    var titleNode = document.getElementById('aTeamTitle');
+                    if (titleNode) {
+                        titleNode.innerHTML = '<i class="fas fa-users-cog me-2 text-primary"></i>Team Status Stacked (' + (data.label || 'Last 7 Days') + ')';
+                    }
+
+                    var tfNode = document.getElementById('aTfLabel');
+                    if (tfNode) {
+                        tfNode.textContent = tfLabels[aTf] || aTf;
+                    }
+
+                    var info = data.total_pages > 1
+                        ? (data.page + ' / ' + data.total_pages)
+                        : (data.total_members + ' member' + (data.total_members !== 1 ? 's' : '') + ' • showing up to ' + aPerPage);
+                    document.getElementById('aPageInfo').textContent = info;
+                    document.getElementById('aPrev').disabled = data.page <= 1;
+                    document.getElementById('aNext').disabled = data.page >= data.total_pages;
+                    aPage = data.page;
+
+                    document.querySelectorAll('#aTfDropdown .dropdown-item').forEach(function(a) {
+                        a.classList.toggle('active', a.dataset.tf === aTf);
+                    });
+                });
+        }
+
+        document.querySelectorAll('#aTfDropdown .dropdown-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                aTf = this.dataset.tf;
+                aPage = 1;
+                loadAnalyticsTeam();
+            });
+        });
+
+        document.querySelectorAll('#aSortDropdown .dropdown-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                aSort = this.dataset.sort;
+                aPage = 1;
+                document.getElementById('aSortLabel').textContent = aSortMap[aSort];
+                document.querySelectorAll('#aSortDropdown .dropdown-item').forEach(function(a) {
+                    a.classList.toggle('active', a.dataset.sort === aSort);
+                });
+                loadAnalyticsTeam();
+            });
+        });
+
+        document.getElementById('aPrev').addEventListener('click', function() { if (aPage > 1) { aPage--; loadAnalyticsTeam(); } });
+        document.getElementById('aNext').addEventListener('click', function() { aPage++; loadAnalyticsTeam(); });
+
+        var aExportNode = document.getElementById('aExportBtn');
+        if (aExportNode) {
+            aExportNode.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '{% url "dashboard_team_stacked_export" %}?timeframe=' + encodeURIComponent(aTf) + '&sort=' + encodeURIComponent(aSort);
+            });
+        }
+
+        loadAnalyticsTeam();
+    });
+</script>
+
+{% if print_mode %}
+<script>
+    window.addEventListener('load', function () {
+        setTimeout(function () {
+            window.print();
+        }, 2200);
+    });
+</script>
+{% endif %}
+
+{% endblock %}

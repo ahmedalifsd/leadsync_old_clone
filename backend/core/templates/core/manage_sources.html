@@ -1,0 +1,240 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Dashboard - LeadSync{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<!-- Messages Display -->
+{% if messages %}
+<div class="row mb-3">
+    <div class="col-12">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {% if message.tags == 'error' %}
+                <i class="fas fa-exclamation-circle me-2"></i>
+            {% elif message.tags == 'success' %}
+                <i class="fas fa-check-circle me-2"></i>
+            {% elif message.tags == 'warning' %}
+                <i class="fas fa-exclamation-triangle me-2"></i>
+            {% else %}
+                <i class="fas fa-info-circle me-2"></i>
+            {% endif %}
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="row mb-3">
+    <!-- Total Sources Card -->
+    <div class="col-lg-3 col-md-6 col-sm-12 col-12 mb-3">
+        <div class="card border-0 rounded-3 bg-white">
+            <div class="card-body text-center">
+                <h5 class="mb-2">
+                    <i class="fas fa-signal me-2 text-primary"></i>Total Sources
+                </h5>
+                <h2 class="mb-0 text-primary">{{ total_sources }}</h2>
+                {% if is_private_scope %}
+                <small class="text-muted">Private: {{ private_count }}/{{ private_limit }}</small>
+                {% endif %}
+                {% if search_query %}
+                <small class="text-muted">Filtered: {{ filtered_count }}</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+   <div class="col-lg-6 col-md-12 col-sm-12 col-12 mb-3">
+        <div class="card border-0 rounded-3 bg-white">
+            <div class="card-body">
+               <h5 class="mb-0">
+                    <i class="fas fa-signal me-2"></i>{% if is_private_scope %}Manage Private Sources{% else %}Manage Lead Sources{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if is_private_scope %}
+                <div class="alert alert-info">
+                    You can add up to <strong>{{ private_limit }}</strong> private sources. These are visible only to you and your employees.
+                </div>
+                {% endif %}
+                <!-- Search/Filter -->
+                <form method="get" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Search sources..." value="{{ search_query }}">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search me-1"></i>Search
+                        </button>
+                        {% if search_query %}
+                        <a href="{% url 'manage_sources' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+                
+                <!-- Add New Source Form -->
+                <form method="post" class="mb-3">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" name="name" class="form-control" 
+                               placeholder="Add new source" required>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Add
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Sources List -->
+                <div class="list-group">
+                    {% for source in sources %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="flex-grow-1">
+                            <strong>{{ source.name }}</strong>
+                            <br>
+                            <small class="text-muted">
+                                {{ source.usage_count|default:0 }} leads
+                            </small>
+                        </div>
+                        <div class="btn-group btn-group-sm ms-2" role="group">
+                            <button type="button" class="btn btn-outline-primary" 
+                                    data-bs-toggle="modal" data-bs-target="#editModal{{ source.id }}" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" 
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal{{ source.id }}" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Edit Modal -->
+                    <div class="modal fade" id="editModal{{ source.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ source.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editModalLabel{{ source.id }}">
+                                        <i class="fas fa-edit me-2"></i>Edit Source
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form method="post" action="{% url 'edit_source' source.id %}">
+                                    {% csrf_token %}
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="sourceName{{ source.id }}" class="form-label">Source Name</label>
+                                            <input type="text" class="form-control" id="sourceName{{ source.id }}" 
+                                                   name="name" value="{{ source.name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-1"></i>Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Delete Modal -->
+                    <div class="modal fade" id="deleteModal{{ source.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ source.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel{{ source.id }}">
+                                        <i class="fas fa-trash me-2 text-danger"></i>Confirm Delete
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Are you sure you want to delete the source "<strong>{{ source.name }}</strong>"?
+                                    </div>
+                                    <p class="text-muted mb-0">
+                                        This source is currently used by <strong>{{ source.usage_count|default:0 }}</strong> lead(s).
+                                        {% if source.usage_count|default:0 > 0 %}
+                                        <br><small class="text-danger">Note: Deleting this source will remove the source association from these leads.</small>
+                                        {% endif %}
+                                    </p>
+                                    <p class="text-muted mt-2 mb-0">This action cannot be undone.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <form method="post" action="{% url 'delete_source' source.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger text-white">
+                                            <i class="fas fa-trash me-1 text-white"></i>Delete Source
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-3">
+                        <p class="text-muted">
+                            {% if search_query %}
+                                No sources found matching "{{ search_query }}".
+                            {% else %}
+                                No sources added yet.
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+     <div class="col-lg-6 col-md-12 col-sm-12 col-12 mb-3">
+        <div class="card border-0 rounded-3 bg-white">
+            <div class="card-body">
+               <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Suggested Sources from "Other"
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if other_sources %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {% if is_private_scope %}
+                    These sources were entered in your leads under "Other". Add them as private options for your team.
+                    {% else %}
+                    These sources were entered by users in the "Other" field.
+                    {% endif %}
+                </div>
+                
+                <div class="list-group">
+                    {% for source in other_sources %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ source }}
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="name" value="{{ source }}">
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus me-1"></i>Add as Standard
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <p class="text-muted">No "Other" sources found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

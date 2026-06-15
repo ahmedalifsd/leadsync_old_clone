@@ -1,0 +1,199 @@
+{% extends 'layout/layout.html' %}
+{% load billing_tags %}
+{% load humanize %}
+
+{% block title %}{{ business_owner.user.username }} - Business Owner Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-tie me-2"></i>{{ business_owner.user.username }} - Business Owner Details
+                </h4>
+                <a href="{% url 'admin_manage_business_owners' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Owners
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- Business Owner Info -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-user me-2"></i>Personal Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Username:</strong></td>
+                                <td>{{ business_owner.user.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Name:</strong></td>
+                                <td>{{ business_owner.user.first_name }} {{ business_owner.user.last_name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>{{ business_owner.user.email }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phone:</strong></td>
+                                <td>{{ business_owner.phone_number|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Company:</strong></td>
+                                <td>{{ business_owner.company_name|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Joined:</strong></td>
+                                <td>{{ business_owner.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    {% if business_owner.is_approved %}
+                                        <span class="badge bg-success">Approved</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-cube me-2"></i>Subscription Information</h5>
+                        {% if subscription %}
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Plan:</strong></td>
+                                <td>{{ subscription.plan.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Price:</strong></td>
+                                <td>{{ currency_symbol }}{{ subscription.plan.monthly_price|clean_price }}/mo
+                                    {% if subscription.billing_cycle == 'yearly' %}
+                                    <span class="badge bg-success ms-1">Yearly ({{ subscription.plan.yearly_discount }}% off)</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Max Employees:</strong></td>
+                                <td>{{ subscription.effective_max_employees|default:"Unlimited" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Monthly Leads:</strong></td>
+                                <td>{{ subscription.effective_max_leads|intcomma|default:"Unlimited" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Yearly Leads:</strong></td>
+                                <td>{{ subscription.plan.yearly_max_leads|intcomma|default:"Unlimited" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Start Date:</strong></td>
+                                <td>{{ subscription.start_date|date:"M d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    {% if subscription.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                        {% else %}
+                        <p>No subscription found for this business owner.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Employees Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users me-2"></i>Employees ({{ employees.count }})
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if employees %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Joined</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for emp in employees %}
+                                    <tr>
+                                        <td><strong>{{ emp.staff.username }}</strong></td>
+                                        <td>{{ emp.staff.first_name }} {{ emp.staff.last_name }}</td>
+                                        <td>{{ emp.staff.email|default:"-" }}</td>
+                                        <td>{{ emp.staff.profile.phone_number|default:"-" }}</td>
+                                        <td>
+                                            {% if emp.staff.profile.is_approved %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ emp.joined_date|date:"M d, Y" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No employees found for this business owner.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Leads Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>Recent Leads ({{ leads.count }})
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if leads %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Client Name</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Created By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lead in leads %}
+                                    <tr>
+                                        <td><strong>{{ lead.client_name }}</strong></td>
+                                        <td>{{ lead.contact_number }}<br><small class="text-muted">{{ lead.email|default:"-" }}</small></td>
+                                        <td><span class="badge bg-secondary">{{ lead.get_status_display }}</span></td>
+                                        <td>{{ lead.created_at|date:"M d, Y" }}</td>
+                                        <td>{{ lead.created_by.username }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No leads found for this business owner.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

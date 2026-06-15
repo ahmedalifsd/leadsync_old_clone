@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - LeadSync{% endblock %}
+
+{% block content %}
+<style>
+    .password-wrap {
+        position: relative;
+    }
+    .password-toggle-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 0;
+        background: transparent;
+        color: #6c757d;
+        padding: 0;
+        line-height: 1;
+    }
+    .password-toggle-btn:focus {
+        outline: none;
+        color: #0d6efd;
+    }
+</style>
+
+
+<div class="container" style="height: 100vh !important">
+    <div class="main-content d-flex flex-column p-0" style="height: 100vh !important">
+        <div class=" " style="height: 100vh !important">
+
+            <div class="row justify-content-center align-items-center" style="height: 100vh !important">
+<!--                <div class="col-lg-4 d-none d-lg-block">-->
+<!--                    <img src="{% static 'assets/img/login.jpg' %}" class="rounded-3" style="height: 550px" alt="login">-->
+<!--                </div>-->
+                <div class="col-lg-6 col-md-12 col-sm-12 col-12">
+                    <div class="card m-0">
+                        <div class="card-body border-0 p-5">
+                            <div class="mw-480 ms-lg-auto">
+                                <div class="d-inline-block mb-4">
+                                     <a href="{% url 'home' %}" aria-label="Go to home page">
+                                        <img src="{% static 'assets/img/leadlogobg.png' %}" class="rounded-3 for-light-logo"
+                                            alt="LeadSync" style="width: 180px;">
+<!--                                        <img src="{% static 'assets/img/white-logo.svg' %}"-->
+<!--                                            class="rounded-3 for-dark-logo" alt="LeadSync" style="width: 180px;">-->
+                                     </a>
+                                </div>
+                                <h6 class="fs-18 mb-2">Welcome back to LeadSync! Login Now</h6>
+
+                            </div>
+
+                            {% if messages %}
+                            {% for message in messages %}
+                            <div class="alert {% if message.tags == 'warning' %}alert-warning{% elif message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} mt-3 mb-3">
+                                {% if message.tags == 'warning' %}
+                                <i class="fas fa-clock me-1"></i>
+                                {% elif message.tags == 'error' %}
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {% elif message.tags == 'success' %}
+                                <i class="fas fa-check-circle me-1"></i>
+                                {% endif %}
+                                {{ message }}
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+
+                            <form method="post">
+                                {% csrf_token %}
+
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="username" name="username" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password</label>
+                                    <div class="password-wrap">
+                                        <input type="password" class="form-control pe-5" id="password" name="password" required>
+                                        <button type="button" class="password-toggle-btn toggle-password" data-target="password" aria-label="Show password">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                                    <label class="form-check-label" for="remember">Remember me</label>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 mb-3">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                                </button>
+
+                                <div class="text-center">
+                                    <p class="mb-0">Don't have an account?
+                                        <a href="{% url 'signup' %}" class="text-decoration-none">Sign up</a>
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.toggle-password').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const input = document.getElementById(this.getAttribute('data-target'));
+            const icon = this.querySelector('i');
+            if (!input) {
+                return;
+            }
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            icon.classList.toggle('fa-eye', !show);
+            icon.classList.toggle('fa-eye-slash', show);
+            this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        });
+    });
+});
+</script>
+{% endblock %}

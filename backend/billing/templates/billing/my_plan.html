@@ -1,0 +1,1239 @@
+{% extends 'layout/layout.html' %}
+{% load billing_tags %}
+{% load humanize %}
+
+{% block title %}My Plan - LeadSync{% endblock %}
+
+{% block content %}
+<style>
+    .discount-price-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+    .discount-original-price {
+        font-size: 0.95rem;
+        color: #6c757d;
+        text-decoration: line-through;
+    }
+    .discount-final-price {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--bs-primary);
+        line-height: 1;
+    }
+    .discount-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #fff3cd;
+        color: #7a5800;
+        font-size: 0.76rem;
+        font-weight: 700;
+        border: 1px solid #ffe69c;
+    }
+    .discount-save-text {
+        font-size: 0.82rem;
+        color: #198754;
+        font-weight: 600;
+    }
+</style>
+
+<div class="row  mt-2 mb-4">
+    <div class="col-md-8">
+        <h3 class="mb-0">
+            <i class="fas fa-credit-card me-2"></i>My Subscription Plan
+        </h3>
+        <p class="text-muted">Manage your subscription and billing</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'manage_team' %}" class="btn btn-outline-primary">
+            <i class="fas fa-users me-1"></i>Manage Team
+        </a>
+    </div>
+</div>
+
+<!-- Current Plan -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-white border-bottom py-3">
+        <h5 class="mb-0"><i class="fas fa-crown text-warning me-2"></i>Current Plan</h5>
+    </div>
+    <div class="card-body">
+        {% if subscription %}
+        <div class="row align-items-center">
+            <div class="col-lg-9">
+                {% if subscription.is_custom_plan %}
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-primary bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center" style="width:56px;height:56px;">
+                        <i class="fas fa-sliders-h text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 text-primary">Custom Plan</h3>
+                        <h4 class="mb-0 fw-normal text-dark">{{ currency_symbol }}{{ subscription.get_current_price|clean_price }}<span class="fs-6 text-muted">/{{ subscription.billing_cycle }}</span></h4>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 mb-3">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2">
+                        <i class="fas fa-users me-1"></i>
+                        {% if subscription.custom_max_employees == -1 %}Unlimited{% else %}{{ subscription.custom_max_employees }}{% endif %} employees
+                    </span>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2">
+                        <i class="fas fa-chart-line me-1"></i>
+                        {% if subscription.custom_max_leads == -1 %}Unlimited{% else %}{{ subscription.custom_max_leads|intcomma }}{% endif %} leads
+                    </span>
+                </div>
+                {% else %}
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-primary bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center" style="width:56px;height:56px;">
+                        <i class="fas fa-gem text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 text-primary">{{ subscription.plan.name }} Plan</h3>
+                        {% if subscription.billing_cycle == 'yearly' %}
+                        <h4 class="mb-0 fw-normal text-dark">{{ currency_symbol }}{{ subscription.plan.yearly_price|clean_price }}<span class="fs-6 text-muted">/year</span></h4>
+                        <small class="text-success">
+                            <i class="fas fa-tag me-1"></i>{{ subscription.plan.yearly_discount|clean_price }}% discount applied
+                            <span class="text-muted">({{ currency_symbol }}{{ subscription.plan.yearly_price_per_month|clean_price }}/mo)</span>
+                        </small>
+                        {% else %}
+                        <h4 class="mb-0 fw-normal text-dark">{{ currency_symbol }}{{ subscription.plan.monthly_price|clean_price }}<span class="fs-6 text-muted">/month</span></h4>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <span class="badge bg-{{ subscription.billing_cycle|yesno:'primary,secondary' }} me-2">
+                    {{ subscription.get_billing_cycle_display }} Billing
+                </span>
+                {% if subscription.is_active %}
+                <span class="badge bg-success">Active</span>
+                {% else %}
+                <span class="badge bg-warning text-dark">Inactive</span>
+                {% endif %}
+
+                {% if subscription.plan.features %}
+                <div class="mt-3">
+                    <ul class="list-unstyled mb-0">
+                        {% for feature in subscription.plan.features.splitlines %}
+                        {% if feature.strip %}
+                        <li class="mb-1"><i class="fas fa-check text-success me-2"></i>{{ feature }}</li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Team Limit + Status Row -->
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="card bg-light border-0 rounded-3">
+                            <div class="card-body p-3">
+                                <h6 class="card-title small text-muted text-uppercase mb-2">Team Usage</h6>
+                                {% if subscription.effective_max_employees is None %}
+                                <h4 class="text-primary mb-1">{{ current_staff_count }} <small class="text-success">/ Unlimited</small></h4>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%;"></div>
+                                </div>
+                                {% else %}
+                                <h4 class="text-primary mb-1">{{ current_staff_count }}/{{ subscription.effective_max_employees }}</h4>
+                                <div class="progress" style="height: 6px;">
+                                    {% widthratio current_staff_count subscription.effective_max_employees 100 as percentage %}
+                                    <div class="progress-bar" role="progressbar"
+                                         style="width: {{ percentage }}%; {% if percentage > 90 %}background-color: #dc3545;{% elif percentage > 75 %}background-color: #ffc107;{% else %}background-color: #28a745;{% endif %}"></div>
+                                </div>
+                                <small class="text-muted">{{ percentage }}% used</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light border-0 rounded-3">
+                            <div class="card-body p-3">
+                                <h6 class="card-title small text-muted text-uppercase mb-2">Start Date</h6>
+                                <p class="mb-0 fw-medium">{{ subscription.start_date|date:"M d, Y" }}</p>
+                                {% if subscription.get_remaining_days is not None %}
+                                <small class="text-muted">{{ subscription.get_remaining_days }} days remaining</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light border-0 rounded-3">
+                            <div class="card-body p-3">
+                                <h6 class="card-title small text-muted text-uppercase mb-2">Renewal Process</h6>
+                                {% if subscription.is_active %}
+                                <span class="badge bg-info mb-2">Manual Verification</span>
+                                <small class="d-block text-muted">For renewal, click Pay/Upgrade and share payment details with support.</small>
+                                {% if subscription.end_date %}
+                                <small class="d-block text-muted">Current cycle ends on {{ subscription.end_date|date:"M d, Y" }}</small>
+                                {% endif %}
+                                {% if pending_renewal_payment %}
+                                <small class="d-block text-success mt-1">
+                                    <i class="fas fa-check-circle me-1"></i>Renewal request #{{ pending_renewal_payment.id }} is pending admin verification.
+                                </small>
+                                {% endif %}
+                                {% if queued_renewal_start_date %}
+                                <small class="d-block text-primary mt-1">
+                                    <i class="fas fa-calendar-check me-1"></i>Next cycle scheduled: {{ queued_renewal_start_date|date:"M d, Y" }} to {{ queued_renewal_end_date|date:"M d, Y" }}.
+                                </small>
+                                {% endif %}
+                                {% if is_in_grace_period %}
+                                <small class="d-block text-warning mt-1">
+                                    <i class="fas fa-exclamation-circle me-1"></i>Grace period active: {{ days_past_expiry }}/{{ renewal_grace_days }} days used.
+                                </small>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 text-center d-none d-lg-block">
+                <div class="display-1 text-primary mb-2" style="opacity:0.15;">
+                    <i class="fas fa-crown"></i>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+            <h5>No Active Subscription</h5>
+            <p class="text-muted">Choose a plan below to get started.</p>
+        </div>
+        {% endif %}
+
+        {% if show_renewal_alert %}
+        <div class="alert alert-warning mt-3 mb-0">
+            <div class="fw-semibold"><i class="fas fa-bell me-2"></i>Your plan expires in {{ renewal_days_left }} day{{ renewal_days_left|pluralize }}.</div>
+            <div class="small mt-1">Please submit payment request now so support can verify payment and renew your package on time.</div>
+            {% if pending_renewal_payment %}
+            <div class="small mt-1 text-success">
+                Renewal request already submitted (ID #{{ pending_renewal_payment.id }}).
+            </div>
+            {% endif %}
+            <button type="button" class="btn btn-sm btn-outline-dark mt-2" onclick="openRenewalRequestModal()">
+                <i class="fas fa-redo me-1"></i>Request Renewal
+            </button>
+        </div>
+        {% endif %}
+
+        {% if is_in_grace_period %}
+        <div class="alert alert-danger mt-3 mb-0">
+            <div class="fw-semibold"><i class="fas fa-hourglass-half me-2"></i>Your subscription is in grace period.</div>
+            <div class="small mt-1">Payment must be verified within {{ renewal_grace_days }} days after expiry to avoid auto deactivation.</div>
+        </div>
+        {% endif %}
+
+        <div class="alert alert-info mt-3 mb-0">
+            <div class="fw-semibold"><i class="fas fa-headset me-2"></i>Manual Billing Support</div>
+            <div class="small mt-1">After clicking Pay/Upgrade, share your payment proof with support. Super admin will verify and activate your package.</div>
+            <div class="small mt-1">
+                {% if support_email %}<strong>Email:</strong> {{ support_email }}{% endif %}
+                {% if support_phone %}<span class="ms-2"><strong>Phone:</strong> {{ support_phone }}</span>{% endif %}
+                {% if support_whatsapp %}<span class="ms-2"><strong>WhatsApp:</strong> {{ support_whatsapp }}</span>{% endif %}
+                <span class="ms-2"><a href="{% url 'support' %}">Open Support Page</a></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Plans -->
+<div class="card border-0 shadow-sm rounded-3 mb-4" id="available-plans">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0"><i class="fas fa-th-large text-primary me-2"></i>Available Plans</h5>
+        <!-- Monthly/Yearly Toggle -->
+        <div class="btn-group" role="group" id="billingToggle" style="border-radius: 50px; overflow: hidden;">
+            <button type="button" class="btn btn-primary btn-sm active px-3" data-cycle="monthly" onclick="switchBilling('monthly')" style="border-radius: 50px 0 0 50px;">
+                Monthly
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm px-3" data-cycle="yearly" onclick="switchBilling('yearly')" style="border-radius: 0 50px 50px 0;">
+                Yearly <span class="badge bg-warning text-dark ms-1">Save</span>
+            </button>
+        </div>
+    </div>
+    <div class="card-body border-bottom bg-light-subtle py-2">
+        <div class="row g-2 align-items-center">
+            <div class="col-lg-6">
+                <div class="input-group input-group-sm" style="max-width: 500px;">
+                    <span class="input-group-text"><i class="fas fa-ticket-alt"></i></span>
+                    <input type="text" id="billingCouponCode" class="form-control" placeholder="Enter coupon code (optional)">
+                    <button type="button" class="btn btn-outline-primary" id="validateCouponBtn" onclick="validateCouponCode()">
+                        Validate Coupon
+                    </button>
+                </div>
+                <div id="couponValidationMessage" class="small mt-2"></div>
+            </div>
+            <div class="col-lg-6 text-lg-end">
+                <small class="text-muted">Coupon code sirf apply ya validate karne par use hogi.</small>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row" id="planCardsRow">
+            {% for plan in plans %}
+            <div class="col-lg-4 col-md-6 mb-3 plan-card-col"
+                 data-plan-id="{{ plan.id }}"
+                 data-monthly-price="{{ plan.monthly_price }}"
+                 data-yearly-base-price="{{ plan.yearly_base_price }}"
+                 data-yearly-price="{{ plan.yearly_price }}"
+                 data-discounted-monthly-price="{{ plan.display_monthly_price }}"
+                 data-discounted-yearly-price="{{ plan.display_yearly_price }}"
+                  data-monthly-campaign-discount="{{ plan.monthly_campaign_discount }}"
+                  data-yearly-campaign-discount="{{ plan.yearly_campaign_discount }}"
+                 data-yearly-discount="{{ plan.yearly_discount }}"
+                 data-yearly-savings="{{ plan.yearly_savings }}"
+                 data-yearly-per-month="{{ plan.yearly_price_per_month }}"
+                  data-active-campaign-name="{{ plan.active_campaign_name|default:'' }}"
+                 data-is-current="{% if subscription and subscription.plan.id == plan.id %}1{% else %}0{% endif %}"
+                 data-sub-cycle="{{ subscription.billing_cycle|default:'monthly' }}">
+                <div class="card rounded-3 h-100 border shadow-sm plan-card-inner">
+                    <div class="current-plan-banner bg-primary text-white text-center py-1 small fw-bold" style="display:none;">
+                        <i class="fas fa-check-circle me-1"></i>Current Plan
+                    </div>
+                    <div class="card-body text-center pt-4 pb-3">
+                        <h5 class="fw-bold">{{ plan.name }}</h5>
+                        <div class="plan-price-monthly">
+                            {% if plan.monthly_campaign_discount > 0 %}
+                            <div class="discount-price-stack mb-1">
+                                <div class="discount-original-price">{{ currency_symbol }}{{ plan.monthly_price|clean_price }}/month</div>
+                                <div class="discount-final-price">{{ currency_symbol }}{{ plan.display_monthly_price|clean_price }}</div>
+                                <div class="discount-badge">
+                                    <i class="fas fa-bolt"></i>{{ plan.active_campaign_name|default:"Discount Applied" }}
+                                </div>
+                                <div class="discount-save-text">You save {{ currency_symbol }}{{ plan.monthly_campaign_discount|clean_price }}</div>
+                            </div>
+                            {% else %}
+                            <h2 class="text-primary mb-0">{{ currency_symbol }}{{ plan.display_monthly_price|clean_price }}</h2>
+                            {% endif %}
+                            <p class="text-muted mb-3">/month</p>
+                        </div>
+                        <div class="plan-price-yearly" style="display:none;">
+                            {% if plan.yearly_campaign_discount > 0 %}
+                            <div class="discount-price-stack mb-1">
+                                <div class="discount-original-price">{{ currency_symbol }}{{ plan.yearly_price|clean_price }}/year</div>
+                                <div class="discount-final-price">{{ currency_symbol }}{{ plan.display_yearly_price|clean_price }}</div>
+                                <div class="discount-badge">
+                                    <i class="fas fa-bolt"></i>{{ plan.active_campaign_name|default:"Discount Applied" }}
+                                </div>
+                                <div class="discount-save-text">You save {{ currency_symbol }}{{ plan.yearly_campaign_discount|clean_price }}</div>
+                            </div>
+                            {% else %}
+                            <h2 class="text-primary mb-0">{{ currency_symbol }}{{ plan.display_yearly_price|clean_price }}</h2>
+                            {% endif %}
+                            <p class="text-muted mb-1">/year</p>
+                            {% if plan.yearly_discount > 0 %}
+                            <span class="badge bg-warning text-dark mb-1">{{ plan.yearly_discount|clean_price }}% OFF</span>
+                            {% endif %}
+                            <p class="text-success small mb-3">
+                                Save {{ currency_symbol }}{{ plan.yearly_savings|clean_price }}/yr
+                                <span class="text-muted">({{ currency_symbol }}{{ plan.yearly_price_per_month|clean_price }}/mo base)</span>
+                            </p>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <ul class="list-unstyled text-start mb-3">
+                            <li class="mb-2">
+                                <i class="fas fa-users text-primary me-2"></i>
+                                Up to <strong>{{ plan.max_employees }}</strong> staff
+                            </li>
+                            <li class="mb-2 plan-leads-monthly">
+                                <i class="fas fa-chart-line text-primary me-2"></i>
+                                <strong>{{ plan.monthly_max_leads|intcomma|default:"Unlimited" }}</strong> leads
+                            </li>
+                            <li class="mb-2 plan-leads-yearly" style="display:none;">
+                                <i class="fas fa-chart-line text-primary me-2"></i>
+                                <strong>{{ plan.yearly_max_leads|intcomma|default:"Unlimited" }}</strong> leads
+                            </li>
+                            {% if plan.features %}
+                            {% for feature in plan.features.splitlines %}
+                            {% if feature.strip %}
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>{{ feature }}
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 text-center pb-4 plan-card-footer">
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Custom Plan Builder -->
+{% if pricing_config and pricing_config.is_active %}
+<div class="card border-0 shadow-sm rounded-3 mb-4" id="custom-plan-builder">
+    <div class="card-header border-0 py-3" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border-radius: 0.5rem 0.5rem 0 0;">
+        <h5 class="mb-0 text-white"><i class="fas fa-sliders-h me-2"></i>Build Your Custom Plan</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-4">Configure your own plan by selecting the number of employees and leads you need.</p>
+
+        <div class="row">
+            <!-- Configuration Panel -->
+            <div class="col-md-7">
+                <!-- Billing Cycle Toggle -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Billing Cycle</label>
+                    <div class="btn-group w-100" role="group" id="customBillingToggle" style="border-radius: 50px; overflow: hidden;">
+                        <button type="button" class="btn btn-primary active" data-cycle="monthly" onclick="switchCustomBilling('monthly')" style="border-radius: 50px 0 0 50px;">
+                            <i class="fas fa-calendar-day me-1"></i>Monthly
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" data-cycle="yearly" onclick="switchCustomBilling('yearly')" style="border-radius: 0 50px 50px 0;">
+                            <i class="fas fa-calendar-alt me-1"></i>Yearly
+                            <span class="badge bg-warning text-dark ms-1">{{ pricing_config.yearly_discount|clean_price }}% OFF</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Employees Selector -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-users text-primary me-1"></i>Number of Employees
+                    </label>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="input-group" id="empInputGroup" style="max-width: 220px;">
+                            <button class="btn btn-outline-primary" type="button" onclick="adjustValue('customEmployees', -{{ pricing_config.employee_step }})">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center fw-bold" id="customEmployees"
+                                   min="{{ pricing_config.min_employees }}" max="{{ pricing_config.max_employees }}"
+                                   step="{{ pricing_config.employee_step }}" value="{{ pricing_config.min_employees }}"
+                                   oninput="updateCustomPrice()">
+                            <button class="btn btn-outline-primary" type="button" onclick="adjustValue('customEmployees', {{ pricing_config.employee_step }})">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <!-- Unlimited employees option temporarily disabled -->
+                        <!--
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="unlimitedEmployees" onchange="toggleUnlimited('employees')">
+                            <label class="form-check-label fw-medium" for="unlimitedEmployees">Unlimited</label>
+                        </div>
+                        -->
+                    </div>
+                    <small class="text-muted mt-1 d-block" id="empPriceInfo">
+                        {{ currency_symbol }}{{ pricing_config.price_per_employee|clean_price }} per employee/month
+                        <span class="text-muted">({{ pricing_config.min_employees }} - {{ pricing_config.max_employees|intcomma }})</span>
+                    </small>
+                    <!-- Unlimited employees pricing info hidden with disabled option -->
+                    <!--
+                    <small class="text-primary mt-1 d-none" id="empUnlimitedInfo">
+                        <i class="fas fa-infinity me-1"></i>Unlimited employees at {{ currency_symbol }}{{ pricing_config.unlimited_employees_price|clean_price }}/month
+                    </small>
+                    -->
+                </div>
+
+                <!-- Leads Selector -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-chart-line text-primary me-1"></i>Number of Leads
+                    </label>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="input-group" id="leadsInputGroup" style="max-width: 220px;">
+                            <button class="btn btn-outline-primary" type="button" onclick="adjustValue('customLeads', -{{ pricing_config.lead_step }})">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center fw-bold" id="customLeads"
+                                   min="{{ pricing_config.min_leads }}" max="{{ pricing_config.max_leads }}"
+                                   step="{{ pricing_config.lead_step }}" value="{{ pricing_config.min_leads }}"
+                                   oninput="updateCustomPrice()">
+                            <button class="btn btn-outline-primary" type="button" onclick="adjustValue('customLeads', {{ pricing_config.lead_step }})">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <!-- Unlimited leads option temporarily disabled -->
+                        <!--
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="unlimitedLeads" onchange="toggleUnlimited('leads')">
+                            <label class="form-check-label fw-medium" for="unlimitedLeads">Unlimited</label>
+                        </div>
+                        -->
+                    </div>
+                    <small class="text-muted mt-1 d-block" id="leadsPriceInfo">
+                        {{ currency_symbol }}{{ pricing_config.price_per_lead_block|clean_price }} per {{ pricing_config.lead_block_size|intcomma }} leads/month
+                        <span class="text-muted">({{ pricing_config.min_leads|intcomma }} - {{ pricing_config.max_leads|intcomma }})</span>
+                    </small>
+                    <!-- Unlimited leads pricing info hidden with disabled option -->
+                    <!--
+                    <small class="text-primary mt-1 d-none" id="leadsUnlimitedInfo">
+                        <i class="fas fa-infinity me-1"></i>Unlimited leads at {{ currency_symbol }}{{ pricing_config.unlimited_leads_price|clean_price }}/month
+                    </small>
+                    -->
+                </div>
+            </div>
+
+            <!-- Price Summary Panel -->
+            <div class="col-md-5">
+                <div class="card border-primary rounded-3 h-100">
+                    <div class="card-body text-center d-flex flex-column justify-content-center">
+                        <h6 class="text-muted mb-2">Your Custom Plan</h6>
+                        <div id="customPriceMonthly">
+                            <h2 class="text-primary mb-0">{{ currency_symbol }}<span id="customMonthlyPrice">0.00</span></h2>
+                            <p class="text-muted">/month</p>
+                        </div>
+                        <div id="customPriceYearly" style="display:none;">
+                            <h2 class="text-primary mb-0">{{ currency_symbol }}<span id="customYearlyPrice">0.00</span></h2>
+                            <p class="text-muted">/year</p>
+                            <p class="text-success small mb-0">
+                                <i class="fas fa-tag me-1"></i>You save {{ currency_symbol }}<span id="customYearlySavings">0.00</span>/year
+                            </p>
+                        </div>
+
+                        <hr>
+
+                        <div class="text-start mb-3">
+                            {% if pricing_config.base_price > 0 %}
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Base Price</span>
+                                <span>{{ currency_symbol }}{{ pricing_config.base_price|clean_price }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Employees</span>
+                                <span id="summaryEmpLine"><span id="summaryEmp">{{ pricing_config.min_employees }}</span> x {{ currency_symbol }}{{ pricing_config.price_per_employee|clean_price }} = {{ currency_symbol }}<span id="summaryEmpCost">0.00</span></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Leads</span>
+                                <span id="summaryLeadsLine"><span id="summaryLeads">{{ pricing_config.min_leads }}</span> x {{ currency_symbol }}{{ pricing_config.price_per_lead_block|clean_price }} = {{ currency_symbol }}<span id="summaryLeadCost">0.00</span></span>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-lg w-100 rounded-pill" id="customPlanBtn" onclick="upgradeCustomPlan()">
+                            <i class="fas fa-paper-plane me-2"></i>Request Activation
+                        </button>
+                        <small class="text-muted mt-2">
+                            <i class="fas fa-info-circle me-1"></i>Manual verification by support team
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Payment History -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom py-3">
+        <h5 class="mb-0"><i class="fas fa-receipt text-muted me-2"></i>Payment History</h5>
+    </div>
+    <div class="card-body">
+        {% if payments %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Discount</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Method</th>
+                        <th>Transaction ID</th>
+                        <th>Proof</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.created_at|date:"M d, Y" }}</td>
+                        <td class="fw-bold">{{ currency_symbol }}{{ payment.amount|clean_price }}</td>
+                        <td>
+                            {% if payment.discount_amount > 0 %}
+                            <span class="badge bg-success-subtle text-success border">-{{ currency_symbol }}{{ payment.discount_amount|clean_price }}</span>
+                            <div class="small text-muted">{{ payment.discount_label|default:"Discount applied" }}</div>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ payment.due_date|date:"M d, Y" }}</td>
+                        <td>
+                            {% if payment.is_paid %}
+                            <span class="badge bg-success">Paid</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Pending Review</span>
+                            {% endif %}
+                            {% if payment.is_renewal %}
+                            <div class="small text-muted">Renewal request</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ payment.get_payment_method_display }}</td>
+                        <td><span class="text-muted small">{{ payment.transaction_id|default:"-" }}</span></td>
+                        <td>
+                            {% if payment.payment_proof %}
+                            <a href="{{ payment.payment_proof_access_url|default:payment.payment_proof.url }}" target="_blank" class="small">View</a>
+                            {% else %}
+                            <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-receipt fa-3x text-muted mb-3 d-block" style="opacity:0.3;"></i>
+            <p class="text-muted">No payment history found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Staff Member Modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Register New Staff Member</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'add_staff_member' %}" id="addStaffForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This staff member will be <strong>auto-approved</strong> and added to your team immediately.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="staffBossUsername" class="form-label fw-medium">Boss Username</label>
+                            <input type="text" class="form-control bg-light" id="staffBossUsername"
+                                   value="{{ request.user.username }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="staffUsername" class="form-label fw-medium">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="staffUsername" name="username"
+                                   placeholder="Enter username" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="staffEmail" class="form-label fw-medium">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="staffEmail" name="email"
+                                   placeholder="staff@example.com" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="staffPhone" class="form-label fw-medium">Phone Number</label>
+                            <input type="text" class="form-control" id="staffPhone" name="phone_number"
+                                   placeholder="03001234567">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="staffPassword1" class="form-label fw-medium">Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="staffPassword1" name="password1"
+                                       placeholder="Min 8 characters" required minlength="8">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('staffPassword1', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="staffPassword2" class="form-label fw-medium">Confirm Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="staffPassword2" name="password2"
+                                       placeholder="Re-enter password" required minlength="8">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('staffPassword2', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="text-danger d-none" id="passwordMismatch">Passwords do not match</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="staffCompany" class="form-label fw-medium">Company Name</label>
+                            <input type="text" class="form-control" id="staffCompany" name="company_name"
+                                   value="{{ request.user.profile.company_name|default:'' }}" placeholder="Company name">
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="card bg-light w-100 border-0">
+                                <div class="card-body py-2 px-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-users me-1"></i>Team Slots:
+                                        <strong class="text-primary">{{ current_staff_count }}/{{ subscription.effective_max_employees|default:"Unlimited" }}</strong>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="addStaffSubmitBtn">
+                        <i class="fas fa-user-plus me-1"></i>Register Staff Member
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Manual Payment Request Modal -->
+<div class="modal fade" id="manualPaymentModal" tabindex="-1" aria-labelledby="manualPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title" id="manualPaymentModalLabel font-weight-bold"><i class="fas fa-file-invoice-dollar me-2"></i>Submit Payment Request</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'request_manual_payment' %}" id="manualPaymentForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="plan_id" id="manualPlanId">
+                <input type="hidden" name="billing_cycle" id="manualBillingCycle" value="monthly">
+                <input type="hidden" name="coupon" id="manualCouponCode">
+                <input type="hidden" name="is_custom" id="manualIsCustom" value="0">
+                <input type="hidden" name="employees" id="manualCustomEmployees" value="">
+                <input type="hidden" name="leads" id="manualCustomLeads" value="">
+                <input type="hidden" name="is_renewal" id="manualIsRenewal" value="0">
+                <input type="hidden" name="payer_name" value="{{ request.user.get_full_name|default:request.user.username }}">
+                <input type="hidden" name="payer_phone" value="{{ request.user.profile.phone_number|default:'' }}">
+                <input type="hidden" name="payer_email" value="{{ request.user.email }}">
+
+                <div class="modal-body py-3">
+                    <!-- Payment Details Grid -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="p-2 border rounded bg-light h-100">
+                                <small class="text-primary fw-bold d-block mb-1"><i class="fas fa-mobile-alt me-1"></i>Mobile Wallets</small>
+                                <div class="mb-1">
+                                    <small class="text-muted d-block small">JazzCash / EasyPaisa</small>
+                                    <div class="fw-bold">+92 323 6734967</div>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block small">Account Holder</small>
+                                    <div class="fw-bold small">Sehar Noreen</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 border rounded bg-light h-100">
+                                <small class="text-success fw-bold d-block mb-1"><i class="fas fa-university me-1"></i>Bank Transfer</small>
+                                <div class="mb-1">
+                                    <small class="text-muted d-block small">Bank / Holder</small>
+                                    <div class="fw-bold small">HBL / Ahmed Ali</div>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block small">IBAN No</small>
+                                    <div class="fw-bold small">PK55HABB0017487902971603</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-primary bg-opacity-10 p-2 rounded mb-3 border border-primary border-opacity-25">
+                        <small class="text-muted d-block">Selected Package:</small>
+                        <div class="fw-bold text-primary" id="manualPlanSummary">-</div>
+                    </div>
+
+                    <!-- Input Fields -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Transaction ID (TID) *</label>
+                        <input type="text" class="form-control form-control-sm border-primary" name="transaction_id" placeholder="Enter the ID from confirmation SMS/App" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label small fw-bold">Additional Message (Optional)</label>
+                        <textarea class="form-control form-control-sm" name="contact_note" rows="2" placeholder="Example: Paid from JazzCash..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary px-4 fw-bold">
+                        <i class="fas fa-check-circle me-1"></i>Confirm & Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    let currentBillingCycle = 'monthly';
+    var currentSubPrice = {{ subscription.plan.monthly_price|default:"0" }};
+    var currentSubCycle = '{{ subscription.billing_cycle|default:"monthly" }}';
+    var hasSub = {% if subscription and subscription.is_active %}true{% else %}false{% endif %};
+    var currentSubPlanId = {% if subscription %}{{ subscription.plan.id }}{% else %}null{% endif %};
+    var currentSubPlanName = '{% if subscription and subscription.is_custom_plan %}Custom Plan{% elif subscription %}{{ subscription.plan.name|escapejs }}{% else %}Plan{% endif %}';
+    var currentSubDisplayAmount = '{% if subscription %}{{ currency_symbol }}{{ subscription.get_current_price|clean_price }}{% else %}{{ currency_symbol }}0{% endif %}';
+    var currentSubIsCustom = {% if subscription and subscription.is_custom_plan %}true{% else %}false{% endif %};
+    var currentSubCustomEmployees = {% if subscription and subscription.is_custom_plan %}{{ subscription.custom_max_employees|default:0 }}{% else %}0{% endif %};
+    var currentSubCustomLeads = {% if subscription and subscription.is_custom_plan %}{{ subscription.custom_max_leads|default:0 }}{% else %}0{% endif %};
+    let selectedPlanIdForCoupon = null;
+    let activeCouponPreviewCode = '';
+
+    function openRenewalRequestModal() {
+        if (!hasSub) return;
+        const couponInput = document.getElementById('billingCouponCode');
+        const couponCode = couponInput ? couponInput.value.trim() : '';
+        openManualPaymentModal({
+            planId: currentSubIsCustom ? '' : currentSubPlanId,
+            planName: currentSubPlanName,
+            cycle: currentSubCycle,
+            couponCode,
+            isCustom: currentSubIsCustom,
+            employees: currentSubIsCustom ? currentSubCustomEmployees : '',
+            leads: currentSubIsCustom ? currentSubCustomLeads : '',
+            isRenewal: true,
+            displayAmount: currentSubDisplayAmount,
+        });
+    }
+
+    function cleanPrice(value) {
+        const num = parseFloat(value);
+        if (Number.isNaN(num)) return value;
+        return num % 1 === 0 ? num.toFixed(0) : parseFloat(num.toFixed(2)).toString();
+    }
+
+    function cleanPercent(value) {
+        const num = parseFloat(value || 0);
+        if (Number.isNaN(num) || num <= 0) return '0';
+        return num % 1 === 0 ? num.toFixed(0) : num.toFixed(2);
+    }
+
+    function renderPlanPriceSection(col, cycle, previewData = null) {
+        const currency = '{{ currency_symbol }}';
+        const container = col.querySelector(cycle === 'yearly' ? '.plan-price-yearly' : '.plan-price-monthly');
+        if (!container) return;
+
+        const originalPrice = parseFloat(cycle === 'yearly' ? col.dataset.yearlyPrice : col.dataset.monthlyPrice) || 0;
+        const yearlyBasePrice = parseFloat(col.dataset.yearlyBasePrice || 0) || 0;
+        const defaultFinal = parseFloat(cycle === 'yearly' ? col.dataset.discountedYearlyPrice : col.dataset.discountedMonthlyPrice) || originalPrice;
+        const defaultCampaignDiscount = parseFloat(cycle === 'yearly' ? col.dataset.yearlyCampaignDiscount : col.dataset.monthlyCampaignDiscount) || 0;
+        const defaultCampaignName = col.dataset.activeCampaignName || 'Discount Applied';
+        const yearlyDiscount = parseFloat(col.dataset.yearlyDiscount || 0) || 0;
+        const yearlySavings = parseFloat(col.dataset.yearlySavings || 0) || 0;
+        const yearlyPerMonth = parseFloat(col.dataset.yearlyPerMonth || 0) || 0;
+
+        const finalPrice = previewData ? parseFloat(previewData.final_amount || defaultFinal) : defaultFinal;
+        const campaignDiscount = previewData ? parseFloat(previewData.campaign_discount || 0) : defaultCampaignDiscount;
+        const couponDiscount = previewData ? parseFloat(previewData.coupon_discount || 0) : 0;
+        const totalDiscount = campaignDiscount + couponDiscount;
+        const label = previewData && previewData.discount_label ? previewData.discount_label : (campaignDiscount > 0 ? defaultCampaignName : '');
+        const periodLabel = cycle === 'yearly' ? '/year' : '/month';
+
+        if (cycle === 'monthly') {
+            const campaignPercent = originalPrice > 0 ? (campaignDiscount / originalPrice) * 100 : 0;
+            const afterCampaign = Math.max(0, originalPrice - campaignDiscount);
+            const couponPercent = afterCampaign > 0 ? (couponDiscount / afterCampaign) * 100 : 0;
+            const campaignName = (defaultCampaignName || 'Campaign Discount');
+
+            let html = `
+                <div class="small text-muted text-decoration-line-through">Main Price: ${currency}${cleanPrice(originalPrice)}${periodLabel}</div>
+            `;
+
+            if (campaignDiscount > 0) {
+                html += `<div class="small text-success">${campaignName} (${cleanPercent(campaignPercent)}% | -${currency}${cleanPrice(campaignDiscount)}) -> ${currency}${cleanPrice(afterCampaign)}</div>`;
+            }
+
+            if (couponDiscount > 0) {
+                html += `<div class="small text-success">Coupon (${cleanPercent(couponPercent)}% | -${currency}${cleanPrice(couponDiscount)}) -> ${currency}${cleanPrice(finalPrice)}</div>`;
+            }
+
+            html += `<h2 class="text-primary mb-0">Final: ${currency}${cleanPrice(finalPrice)}</h2>`;
+            html += `<p class="text-muted mb-2">${periodLabel}</p>`;
+            container.innerHTML = html;
+            return;
+        }
+
+        const yearlyBaseDiscountAmount = Math.max(0, yearlyBasePrice - originalPrice);
+        const campaignPercentYearly = originalPrice > 0 ? (campaignDiscount / originalPrice) * 100 : 0;
+        const afterCampaignYearly = Math.max(0, originalPrice - campaignDiscount);
+        const couponPercentYearly = afterCampaignYearly > 0 ? (couponDiscount / afterCampaignYearly) * 100 : 0;
+
+        let yearlyHtml = `
+            <div class="small text-muted text-decoration-line-through">Main Yearly Price: ${currency}${cleanPrice(yearlyBasePrice || originalPrice)}</div>
+        `;
+
+        if (yearlyBaseDiscountAmount > 0) {
+            yearlyHtml += `<div class="small text-success">Yearly Discount (${cleanPercent(yearlyDiscount)}% | -${currency}${cleanPrice(yearlyBaseDiscountAmount)}) -> ${currency}${cleanPrice(originalPrice)}</div>`;
+        }
+
+        if (campaignDiscount > 0) {
+            yearlyHtml += `<div class="small text-success">${defaultCampaignName || 'Campaign Discount'} (${cleanPercent(campaignPercentYearly)}% | -${currency}${cleanPrice(campaignDiscount)}) -> ${currency}${cleanPrice(afterCampaignYearly)}</div>`;
+        }
+
+        if (couponDiscount > 0) {
+            yearlyHtml += `<div class="small text-success">Coupon (${cleanPercent(couponPercentYearly)}% | -${currency}${cleanPrice(couponDiscount)}) -> ${currency}${cleanPrice(finalPrice)}</div>`;
+        }
+
+        yearlyHtml += `
+            <h2 class="text-primary mb-0">Final: ${currency}${cleanPrice(finalPrice)}</h2>
+            <p class="text-muted mb-1">/year</p>
+            ${yearlyDiscount > 0 ? `<span class="badge bg-warning text-dark mb-1">${cleanPrice(yearlyDiscount)}% OFF</span>` : ''}
+        `;
+        container.innerHTML = yearlyHtml;
+    }
+
+    function resetPlanPreviewPrices() {
+        document.querySelectorAll('.plan-card-col').forEach((col) => {
+            renderPlanPriceSection(col, 'monthly', null);
+            renderPlanPriceSection(col, 'yearly', null);
+        });
+    }
+
+    function applyCouponPreviewToPlans(previews) {
+        const map = new Map((previews || []).map(item => [String(item.plan_id), item]));
+        document.querySelectorAll('.plan-card-col').forEach((col) => {
+            const previewData = map.get(col.dataset.planId) || null;
+            renderPlanPriceSection(col, currentBillingCycle, previewData);
+        });
+    }
+
+    function previewCouponAcrossPlans(couponCode) {
+        return fetch(`/billing/coupon-plan-previews/?coupon=${encodeURIComponent(couponCode)}&cycle=${encodeURIComponent(currentBillingCycle)}`)
+            .then(async (response) => {
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || data.error || 'Could not preview coupon on plans.');
+                }
+                return data;
+            })
+            .then((data) => {
+                applyCouponPreviewToPlans(data.previews || []);
+            });
+    }
+
+    function switchBilling(cycle) {
+        currentBillingCycle = cycle;
+        document.querySelectorAll('#billingToggle button').forEach(btn => {
+            if (btn.dataset.cycle === cycle) {
+                btn.classList.remove('btn-outline-primary');
+                btn.classList.add('btn-primary', 'active');
+            } else {
+                btn.classList.remove('btn-primary', 'active');
+                btn.classList.add('btn-outline-primary');
+            }
+        });
+        document.querySelectorAll('.plan-price-monthly').forEach(el => el.style.display = cycle === 'monthly' ? '' : 'none');
+        document.querySelectorAll('.plan-price-yearly').forEach(el => el.style.display = cycle === 'yearly' ? '' : 'none');
+        document.querySelectorAll('.plan-leads-monthly').forEach(el => el.style.display = cycle === 'monthly' ? '' : 'none');
+        document.querySelectorAll('.plan-leads-yearly').forEach(el => el.style.display = cycle === 'yearly' ? '' : 'none');
+        updatePlanCards(cycle);
+        if (activeCouponPreviewCode) {
+            previewCouponAcrossPlans(activeCouponPreviewCode).catch(() => {});
+        }
+    }
+
+    function updatePlanCards(cycle) {
+        selectedPlanIdForCoupon = null;
+        document.querySelectorAll('.plan-card-col').forEach(col => {
+            renderPlanPriceSection(col, 'monthly', null);
+            renderPlanPriceSection(col, 'yearly', null);
+
+            var isCurrent = col.dataset.isCurrent === '1';
+            var subCycle = col.dataset.subCycle;
+            var mPrice = parseFloat(col.dataset.monthlyPrice);
+            var yPrice = parseFloat(col.dataset.yearlyPrice);
+            var dmPrice = parseFloat(col.dataset.discountedMonthlyPrice || col.dataset.monthlyPrice);
+            var dyPrice = parseFloat(col.dataset.discountedYearlyPrice || col.dataset.yearlyPrice);
+            var planId = col.dataset.planId;
+            var banner = col.querySelector('.current-plan-banner');
+            var inner = col.querySelector('.plan-card-inner');
+            var footer = col.querySelector('.plan-card-footer');
+            var effectivePriceForCycle = cycle === 'yearly' ? dyPrice : dmPrice;
+
+            var showCurrent = isCurrent && hasSub && cycle === subCycle;
+            var isHigher = dmPrice > currentSubPrice;
+
+            banner.style.display = showCurrent ? '' : 'none';
+            inner.classList.toggle('border-primary', showCurrent);
+            inner.classList.toggle('border-2', showCurrent);
+            inner.classList.toggle('shadow', showCurrent);
+
+            if (showCurrent) {
+                footer.innerHTML = '<button class="btn btn-outline-success w-100 rounded-pill" disabled><i class="fas fa-check-circle me-1"></i>Current Plan</button>';
+            } else if (hasSub && !isHigher) {
+                footer.innerHTML = '';
+            } else {
+                if (!selectedPlanIdForCoupon && effectivePriceForCycle > 0) {
+                    selectedPlanIdForCoupon = planId;
+                }
+                footer.innerHTML = '<button class="btn btn-primary w-100 rounded-pill manual-payment-btn" data-plan-id="' + planId + '" data-plan-name="' + (col.querySelector('h5')?.textContent?.trim() || 'Plan') + '" data-plan-monthly-price="' + dmPrice + '" data-plan-yearly-price="' + dyPrice + '"><i class="fas fa-paper-plane me-1"></i>Pay / Request</button>';
+            }
+        });
+        bindPaymentButtons();
+    }
+
+    function showCouponValidationMessage(message, isValid) {
+        const el = document.getElementById('couponValidationMessage');
+        if (!el) return;
+        el.className = 'small mt-2 ' + (isValid ? 'text-success' : 'text-danger');
+        el.textContent = message;
+    }
+
+    function validateCouponCode(isCustom = false) {
+        const couponInput = document.getElementById('billingCouponCode');
+        const couponCode = couponInput ? couponInput.value.trim() : '';
+        if (!couponCode) {
+            showCouponValidationMessage('Please enter a coupon code.', false);
+            return;
+        }
+
+        let url = `/billing/validate-coupon/?coupon=${encodeURIComponent(couponCode)}&cycle=${encodeURIComponent(isCustom ? customBillingCycle : currentBillingCycle)}`;
+
+        if (isCustom) {
+            const employees = document.getElementById('customEmployees')?.value;
+            const leads = document.getElementById('customLeads')?.value;
+            url += `&is_custom=1&employees=${encodeURIComponent(employees || '')}&leads=${encodeURIComponent(leads || '')}`;
+        } else {
+            const chosenPlanId = selectedPlanIdForCoupon || document.querySelector('.manual-payment-btn')?.getAttribute('data-plan-id');
+            if (!chosenPlanId) {
+                showCouponValidationMessage('Choose a plan first.', false);
+                return;
+            }
+            url += `&plan_id=${encodeURIComponent(chosenPlanId)}`;
+        }
+
+        fetch(url)
+            .then(async (response) => {
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || data.error || 'Coupon validation failed.');
+                }
+                return data;
+            })
+            .then((data) => {
+                activeCouponPreviewCode = couponCode;
+                showCouponValidationMessage(
+                    `${data.message} Final: ${data.currency_symbol}${data.final_amount} | Discount: ${data.currency_symbol}${data.discount_amount}`,
+                    true
+                );
+                previewCouponAcrossPlans(couponCode).catch((error) => {
+                    showCouponValidationMessage(error.message || 'Coupon applied but preview update failed.', true);
+                });
+            })
+            .catch((error) => {
+                activeCouponPreviewCode = '';
+                resetPlanPreviewPrices();
+                showCouponValidationMessage(error.message || 'Coupon validation failed.', false);
+            });
+    }
+
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') { input.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); }
+        else { input.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const couponInput = document.getElementById('billingCouponCode');
+        const pw1 = document.getElementById('staffPassword1');
+        const pw2 = document.getElementById('staffPassword2');
+        const mismatch = document.getElementById('passwordMismatch');
+        const submitBtn = document.getElementById('addStaffSubmitBtn');
+        if (couponInput) {
+            couponInput.addEventListener('input', function() {
+                if (!this.value.trim()) {
+                    activeCouponPreviewCode = '';
+                    resetPlanPreviewPrices();
+                    showCouponValidationMessage('', true);
+                }
+            });
+        }
+        function checkPasswords() {
+            if (pw2.value && pw1.value !== pw2.value) {
+                mismatch.classList.remove('d-none'); pw2.classList.add('is-invalid'); submitBtn.disabled = true;
+            } else {
+                mismatch.classList.add('d-none'); pw2.classList.remove('is-invalid'); submitBtn.disabled = false;
+            }
+        }
+        if (pw1 && pw2) { pw1.addEventListener('input', checkPasswords); pw2.addEventListener('input', checkPasswords); }
+    });
+
+    function openManualPaymentModal({ planId = '', planName = 'Plan', cycle = 'monthly', couponCode = '', isCustom = false, employees = '', leads = '', isRenewal = false, displayAmount = '' }) {
+        const modalEl = document.getElementById('manualPaymentModal');
+        if (!modalEl) return;
+
+        document.getElementById('manualPlanId').value = planId;
+        document.getElementById('manualBillingCycle').value = cycle;
+        document.getElementById('manualCouponCode').value = couponCode;
+        document.getElementById('manualIsCustom').value = isCustom ? '1' : '0';
+        document.getElementById('manualCustomEmployees').value = employees;
+        document.getElementById('manualCustomLeads').value = leads;
+        document.getElementById('manualIsRenewal').value = isRenewal ? '1' : '0';
+
+        const cycleLabel = cycle === 'yearly' ? 'Yearly' : 'Monthly';
+        const summary = `${planName} (${cycleLabel})${displayAmount ? ' - ' + displayAmount : ''}${isRenewal ? ' [Renewal]' : ''}`;
+        document.getElementById('manualPlanSummary').textContent = summary;
+
+        const bsModal = new bootstrap.Modal(modalEl);
+        bsModal.show();
+    }
+
+    function bindPaymentButtons() {
+        document.querySelectorAll('.manual-payment-btn').forEach(button => {
+            if (button._bound) return;
+            button._bound = true;
+            button.addEventListener('click', function() {
+                const planId = this.getAttribute('data-plan-id');
+                const planName = this.getAttribute('data-plan-name') || 'Plan';
+                selectedPlanIdForCoupon = planId;
+                const monthlyPrice = parseFloat(this.getAttribute('data-plan-monthly-price') || '0');
+                const yearlyPrice = parseFloat(this.getAttribute('data-plan-yearly-price') || '0');
+                const effectivePrice = (currentBillingCycle === 'yearly') ? yearlyPrice : monthlyPrice;
+                const couponInput = document.getElementById('billingCouponCode');
+                const couponCode = couponInput ? couponInput.value.trim() : '';
+                const amountLabel = `{{ currency_symbol }}${cleanPrice(effectivePrice)}`;
+                openManualPaymentModal({
+                    planId,
+                    planName,
+                    cycle: currentBillingCycle,
+                    couponCode,
+                    isCustom: false,
+                    displayAmount: amountLabel,
+                });
+            });
+        });
+    }
+
+    // Initial render
+    document.addEventListener('DOMContentLoaded', function() { updatePlanCards('monthly'); });
+
+    // ===== CUSTOM PLAN BUILDER =====
+    {% if pricing_config and pricing_config.is_active %}
+    const CS = '{{ currency_symbol }}';
+    const customConfig = {
+        pricePerEmployee: {{ pricing_config.price_per_employee }},
+        pricePerLeadBlock: {{ pricing_config.price_per_lead_block }},
+        leadBlockSize: {{ pricing_config.lead_block_size }},
+        basePrice: {{ pricing_config.base_price }},
+        yearlyDiscount: {{ pricing_config.yearly_discount }},
+        unlimitedEmployeesPrice: {{ pricing_config.unlimited_employees_price }},
+        unlimitedLeadsPrice: {{ pricing_config.unlimited_leads_price }},
+        minEmployees: {{ pricing_config.min_employees }},
+        maxEmployees: {{ pricing_config.max_employees }},
+        minLeads: {{ pricing_config.min_leads }},
+        maxLeads: {{ pricing_config.max_leads }},
+    };
+    let customBillingCycle = 'monthly';
+
+    function clampInput(input) {
+        let val = parseInt(input.value);
+        const min = parseInt(input.min), max = parseInt(input.max);
+        if (isNaN(val) || val < min) { input.value = min; return; }
+        if (val > max) { input.value = max; }
+    }
+
+    function adjustValue(inputId, delta) {
+        const input = document.getElementById(inputId);
+        if (input.disabled) return;
+        let val = parseInt(input.value) || 0;
+        val += delta;
+        val = Math.max(parseInt(input.min), Math.min(parseInt(input.max), val));
+        input.value = val;
+        updateCustomPrice();
+    }
+
+    document.getElementById('customEmployees').addEventListener('blur', function() { clampInput(this); updateCustomPrice(); });
+    document.getElementById('customEmployees').addEventListener('change', function() { clampInput(this); updateCustomPrice(); });
+    document.getElementById('customLeads').addEventListener('blur', function() { clampInput(this); updateCustomPrice(); });
+    document.getElementById('customLeads').addEventListener('change', function() { clampInput(this); updateCustomPrice(); });
+
+    ['customEmployees', 'customLeads'].forEach(function(id) {
+        const input = document.getElementById(id);
+        input.addEventListener('keydown', function(e) {
+            if ([8, 9, 13, 27, 46, 37, 38, 39, 40].indexOf(e.keyCode) !== -1) return;
+            if ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].indexOf(e.keyCode) !== -1) return;
+            if ((e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) e.preventDefault();
+        });
+        input.addEventListener('paste', function() { setTimeout(function() { clampInput(input); updateCustomPrice(); }, 10); });
+    });
+
+    function toggleUnlimited(type) {
+        const isEmp = type === 'employees';
+        const cb = document.getElementById(isEmp ? 'unlimitedEmployees' : 'unlimitedLeads');
+        const input = document.getElementById(isEmp ? 'customEmployees' : 'customLeads');
+        const group = document.getElementById(isEmp ? 'empInputGroup' : 'leadsInputGroup');
+        const infoNorm = document.getElementById(isEmp ? 'empPriceInfo' : 'leadsPriceInfo');
+        const infoUnlim = document.getElementById(isEmp ? 'empUnlimitedInfo' : 'leadsUnlimitedInfo');
+        if (!cb || !input || !group || !infoNorm || !infoUnlim) {
+            updateCustomPrice();
+            return;
+        }
+        if (cb.checked) { input.disabled = true; group.classList.add('opacity-50'); infoNorm.classList.add('d-none'); infoUnlim.classList.remove('d-none'); }
+        else { input.disabled = false; group.classList.remove('opacity-50'); infoNorm.classList.remove('d-none'); infoUnlim.classList.add('d-none'); }
+        updateCustomPrice();
+    }
+
+    function switchCustomBilling(cycle) {
+        customBillingCycle = cycle;
+        document.querySelectorAll('#customBillingToggle button').forEach(btn => {
+            if (btn.dataset.cycle === cycle) { btn.classList.remove('btn-outline-primary'); btn.classList.add('btn-primary', 'active'); }
+            else { btn.classList.remove('btn-primary', 'active'); btn.classList.add('btn-outline-primary'); }
+        });
+        document.getElementById('customPriceMonthly').style.display = cycle === 'monthly' ? '' : 'none';
+        document.getElementById('customPriceYearly').style.display = cycle === 'yearly' ? '' : 'none';
+        updateCustomPrice();
+    }
+
+    function updateCustomPrice() {
+        const unlimitedEmpEl = document.getElementById('unlimitedEmployees');
+        const unlimitedLdsEl = document.getElementById('unlimitedLeads');
+        const unlimitedEmp = !!(unlimitedEmpEl && unlimitedEmpEl.checked);
+        const unlimitedLds = !!(unlimitedLdsEl && unlimitedLdsEl.checked);
+        const employees = unlimitedEmp ? -1 : parseInt(document.getElementById('customEmployees').value) || 0;
+        const leads = unlimitedLds ? -1 : parseInt(document.getElementById('customLeads').value) || 0;
+
+        let empCost;
+        if (unlimitedEmp) { empCost = customConfig.unlimitedEmployeesPrice; document.getElementById('summaryEmpLine').innerHTML = 'Unlimited = ' + CS + empCost.toFixed(2); }
+        else { empCost = customConfig.pricePerEmployee * employees; document.getElementById('summaryEmpLine').innerHTML = employees + ' x ' + CS + customConfig.pricePerEmployee.toFixed(2) + ' = ' + CS + empCost.toFixed(2); }
+
+        let leadCost;
+        if (unlimitedLds) { leadCost = customConfig.unlimitedLeadsPrice; document.getElementById('summaryLeadsLine').innerHTML = 'Unlimited = ' + CS + leadCost.toFixed(2); }
+        else { const blocks = leads / customConfig.leadBlockSize; leadCost = customConfig.pricePerLeadBlock * blocks; document.getElementById('summaryLeadsLine').innerHTML = leads.toLocaleString() + ' x ' + CS + customConfig.pricePerLeadBlock.toFixed(2) + ' = ' + CS + leadCost.toFixed(2); }
+
+        const monthlyTotal = customConfig.basePrice + empCost + leadCost;
+        document.getElementById('customMonthlyPrice').textContent = monthlyTotal.toFixed(2);
+
+        const yearlyTotal = monthlyTotal * 12;
+        const discount = yearlyTotal * (customConfig.yearlyDiscount / 100);
+        document.getElementById('customYearlyPrice').textContent = (yearlyTotal - discount).toFixed(2);
+        document.getElementById('customYearlySavings').textContent = discount.toFixed(2);
+    }
+
+    function upgradeCustomPlan() {
+        const unlimitedEmpEl = document.getElementById('unlimitedEmployees');
+        const unlimitedLdsEl = document.getElementById('unlimitedLeads');
+        const unlimitedEmp = !!(unlimitedEmpEl && unlimitedEmpEl.checked);
+        const unlimitedLds = !!(unlimitedLdsEl && unlimitedLdsEl.checked);
+        const employees = unlimitedEmp ? -1 : document.getElementById('customEmployees').value;
+        const leads = unlimitedLds ? -1 : document.getElementById('customLeads').value;
+        const couponInput = document.getElementById('billingCouponCode');
+        const couponCode = couponInput ? couponInput.value.trim() : '';
+        const customAmount = customBillingCycle === 'yearly'
+            ? document.getElementById('customYearlyPrice').textContent
+            : document.getElementById('customMonthlyPrice').textContent;
+
+        openManualPaymentModal({
+            planId: '',
+            planName: 'Custom Plan',
+            cycle: customBillingCycle,
+            couponCode,
+            isCustom: true,
+            employees,
+            leads,
+            displayAmount: `{{ currency_symbol }}${cleanPrice(customAmount)}`,
+            isRenewal: false,
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', updateCustomPrice);
+    {% endif %}
+</script>
+{% endblock %}
+{% endblock %}

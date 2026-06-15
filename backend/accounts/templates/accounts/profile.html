@@ -1,0 +1,676 @@
+{% extends 'layout/layout.html' %}
+{% block title %}Profile - LeadSync{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+  :root {
+    --ink: #0d0f14;
+    --ink-2: #1c1f2a;
+    --ink-3: #2a2e3d;
+    --surface: #f5f4f0;
+    --surface-2: #eceae4;
+    --accent: #4f6ef7;
+    --accent-soft: #e8ecff;
+    --accent-glow: rgba(79,110,247,0.15);
+    --gold: #e8a838;
+    --gold-soft: #fef6e4;
+    --success: #1db87e;
+    --success-soft: #e3f9f0;
+    --danger: #e84545;
+    --danger-soft: #fdeaea;
+    --warning: #f59e0b;
+    --warning-soft: #fef3c7;
+    --border: rgba(13,15,20,0.08);
+    --shadow-sm: 0 1px 3px rgba(13,15,20,0.06), 0 1px 2px rgba(13,15,20,0.04);
+    --shadow-md: 0 4px 16px rgba(13,15,20,0.08), 0 2px 6px rgba(13,15,20,0.05);
+    --shadow-lg: 0 12px 40px rgba(13,15,20,0.10), 0 4px 12px rgba(13,15,20,0.06);
+    --shadow-accent: 0 8px 32px rgba(79,110,247,0.20);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  .profile-wrapper {
+    font-family: var(--font-body);
+    min-height: 100vh;
+    background: var(--surface);
+    padding: 40px 16px 60px;
+    position: relative;
+  }
+
+  .profile-wrapper::before {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .profile-container {
+    max-width: 860px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .page-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .page-header-icon {
+    width: 48px; height: 48px;
+    background: var(--ink);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 2px 0 0;
+  }
+
+  .breadcrumb-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #6b7280;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .breadcrumb-pill:hover { background: #fff; color: var(--accent); border-color: var(--accent); }
+  .breadcrumb-pill i { font-size: 11px; }
+
+  /* ── Cards ── */
+  .card-glass {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    margin-bottom: 20px;
+    transition: box-shadow 0.3s;
+  }
+  .card-glass:hover { box-shadow: var(--shadow-lg); }
+
+  /* ── Identity panel ── */
+  .identity-panel {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 300px;
+  }
+
+  @media (max-width: 700px) {
+    .identity-panel { grid-template-columns: 1fr; }
+    .identity-sidebar { border-right: none !important; border-bottom: 1px solid var(--border); }
+  }
+
+  .identity-sidebar {
+    border-right: 1px solid var(--border);
+    padding: 36px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(160deg, #fafafa 0%, var(--surface) 100%);
+    text-align: center;
+  }
+
+  .avatar-ring {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-accent);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .avatar-ring::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px dashed rgba(79,110,247,0.3);
+    animation: spin 20s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .avatar-ring i { font-size: 36px; color: #fff; }
+
+  .avatar-initials {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+  }
+
+  .user-name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+    letter-spacing: -0.3px;
+  }
+
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  .role-badge.super-admin { background: var(--danger-soft); color: var(--danger); }
+  .role-badge.owner { background: var(--accent-soft); color: var(--accent); }
+  .role-badge.staff { background: var(--success-soft); color: var(--success); }
+
+  .member-since {
+    font-size: 12px;
+    color: #9ca3af;
+    margin: 0;
+  }
+
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid;
+  }
+
+  .status-chip.approved {
+    background: var(--success-soft);
+    color: var(--success);
+    border-color: rgba(29,184,126,0.2);
+  }
+
+  .status-chip.pending {
+    background: var(--warning-soft);
+    color: var(--warning);
+    border-color: rgba(245,158,11,0.2);
+  }
+
+  .status-chip .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse-dot 1.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+
+  /* ── Form area ── */
+  .identity-form {
+    padding: 32px 36px;
+  }
+
+  @media (max-width: 700px) { .identity-form { padding: 24px 20px; } }
+
+  .section-label {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .field-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    letter-spacing: 0.2px;
+  }
+
+  .field-input {
+    width: 100%;
+    padding: 10px 14px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .field-input:focus {
+    background: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .field-input[readonly] {
+    background: var(--surface-2);
+    color: #9ca3af;
+    cursor: not-allowed;
+    border-color: transparent;
+  }
+
+  .field-input[readonly]:focus {
+    border-color: transparent;
+    box-shadow: none;
+    background: var(--surface-2);
+  }
+
+  /* Django form rendered fields override */
+  .identity-form input[type="text"]:not([readonly]),
+  .identity-form input[type="email"]:not([readonly]),
+  .identity-form input[type="tel"],
+  .identity-form select,
+  .identity-form textarea {
+    width: 100%;
+    padding: 10px 14px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: all 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .identity-form input[type="text"]:not([readonly]):focus,
+  .identity-form input[type="email"]:not([readonly]):focus,
+  .identity-form input[type="tel"]:focus,
+  .identity-form select:focus,
+  .identity-form textarea:focus {
+    background: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 24px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .save-btn:hover {
+    background: var(--accent);
+    box-shadow: var(--shadow-accent);
+    transform: translateY(-1px);
+  }
+
+  .save-btn:active { transform: translateY(0); }
+
+  /* ── Bottom grid ── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 600px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+  .info-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+  }
+
+  .info-card-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .info-card-title i {
+    width: 28px; height: 28px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .info-rows { display: flex; flex-direction: column; gap: 12px; }
+
+  .info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-radius: var(--radius-xs);
+    gap: 12px;
+  }
+
+  .info-row-key {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .info-row-val {
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 500;
+    text-align: right;
+  }
+
+  /* ── Quick actions ── */
+  .action-stack { display: flex; flex-direction: column; gap: 10px; }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-body);
+  }
+
+  .action-btn-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .action-btn.primary-action .action-btn-icon { background: var(--accent-soft); color: var(--accent); }
+  .action-btn.secondary-action .action-btn-icon { background: var(--surface-2); color: #6b7280; }
+
+  .action-btn:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 16px var(--accent-glow);
+    transform: translateX(3px);
+    color: var(--accent);
+  }
+
+  .action-btn:hover .action-btn-icon {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .action-btn-arrow {
+    margin-left: auto;
+    color: #d1d5db;
+    font-size: 12px;
+    transition: all 0.2s;
+  }
+  .action-btn:hover .action-btn-arrow { color: var(--accent); transform: translateX(2px); }
+
+  /* pending note */
+  .pending-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: var(--warning-soft);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: var(--radius-xs);
+    font-size: 12px;
+    color: #92400e;
+  }
+
+  .fade-in {
+    animation: fadeUp 0.5s ease both;
+  }
+  .fade-in:nth-child(1) { animation-delay: 0.05s; }
+  .fade-in:nth-child(2) { animation-delay: 0.10s; }
+  .fade-in:nth-child(3) { animation-delay: 0.15s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="profile-wrapper">
+  <div class="profile-container">
+
+    <!-- Page header -->
+    <div class="page-header fade-in">
+      <div class="page-header-left">
+        <div class="page-header-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <div>
+          <h1 class="page-title">My Profile</h1>
+          <p class="page-subtitle">Manage your personal information & preferences</p>
+        </div>
+      </div>
+      <a href="{% url 'dashboard' %}" class="breadcrumb-pill">
+        <i class="fas fa-arrow-left"></i> Dashboard
+      </a>
+    </div>
+
+    <!-- Main identity card -->
+    <div class="card-glass fade-in">
+      <div class="identity-panel">
+
+        <!-- Sidebar -->
+        <div class="identity-sidebar">
+          <div class="avatar-ring">
+            <span class="avatar-initials">
+              {{ user.username|slice:":1"|upper }}
+            </span>
+          </div>
+
+          <h2 class="user-name">{{ user.username }}</h2>
+
+          <span class="role-badge {% if user.profile.role == 'super_admin' %}super-admin{% elif user.profile.role == 'owner' %}owner{% else %}staff{% endif %}">
+            <i class="fas fa-{% if user.profile.role == 'super_admin' %}crown{% elif user.profile.role == 'owner' %}briefcase{% else %}user-tie{% endif %}"></i>
+            {{ user.profile.get_role_display }}
+          </span>
+
+          <p class="member-since">Member since {{ user.date_joined|date:"M d, Y" }}</p>
+
+          {% if user.profile.is_approved %}
+            <div class="status-chip approved">
+              <span class="dot"></span> Account Approved
+            </div>
+          {% else %}
+            <div class="status-chip pending">
+              <span class="dot"></span> Pending Approval
+            </div>
+            {% if user.profile.role == 'staff' %}
+              <div class="pending-note">
+                <i class="fas fa-clock" style="color:var(--warning)"></i>
+                Waiting on <strong>{{ user.profile.pending_boss_username }}</strong>
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+
+        <!-- Form -->
+        <div class="identity-form">
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="section-label">Account Details</div>
+            <div class="form-grid">
+              <div class="field-group">
+                <label class="field-label">Username</label>
+                <input type="text" class="field-input" value="{{ user.username }}" readonly>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Email Address</label>
+                <input type="email" class="field-input" value="{{ user.email }}" readonly>
+              </div>
+            </div>
+
+            <div class="section-label" style="margin-top:8px;">Personal Info</div>
+            <div class="form-grid">
+              <div class="field-group">
+                <label class="field-label">First Name</label>
+                {{ form.first_name }}
+              </div>
+              <div class="field-group">
+                <label class="field-label">Last Name</label>
+                {{ form.last_name }}
+              </div>
+            </div>
+
+            <div class="form-grid" style="margin-top:0;">
+              <div class="field-group">
+                <label class="field-label">Phone Number</label>
+                {{ form.phone_number }}
+              </div>
+              <div class="field-group">
+                <label class="field-label">Company</label>
+                {{ form.company_name }}
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:24px;">
+              <button type="submit" class="save-btn">
+                <i class="fas fa-arrow-right"></i>
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bottom grid -->
+    <div class="bottom-grid fade-in">
+
+      <!-- Account info -->
+      <div class="info-card">
+        <h3 class="info-card-title">
+          <i class="fas fa-info-circle" style="width:28px;height:28px;background:var(--accent-soft);color:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;"></i>
+          Account Information
+        </h3>
+        <div class="info-rows">
+          <div class="info-row">
+            <span class="info-row-key">Role</span>
+            <span class="info-row-val">{{ user.profile.get_role_display }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-row-key">Joined</span>
+            <span class="info-row-val">{{ user.date_joined|date:"M d, Y" }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-row-key">Last Login</span>
+            <span class="info-row-val">{{ user.last_login|date:"M d, Y · H:i" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="info-card">
+        <h3 class="info-card-title">
+          <i class="fas fa-bolt" style="width:28px;height:28px;background:var(--gold-soft);color:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;"></i>
+          Quick Actions
+        </h3>
+        <div class="action-stack">
+          <a href="{% url 'password_change' %}" class="action-btn primary-action">
+            <div class="action-btn-icon"><i class="fas fa-key"></i></div>
+            Change Password
+            <i class="fas fa-chevron-right action-btn-arrow"></i>
+          </a>
+          <a href="{% url 'dashboard' %}" class="action-btn secondary-action">
+            <div class="action-btn-icon"><i class="fas fa-tachometer-alt"></i></div>
+            Go to Dashboard
+            <i class="fas fa-chevron-right action-btn-arrow"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

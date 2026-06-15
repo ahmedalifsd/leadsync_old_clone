@@ -1,0 +1,1259 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Dashboard - LeadSync{% endblock %}
+
+{% block extra_links %}
+<style>
+    /* Modern Filter Styles */
+    .search-wrapper-modern {
+        position: relative;
+        width: 100%;
+    }
+    .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9aa6b5;
+        font-size: 0.9rem;
+    }
+    .search-input-modern {
+        padding-left: 40px;
+        border-radius: 40px;
+        border: 1px solid #e2e8f0;
+        background-color: #f8fafc;
+        transition: all 0.2s;
+        height: 45px;
+    }
+    .search-input-modern:focus {
+        background-color: #fff;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+    }
+
+    .filter-card {
+        background: #fff !important;
+    }
+
+    /* Form controls inside filter card */
+    .filter-card select,
+    .filter-card .form-select,
+    .filter-card input[type="date"],
+    .filter-card input[type="text"] {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        background-color: #fff;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .filter-card #id_category,
+    .filter-card #id_source,
+    .filter-card #id_status {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+
+    .date-range-wrap {
+        width: 100%;
+    }
+    .filter-card select:focus,
+    .filter-card input:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.1);
+        outline: none;
+    }
+
+    /* Labels */
+    .filter-card .form-label {
+        font-weight: 500;
+        color: #4a5568;
+    }
+
+    /* Buttons */
+    .btn-rounded {
+        border-radius: 40px !important;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .filter-card .d-flex.justify-content-between {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 1rem;
+        }
+        .filter-card .btn {
+            width: 100%;
+        }
+        .date-range-group {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+
+.mini-stat-label{
+font-size: 14px !important;}
+    .mini-stat-val{
+    font-size: 16px !important;}
+</style>
+{% endblock %}
+
+{% block content %}
+
+
+
+<div class="page-header page-add-notes">
+    <div class="add-item d-flex">
+        <div class="page-title">
+            <h4>All Leads</h4>
+            <h6>View and manage all your leads</h6>
+        </div>
+
+    </div>
+    <div class="d-flex flex-sm-row flex-column align-items-sm-center align-items-start">
+        <div class="btn-group">
+             <a href="{% url 'bulk_add_leads' %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus me-1"></i>Add New Lead
+        </a>
+        <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split me-1"
+                                    data-bs-toggle="dropdown">
+                                <span class="visually-hidden">Toggle Dropdown</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'bulk_add_leads' %}"><i
+                                        class="fas fa-bolt me-2"></i>Add Leads</a></li>
+                                <li><a class="dropdown-item" href="{% url 'csv_upload' %}"><i
+                                        class="fas fa-file-csv me-2"></i>Import from CSV</a></li>
+                                <li><a class="dropdown-item" href="{% url 'manage_templates' %}"><i
+                                        class="fas fa-clipboard-list me-2"></i>Manage Templates</a></li>
+                            </ul>
+
+        </div>
+         <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+    Filters
+  </button>
+    </div>
+</div>
+
+
+<div class="collapse" id="collapseExample">
+
+    <div class="card filter-card">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fas fa-sliders-h me-2 text-primary"></i>Filter Leads
+                </h5>
+                <a href="{% url 'lead_list' %}" class="text-decoration-none small text-muted fw-semibold">
+                    <i class="fas fa-undo-alt me-1"></i>Reset Filters
+                </a>
+            </div>
+
+            <form method="get">
+                <!-- Search Bar (full width) -->
+                <div class="mb-4">
+                    <div class="search-wrapper-modern">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" name="search" id="searchInput" class="form-control search-input-modern ps-5"
+                               placeholder="Search by name, email, phone..." value="{{ request.GET.search }}">
+                    </div>
+                </div>
+
+                <!-- Filter Row (4 columns with adjusted widths) -->
+                <div class="row g-3 mb-4">
+                    <!-- Category -->
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label small text-muted mb-1">Category</label>
+                        {{ form.category }}
+                    </div>
+                    <!-- Source -->
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label small text-muted mb-1">Source</label>
+                        {{ form.source }}
+                    </div>
+                    <!-- Status -->
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label small text-muted mb-1">Status</label>
+                        {{ form.status }}
+                    </div>
+                    <!-- Date Range (Giving more width to accommodate two inputs) -->
+                    <div class="col-lg-6 col-md-12">
+                        <label class="form-label small text-muted mb-1">Date Range</label>
+                        <div class="d-flex gap-2 align-items-center">
+                            <div class="flex-grow-1">
+                                <input type="date" name="start_date" id="id_start_date"
+                                       class="form-control form-control-sm"
+                                       placeholder="From" value="{{ request.GET.start_date }}">
+                            </div>
+                            <span class="text-muted">–</span>
+                            <div class="flex-grow-1">
+                                <input type="date" name="end_date" id="id_end_date"
+                                       class="form-control form-control-sm"
+                                       placeholder="To" value="{{ request.GET.end_date }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'lead_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                    </div>
+                    <a href="{% url 'export_leads_csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success">
+                        <i class="fas fa-download me-1"></i>Export CSV
+                    </a>
+                </div>
+            </form>
+
+            <!-- Active Filter Indicator (if any) -->
+            {% if active_filter_label %}
+            <div class="mt-4 p-2 bg-light rounded-3 d-flex align-items-center justify-content-between border">
+                <div>
+                    <i class="fas fa-filter text-primary me-2"></i>
+                    <small class="text-muted">Active Filter:</small>
+                    <span class="badge bg-primary ms-2">{{ active_filter_label }}</span>
+                </div>
+                <a href="{% url 'lead_list' %}" class="btn btn-sm btn-link text-danger p-0 text-decoration-none">
+                    <i class="fas fa-times"></i> Remove
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+
+</div>
+
+<div class="row">
+    <!-- Header / Title Section -->
+
+    <div class="col-4 col-lg-4 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+
+                        <!-- Card 6 · Red · Declining Line -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-green"
+                             data-card="6">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Total Leads</span>
+                                    </div>
+                                    <div class="card-number">{{ today_total_leads }}</div>
+                                </div>
+                                <!--                    <div class="icon-box">-->
+                                <!--                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">-->
+                                <!--                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"-->
+                                <!--                                  stroke-width="1.8"/>-->
+                                <!--                            <line x1="12" y1="9" x2="12" y2="13" stroke-width="1.8" stroke-linecap="round"/>-->
+                                <!--                            <line x1="12" y1="17" x2="12.01" y2="17" stroke-width="1.8" stroke-linecap="round"/>-->
+                                <!--                        </svg>-->
+                                <!--                    </div>-->
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">This Week</div>
+                                    <div class="mini-stat-val">{{ total_mini_stats.week }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">This Month</div>
+                                    <div class="mini-stat-val accent">{{ total_mini_stats.month }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Total</div>
+                                    <div class="mini-stat-val">{{ total_mini_stats.total }}</div>
+                                </div>
+                            </div>
+                            <!-- DUAL LINE CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <path class="spark-path secondary"
+                                          d="M0,55 C40,48 70,58 110,40 C150,22 170,45 210,30 C240,18 270,25 300,12"
+                                          stroke-width="1.5" stroke-linecap="round"/>
+                                    <path class="spark-path"
+                                          d="M0,65 C30,58 60,68 100,52 C140,36 160,55 200,40 C230,28 265,35 300,20"
+                                          stroke-width="2"
+                                          stroke-linecap="round"/>
+                                    <circle class="chart-dot" cx="300" cy="20" r="3"/>
+                                    <circle class="chart-dot-dim" cx="300" cy="12" r="2"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+    <div class="col-4 col-lg-4 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+                        <!-- Card 3 · Pink · Donut -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-pink"
+                             data-card="3">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Contacted Leads</span>
+                                    </div>
+                                    <div class="card-number">{{ today_new_leads }}</div>
+                                </div>
+                                <!--                    <div class="icon-box">-->
+                                <!--                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">-->
+                                <!--                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"-->
+                                <!--                                  stroke-width="1.8"/>-->
+                                <!--                        </svg>-->
+                                <!--                    </div>-->
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">Won</div>
+                                    <div class="mini-stat-val">{{ new_mini_stats.total_won }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Contacted</div>
+                                    <div class="mini-stat-val accent">{{ new_mini_stats.total_contacted }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Proposal</div>
+                                    <div class="mini-stat-val">{{ new_mini_stats.total_proposal }}</div>
+                                </div>
+                            </div>
+                            <!-- BAR CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <rect class="bar-rect" x="8" y="30" width="22" height="45" rx="4"/>
+                                    <rect class="bar-rect" x="38" y="45" width="22" height="30" rx="4"/>
+                                    <rect class="bar-rect" x="68" y="20" width="22" height="55" rx="4"/>
+                                    <rect class="bar-rect" x="98" y="38" width="22" height="37" rx="4"/>
+                                    <rect class="bar-rect bright" x="128" y="10" width="22" height="65" rx="4"/>
+                                    <rect class="bar-rect" x="158" y="25" width="22" height="50" rx="4"/>
+                                    <rect class="bar-rect" x="188" y="15" width="22" height="60" rx="4"/>
+                                    <rect class="bar-rect bright" x="218" y="5" width="22" height="70" rx="4"/>
+                                    <rect class="bar-rect" x="248" y="20" width="22" height="55" rx="4"/>
+                                    <rect class="bar-rect bright" x="270" y="8" width="22" height="67" rx="4"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+    <div class="col-4 col-lg-4 col-md-6 col-sm-12 col-12 mb-4">
+                    <div class="card m-0 border-0 h-100">
+
+                        <!-- Card 5 · Green · Wave Sparkline -->
+                        <div class="stat-card card-animated d-flex flex-column justify-content-between h-100 card-red"
+                             data-card="5">
+                            <div class="card-header-row">
+                                <div>
+                                    <div class="card-label-row">
+                                        <div class="live-dot"></div>
+                                        <span class="card-label">Lost Leads</span>
+                                    </div>
+                                    <div class="card-number">{{ today_won_leads }}</div>
+                                </div>
+                                <!--                    <div class="icon-box">-->
+                                <!--                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">-->
+                                <!--                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-width="1.8"-->
+                                <!--                                  stroke-linecap="round"/>-->
+                                <!--                            <circle cx="9" cy="7" r="4" stroke-width="1.8"/>-->
+                                <!--                            <line x1="19" y1="8" x2="19" y2="14" stroke-width="1.8" stroke-linecap="round"/>-->
+                                <!--                            <line x1="16" y1="11" x2="22" y2="11" stroke-width="1.8" stroke-linecap="round"/>-->
+                                <!--                        </svg>-->
+                                <!--                    </div>-->
+                            </div>
+
+                            <div class="mini-stats">
+                                <div>
+                                    <div class="mini-stat-label">Lost</div>
+                                    <div class="mini-stat-val">{{ won_mini_stats.total_lost }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">No Response</div>
+                                    <div class="mini-stat-val accent">{{ won_mini_stats.total_no_response }}</div>
+                                </div>
+                                <div>
+                                    <div class="mini-stat-label">Not Interested</div>
+                                    <div class="mini-stat-val">{{ won_mini_stats.total_not_interested }}</div>
+                                </div>
+                            </div>
+                            <!-- WAVE CHART — colours from CSS vars -->
+                            <div class="chart-area">
+                                <svg viewBox="0 0 300 75" preserveAspectRatio="none">
+                                    <path class="chart-fill"
+                                          d="M0,40 C20,30 30,50 60,35 C90,20 100,45 130,30 C160,15 170,40 200,25 C230,10 250,35 280,18 C290,13 295,10 300,8 L300,75 L0,75 Z"/>
+                                    <path class="spark-path"
+                                          d="M0,40 C20,30 30,50 60,35 C90,20 100,45 130,30 C160,15 170,40 200,25 C230,10 250,35 280,18 C290,13 295,10 300,8"
+                                          stroke-width="2" stroke-linecap="round"/>
+                                    <circle class="chart-dot" cx="300" cy="8" r="3"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+    <!-- Leads Table -->
+    <div class="col-12 mb-3">
+        <div class="card rounded-3 bg-white">
+            <div class="card-body">
+                <h5 class="mb-0">Leads ({{ leads.count }} found)</h5>
+                <div>
+                    <small class="text-muted me-3">
+                        Showing {{ leads|length }} of {{ leads.count }}
+                    </small>
+                </div>
+
+
+                {% if leads %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <button type="submit" name="bulk_delete" value="1"
+                                    class="btn btn-outline-danger" id="bulkDeleteBtn" disabled>
+                                <i class="fas fa-trash me-1"></i>Delete Selected
+                            </button>
+                            <span id="selectedCount" class="ms-2 text-muted">0 selected</span>
+                        </div>
+                        <div>
+                            <label for="perPageSelect" class="small text-muted me-1">Rows:</label>
+                            <select id="perPageSelect" class="form-select form-select-sm d-inline-block" style="width: 90px;">
+                                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                                <option value="15" {% if per_page == 15 %}selected{% endif %}>15</option>
+                                <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                                <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                            </select>
+                            <a href="#" class="btn btn-sm btn-outline-secondary me-2"
+                                    id="exportTableBtn">
+                                <i class="fas fa-download me-1"></i>Export Table
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    id="selectAllBtn">
+                                Select All
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    id="clearSelectionBtn">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="basic-table table-responsive">
+                        <table class="table text-nowrap table-sm" id="leadsTable">
+                            <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAllCheckbox">
+                                </th>
+                                <th>Client</th>
+                                <th>Contact</th>
+                                <th>Status</th>
+                                <th>Category</th>
+                                <th>Source</th>
+                                <th>Follow-up</th>
+                                {% for cf_name in custom_field_names %}
+                                    <th>{{ cf_name }}</th>
+                                {% endfor %}
+                                <th>Added By</th>
+                                <th>Main Activity</th>
+                                <th>Posted Date</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody id="leadsTableBody">
+                            <!-- Leads will be loaded via AJAX -->
+                            </tbody>
+                        </table>
+
+                        <!-- Loading indicator -->
+                        <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading leads...</p>
+                        </div>
+                    </div>
+
+                    <!-- Pagination outside responsive div -->
+                    <nav aria-label="Page navigation" id="paginationContainer" style="display: none;" class="mt-3">
+                        <ul class="pagination justify-content-center" id="paginationList">
+                            <!-- Pagination will be loaded via AJAX -->
+                        </ul>
+                    </nav>
+                </form>
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No leads found</h5>
+                    <p class="text-muted">Try adjusting your filters or add new leads.</p>
+                    <a href="{% url 'bulk_add_leads' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add First Lead
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to Deleted Leads for Owners and Super Admins -->
+
+</div>
+    {% block extra_scripts %}
+    <script>
+        // Custom field names from server
+        var customFieldNames = JSON.parse('{{ custom_field_names_json|escapejs }}');
+
+        // Make table rows clickable and handle AJAX filtering/pagination
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load leads on page load
+            loadLeads();
+
+            // Auto-submit on filter changes with AJAX
+            const autoSubmitSelects = document.querySelectorAll('#id_category, #id_source, #id_status');
+            autoSubmitSelects.forEach(select => {
+                select.addEventListener('change', function() {
+                    loadLeads();
+                });
+            });
+
+            // Handle date range changes
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    loadLeads();
+                });
+            });
+
+            // Handle search input changes with debounce
+            const searchInput = document.getElementById('searchInput');
+            const perPageSelect = document.getElementById('perPageSelect');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        loadLeads(); // Reset to first page when searching
+                    }, 300); // Debounce for 300ms
+                });
+            }
+
+            if (perPageSelect) {
+                perPageSelect.addEventListener('change', function() {
+                    loadLeads(1);
+                });
+            }
+
+            // Bulk selection functionality
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            const selectedCountSpan = document.getElementById('selectedCount');
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+
+            // Update bulk delete button state
+            function updateBulkDeleteButton() {
+                const checkedBoxes = document.querySelectorAll('.lead-checkbox:checked');
+                const count = checkedBoxes.length;
+
+                if (count > 0) {
+                    bulkDeleteBtn.disabled = false;
+                    selectedCountSpan.textContent = `${count} selected`;
+                } else {
+                    bulkDeleteBtn.disabled = true;
+                    selectedCountSpan.textContent = '0 selected';
+                }
+            }
+
+            // Select all checkbox event listener
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    const checkboxes = document.querySelectorAll('.lead-checkbox');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = selectAllCheckbox.checked;
+                    });
+                    updateBulkDeleteButton();
+                });
+            }
+
+            // Select all button event listener
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', function() {
+                    const checkboxes = document.querySelectorAll('.lead-checkbox');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = true;
+                    });
+                    if (selectAllCheckbox) selectAllCheckbox.checked = true;
+                    updateBulkDeleteButton();
+                });
+            }
+
+            // Clear selection button event listener
+            if (clearSelectionBtn) {
+                clearSelectionBtn.addEventListener('click', function() {
+                    const checkboxes = document.querySelectorAll('.lead-checkbox');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+                    updateBulkDeleteButton();
+                });
+            }
+
+            // Handle form submission confirmation
+            if (bulkDeleteBtn) {
+                bulkDeleteBtn.addEventListener('click', function(e) {
+                    const selectedCount = document.querySelectorAll('.lead-checkbox:checked').length;
+                    if (selectedCount > 0) {
+                        if (!confirm(`Are you sure you want to delete ${selectedCount} lead(s)? This action cannot be undone.`)) {
+                            e.preventDefault();
+                        }
+                    }
+                });
+            }
+        });
+
+        // Function to load leads via AJAX
+        function loadLeads(page = 1) {
+            // Show loading indicator
+            document.getElementById('loadingIndicator').style.display = 'block';
+
+            // Get filter values
+            const category = document.getElementById('id_category')?.value || '';
+            const source = document.getElementById('id_source')?.value || '';
+            const status = document.getElementById('id_status')?.value || '';
+            const startDate = document.getElementById('id_start_date')?.value || '';
+            const endDate = document.getElementById('id_end_date')?.value || '';
+            const searchQuery = document.getElementById('searchInput')?.value || '';
+            const perPage = document.getElementById('perPageSelect')?.value || '10';
+
+            // Build query string
+            const params = new URLSearchParams({
+                page: page,
+                category: category,
+                source: source,
+                status: status,
+                start_date: startDate,
+                end_date: endDate,
+                search: searchQuery,
+                per_page: perPage
+            });
+
+            // Make AJAX request
+            fetch(`?${params.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading indicator
+                document.getElementById('loadingIndicator').style.display = 'none';
+
+                // Update table body
+                const tbody = document.getElementById('leadsTableBody');
+                tbody.innerHTML = '';
+
+                if (data.leads.length > 0) {
+                    data.leads.forEach(lead => {
+                        const row = document.createElement('tr');
+
+                        // Determine badge classes based on status
+                        let statusBadgeClass = 'bg-soft-secondary';
+                        switch(lead.status) {
+                            case 'new': statusBadgeClass = 'bg-soft-info'; break;
+                            case 'not_contacted': statusBadgeClass = 'bg-soft-secondary'; break;
+                            case 'contacted': statusBadgeClass = 'bg-soft-warning'; break;
+                            case 'no_response': statusBadgeClass = 'bg-soft-danger'; break;
+                            case 'interested': statusBadgeClass = 'bg-soft-success'; break;
+                            case 'not_interested': statusBadgeClass = 'bg-soft-warning'; break;
+                            case 'qualified': statusBadgeClass = 'bg-soft-primary'; break;
+                            case 'proposal': statusBadgeClass = 'bg-soft-info'; break;
+                            case 'negotiation': statusBadgeClass = 'bg-soft-info'; break;
+                            case 'won': statusBadgeClass = 'bg-soft-success'; break;
+                            case 'lost': statusBadgeClass = 'bg-soft-danger'; break;
+                        }
+
+                        // Determine follow-up badge class
+                        let followUpBadgeClass = 'multi-badge';
+                        if (lead.is_overdue) {
+                            followUpBadgeClass = 'bg-soft-danger';
+                        } else if (lead.is_today) {
+                            followUpBadgeClass = 'bg-soft-warning text-dark';
+                        } else if (lead.follow_up_date) {
+                            followUpBadgeClass = 'bg-soft-success';
+                        }
+
+                        // Build custom field cells
+                        let customFieldCells = '';
+                        if (customFieldNames && customFieldNames.length > 0) {
+                            customFieldNames.forEach(cfName => {
+                                const cfVal = (lead.custom_fields && lead.custom_fields[cfName]) || '';
+                                customFieldCells += `<td><small>${cfVal}</small></td>`;
+                            });
+                        }
+
+                        row.innerHTML = `
+                            <td>
+                                <input type="checkbox" name="selected_leads" value="${lead.id}" class="lead-checkbox">
+                            </td>
+                            <td>
+                                <a href="/leads/detail/${lead.id}/" class="fw-semibold text-primary text-decoration-none lead-name-link">${lead.client_name}</a>
+                                ${lead.email ? `<br><small class="text-muted">${lead.email}</small>` : ''}
+                            </td>
+                            <td>${lead.contact_number}</td>
+                            <td>
+                                <span class="badge ${statusBadgeClass} status-badge" style="cursor:pointer;" data-lead-id="${lead.id}" data-current-status="${lead.status}">
+                                    ${lead.status_display}${lead.status_repeat_count && lead.status_repeat_count > 1 ? ` ${lead.status_repeat_count}` : ''} <i class="fas fa-angle-down ms-1" style="font-size:0.7em;"></i>
+                                </span>
+                            </td>
+                            <td>${lead.category}</td>
+                            <td>${lead.source}</td>
+                            <td>
+                                ${lead.follow_up_date ? `
+                                    <span class="badge ${followUpBadgeClass}">
+                                        ${lead.follow_up_display}
+                                    </span>
+                                ` : '<span class="multi-badge">Not set</span>'}
+                            </td>
+                            ${customFieldCells}
+                            <td>
+                                <small>${lead.created_by}</small>
+                            </td>
+                            <td>
+                                <small>${lead.main_activity || 'None'}</small>
+                            </td>
+                            <td>
+                                <small>${lead.created_at}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/leads/detail/${lead.id}/" class="btn btn-icon btn-sm btn-soft-info rounded-pill me-2" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/leads/edit/${lead.id}/" class="btn btn-icon btn-sm btn-soft-warning rounded-pill me-2" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-icon btn-sm btn-soft-danger rounded-pill me-2"
+                                            data-bs-toggle="modal" data-bs-target="#deleteModal${lead.id}" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal${lead.id}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirm Delete</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to delete lead for <strong>${lead.client_name}</strong>?
+                                                <br><small class="text-muted">This action cannot be undone.</small>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form method="post" action="/leads/delete/${lead.id}/" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+
+                    // Update pagination
+                    updatePagination(data);
+                } else {
+                    // Show no results message
+                    const totalCols = 10 + (customFieldNames ? customFieldNames.length : 0);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="${totalCols}" class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No leads found</h5>
+                                <p class="text-muted">Try adjusting your filters.</p>
+                            </td>
+                        </tr>
+                    `;
+
+                    // Hide pagination if no results
+                    document.getElementById('paginationContainer').style.display = 'none';
+                }
+
+                // Reattach event listeners for checkboxes
+                attachCheckboxEventListeners();
+            })
+            .catch(error => {
+                console.error('Error loading leads:', error);
+                document.getElementById('loadingIndicator').style.display = 'none';
+            });
+        }
+
+        // Function to update pagination controls
+        function updatePagination(data) {
+            const paginationList = document.getElementById('paginationList');
+            const paginationContainer = document.getElementById('paginationContainer');
+
+            if (data.total_pages <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+
+            paginationContainer.style.display = 'block';
+            paginationList.innerHTML = '';
+
+            // Previous button
+            if (data.has_previous) {
+                const prevItem = document.createElement('li');
+                prevItem.className = 'page-item';
+                prevItem.innerHTML = `
+                    <a class="page-link" href="#" onclick="loadLeads(${data.current_page - 1}); return false;">Previous</a>
+                `;
+                paginationList.appendChild(prevItem);
+            } else {
+                const prevItem = document.createElement('li');
+                prevItem.className = 'page-item disabled';
+                prevItem.innerHTML = `<span class="page-link">Previous</span>`;
+                paginationList.appendChild(prevItem);
+            }
+
+            // Page numbers
+            for (let i = Math.max(1, data.current_page - 2); i <= Math.min(data.total_pages, data.current_page + 2); i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = i === data.current_page ? 'page-item active' : 'page-item';
+                pageItem.innerHTML = `
+                    <a class="page-link" href="#" onclick="loadLeads(${i}); return false;">${i}</a>
+                `;
+                paginationList.appendChild(pageItem);
+            }
+
+            // Next button
+            if (data.has_next) {
+                const nextItem = document.createElement('li');
+                nextItem.className = 'page-item';
+                nextItem.innerHTML = `
+                    <a class="page-link" href="#" onclick="loadLeads(${data.current_page + 1}); return false;">Next</a>
+                `;
+                paginationList.appendChild(nextItem);
+            } else {
+                const nextItem = document.createElement('li');
+                nextItem.className = 'page-item disabled';
+                nextItem.innerHTML = `<span class="page-link">Next</span>`;
+                paginationList.appendChild(nextItem);
+            }
+        }
+
+        // Function to attach event listeners to checkboxes
+        function attachCheckboxEventListeners() {
+            const checkboxes = document.querySelectorAll('.lead-checkbox');
+            checkboxes.forEach(checkbox => {
+                // Remove existing listeners to avoid duplicates
+                checkbox.removeEventListener('change', handleCheckboxChange);
+                checkbox.addEventListener('change', handleCheckboxChange);
+            });
+
+            // Attach status dropdown handlers
+            attachStatusDropdowns();
+        }
+
+        // Status dropdown with fixed positioning - avoids table overflow clipping
+        let currentOpenDropdown = null;
+
+        function attachStatusDropdowns() {
+            document.querySelectorAll('.status-badge').forEach(badge => {
+                const newBadge = badge.cloneNode(true);
+                badge.replaceWith(newBadge);
+                
+                newBadge.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (currentOpenDropdown) currentOpenDropdown.remove();
+                    currentOpenDropdown = null;
+                    
+                    const leadId = this.dataset.leadId;
+                    const rect = this.getBoundingClientRect();
+                    
+                    const menu = document.createElement('div');
+                    menu.style.cssText = `position:fixed;top:${rect.bottom + 4}px;left:${rect.left}px;background:#fff;border:1px solid #dee2e6;border-radius:0.375rem;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:9999;min-width:160px;`;
+                    
+                    const statuses = [
+                        {v:'new',l:'New',c:'bg-soft-info'},
+                        {v:'not_contacted',l:'Not Contacted',c:'bg-soft-secondary'},
+                        {v:'contacted',l:'Contacted',c:'bg-soft-warning'},
+                        {v:'no_response',l:'No Response',c:'bg-soft-danger'},
+                        {v:'interested',l:'Interested',c:'bg-soft-success'},
+                        {v:'not_interested',l:'Not Interested',c:'bg-soft-warning'},
+                        {v:'qualified',l:'Qualified',c:'bg-soft-primary'},
+                        {v:'proposal',l:'Proposal Sent',c:'bg-soft-info'},
+                        {v:'negotiation',l:'Negotiation',c:'bg-soft-info'},
+                        {v:'won',l:'Won',c:'bg-soft-success'},
+                        {v:'lost',l:'Lost',c:'bg-soft-danger'}
+                    ];
+                    let html = '<div style="padding:4px;">';
+                    statuses.forEach(s => {
+                        html += `<div style="padding:6px 8px;cursor:pointer;border-radius:0.25rem;" data-status="${s.v}" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
+                            <span class="badge ${s.c} m-0" style="display:inline-block;padding:2px 4px;margin-right:6px;">${s.l}</span>
+                        </div>`;
+                    });
+                    html += '</div>';
+                    menu.innerHTML = html;
+                    document.body.appendChild(menu);
+                    currentOpenDropdown = menu;
+                    
+                    menu.querySelectorAll('[data-status]').forEach(opt => {
+                        opt.addEventListener('click', function() {
+                            updateLeadStatus(leadId, this.dataset.status);
+                            if (currentOpenDropdown) {
+                                currentOpenDropdown.remove();
+                                currentOpenDropdown = null;
+                            }
+                        });
+                    });
+                });
+            });
+        }
+        
+        function updateLeadStatus(leadId, newStatus) {
+            const badge_classes = {
+                new: 'bg-info',
+                not_contacted: 'bg-secondary',
+                contacted: 'bg-warning text-dark',
+                no_response: 'bg-danger',
+                interested: 'bg-success',
+                not_interested: 'bg-warning text-dark',
+                qualified: 'bg-primary',
+                proposal: 'bg-info',
+                negotiation: 'bg-info',
+                won: 'bg-success',
+                lost: 'bg-danger'
+            };
+            const status_labels = {
+                new: 'New',
+                not_contacted: 'Not Contacted',
+                contacted: 'Contacted',
+                no_response: 'No Response',
+                interested: 'Interested',
+                not_interested: 'Not Interested',
+                qualified: 'Qualified',
+                proposal: 'Proposal Sent',
+                negotiation: 'Negotiation',
+                won: 'Won',
+                lost: 'Lost'
+            };
+            const badge = document.querySelector(`.status-badge[data-lead-id="${leadId}"]`);
+            
+            fetch(`/leads/lead/${leadId}/update-status/`, {
+                method: 'POST',
+                headers: {'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/x-www-form-urlencoded'},
+                body: `status=${newStatus}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && badge) {
+                    const repeatCount = data.status_repeat_count || 1;
+                    const label = data.status_display || status_labels[newStatus] || newStatus;
+                    const suffix = repeatCount > 1 ? ` ${repeatCount}` : '';
+
+                    badge.className = `badge ${badge_classes[newStatus]} status-badge`;
+                    badge.style.cursor = 'pointer';
+                    badge.dataset.currentStatus = newStatus;
+                    badge.innerHTML = `${label}${suffix} <i class="fas fa-angle-down ms-1" style="font-size:0.7em;"></i>`;
+                    const newBadge = badge.cloneNode(true);
+                    badge.replaceWith(newBadge);
+                    attachStatusDropdowns();
+                }
+            })
+            .catch(err => console.error('Error:', err));
+        }
+
+        document.addEventListener('click', function(e) {
+            if (currentOpenDropdown && !e.target.closest('.status-badge') && !e.target.closest('[data-status]')) {
+                currentOpenDropdown.remove();
+                currentOpenDropdown = null;
+            }
+        });
+
+        // Handler for checkbox changes
+        function handleCheckboxChange() {
+            const checkedBoxes = document.querySelectorAll('.lead-checkbox:checked');
+            const count = checkedBoxes.length;
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            const selectedCountSpan = document.getElementById('selectedCount');
+
+            if (count > 0) {
+                bulkDeleteBtn.disabled = false;
+                selectedCountSpan.textContent = `${count} selected`;
+            } else {
+                bulkDeleteBtn.disabled = true;
+                selectedCountSpan.textContent = '0 selected';
+            }
+        }
+
+        // Global function for pagination links
+        window.loadLeads = loadLeads;
+
+        // Export table functionality - server-side export with current filters
+        document.getElementById('exportTableBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            // Build query string from current filter values
+            const category = document.getElementById('id_category')?.value || '';
+            const source = document.getElementById('id_source')?.value || '';
+            const status = document.getElementById('id_status')?.value || '';
+            const startDate = document.getElementById('id_start_date')?.value || '';
+            const endDate = document.getElementById('id_end_date')?.value || '';
+            const searchQuery = document.getElementById('searchInput')?.value || '';
+
+            const params = new URLSearchParams();
+            if (category) params.set('category', category);
+            if (source) params.set('source', source);
+            if (status) params.set('status', status);
+            if (startDate) params.set('start_date', startDate);
+            if (endDate) params.set('end_date', endDate);
+            if (searchQuery) params.set('search', searchQuery);
+
+            const exportUrl = "{% url 'export_leads_csv' %}" + (params.toString() ? '?' + params.toString() : '');
+            window.location.href = exportUrl;
+        });
+
+        // --- Team Stacked Chart JS ---
+        var tfLabels = {
+            'all': 'All', 'today': 'Today', 'week': 'This Week', '7d': '7 Days',
+            '15d': '15 Days', '30d': '30 Days', '90d': '90 Days'
+        };
+        var colTf = '{{ dashboard_col_tf|default:"7d"|escapejs }}';
+        var colSort = '{{ dashboard_col_sort|default:"total"|escapejs }}';
+        var colPage = 1;
+        var colPerPage = 6;
+        var colSortLabels = {
+            total: 'Total Leads',
+            new: 'Most New',
+            contacted: 'Most Contacted',
+            won: 'Most Won',
+            lost: 'Most Lost',
+            name: 'Name (A-Z)'
+        };
+        var stackedColChartInstance = null;
+
+        function loadStackedColData() {
+            var url = '{% url "dashboard_team_stacked_data" %}' +
+                '?timeframe=' + encodeURIComponent(colTf) +
+                '&sort=' + encodeURIComponent(colSort) +
+                '&page=' + encodeURIComponent(colPage) +
+                '&per_page=' + encodeURIComponent(colPerPage);
+            
+            // Add filter parameters to chart API call
+            var params = new URLSearchParams(window.location.search);
+            var category = params.get('category');
+            var source = params.get('source');
+            var status = params.get('status');
+            var startDate = params.get('start_date');
+            var endDate = params.get('end_date');
+            var search = params.get('search');
+            
+            if (category) url += '&category=' + encodeURIComponent(category);
+            if (source) url += '&source=' + encodeURIComponent(source);
+            if (status) url += '&status=' + encodeURIComponent(status);
+            if (startDate) url += '&start_date=' + encodeURIComponent(startDate);
+            if (endDate) url += '&end_date=' + encodeURIComponent(endDate);
+            if (search) url += '&search=' + encodeURIComponent(search);
+
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (stackedColChartInstance) { stackedColChartInstance.destroy(); }
+
+                    var members = data.members || [];
+                    var statuses = data.statuses || [];
+                    var categories = members.map(function(m) { return m.name; });
+                    var series = statuses.map(function(status) {
+                        return {
+                            name: status.label,
+                            data: members.map(function(m) {
+                                return (m.statuses && m.statuses[status.key]) ? m.statuses[status.key] : 0;
+                            })
+                        };
+                    });
+
+                    while (categories.length < colPerPage) {
+                        categories.push('');
+                        series.forEach(function(item) {
+                            item.data.push(null);
+                        });
+                    }
+
+                    stackedColChartInstance = new ApexCharts(document.querySelector('#chartcol1'), {
+                        series: series,
+                        chart: {
+                            type: 'bar',
+                            height: 350,
+                            stacked: true,
+                            toolbar: { show: false },
+                            zoom: { enabled: false },
+                            fontFamily: 'inherit'
+                        },
+                        colors: statuses.map(function(status) { return status.color; }),
+                        plotOptions: {
+                            bar: {
+                                horizontal: false,
+                                columnWidth: '30px',
+                                borderRadius: 4,
+                                borderRadiusApplication: 'around',
+                                borderRadiusWhenStacked: 'all',
+                                endingShape: 'rounded',
+                                dataLabels: {
+                                    total: {
+                                        enabled: true,
+                                        style: {
+                                            fontSize: '12px',
+                                            fontWeight: 700
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: function (val) {
+                                var n = Number(val || 0);
+                                return n > 0 ? String(Math.round(n)) : '';
+                            },
+                            style: {
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                colors: ['#ffffff']
+                            },
+                            dropShadow: {
+                                enabled: true,
+                                top: 0,
+                                left: 0,
+                                blur: 1,
+                                color: '#000000',
+                                opacity: 0.2
+                            },
+                            textAnchor: 'middle'
+                        },
+                        xaxis: {
+                            categories: categories,
+                            labels: { style: { colors: '#6c757d', fontSize: '11px' }, rotate: -45, maxHeight: 80, trim: true },
+                            min: 0,
+                            max: Math.max(0, colPerPage - 1)
+                        },
+                        yaxis: {
+                            labels: { style: { colors: '#6c757d' } },
+                            min: 0
+                        },
+                        legend: { position: 'right', offsetY: 40, fontSize: '12px' },
+                        fill: { opacity: 1 },
+                        stroke: { width: 0 },
+                        grid: { borderColor: '#f1f1f1' },
+                        noData: { text: 'No team data in selected period', style: { fontSize: '14px', color: '#adb5bd' } }
+                    });
+                    stackedColChartInstance.render();
+
+                    var titleNode = document.getElementById('chartcol1Title');
+                    if (titleNode) {
+                        titleNode.textContent = 'Team Status Stacked (' + (data.label || 'Last 7 Days') + ')';
+                    }
+                    var tfNode = document.getElementById('colTfLabel');
+                    if (tfNode) {
+                        tfNode.textContent = tfLabels[colTf] || colTf;
+                    }
+                    var sortNode = document.getElementById('colSortLabel');
+                    if (sortNode) {
+                        sortNode.textContent = colSortLabels[colSort] || 'Total Leads';
+                    }
+
+                    document.querySelectorAll('#colTfDropdown .dropdown-item').forEach(function(a) {
+                        a.classList.toggle('active', a.dataset.tf === colTf);
+                    });
+                    document.querySelectorAll('#colSortDropdown .dropdown-item').forEach(function(a) {
+                        a.classList.toggle('active', a.dataset.sort === colSort);
+                    });
+
+                    var pageInfoNode = document.getElementById('chartcolPageInfo');
+                    if (pageInfoNode) {
+                        if ((data.total_pages || 1) > 1) {
+                            pageInfoNode.textContent = (data.page || 1) + ' / ' + (data.total_pages || 1);
+                        } else {
+                            var totalMembers = data.total_members || 0;
+                            pageInfoNode.textContent = totalMembers + ' member' + (totalMembers !== 1 ? 's' : '') + ' • showing up to ' + colPerPage;
+                        }
+                    }
+
+                    var prevBtn = document.getElementById('chartcolPrev');
+                    var nextBtn = document.getElementById('chartcolNext');
+                    if (prevBtn) { prevBtn.disabled = (data.page || 1) <= 1; }
+                    if (nextBtn) { nextBtn.disabled = (data.page || 1) >= (data.total_pages || 1); }
+                    colPage = data.page || 1;
+                });
+        }
+
+        document.querySelectorAll('#colTfDropdown .dropdown-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                colTf = this.dataset.tf;
+                colPage = 1;
+                loadStackedColData();
+            });
+        });
+
+        document.querySelectorAll('#colSortDropdown .dropdown-item').forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                colSort = this.dataset.sort;
+                colPage = 1;
+                loadStackedColData();
+            });
+        });
+
+        var colPrevBtn = document.getElementById('chartcolPrev');
+        if (colPrevBtn) {
+            colPrevBtn.addEventListener('click', function() {
+                if (colPage > 1) {
+                    colPage -= 1;
+                    loadStackedColData();
+                }
+            });
+        }
+
+        var colNextBtn = document.getElementById('chartcolNext');
+        if (colNextBtn) {
+            colNextBtn.addEventListener('click', function() {
+                colPage += 1;
+                loadStackedColData();
+            });
+        }
+
+        var exportColNode = document.getElementById('exportCsvCol');
+        if (exportColNode) {
+            exportColNode.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '{% url "dashboard_team_stacked_export" %}' +
+                    '?timeframe=' + encodeURIComponent(colTf) + '&sort=' + encodeURIComponent(colSort);
+            });
+        }
+
+        loadStackedColData();
+    </script>
+    {% endblock %}
+    {% endblock %}

@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}LeadSync - Lead Management System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section text-center py-5 my-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-4">
+            <i class="fas fa-sync-alt text-primary me-3"></i>LeadSync
+        </h1>
+        <p class="lead mb-4">Powerful Lead Management System for Modern Businesses</p>
+        <p class="text-muted mb-5">
+            Streamline your sales process, manage your team, and grow your business with our all-in-one lead management solution.
+        </p>
+        
+        {% if not user.is_authenticated %}
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'signup' %}" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-rocket me-2"></i>Get Started Free
+            </a>
+            <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-5">
+                <i class="fas fa-sign-in-alt me-2"></i>Login
+            </a>
+        </div>
+        {% else %}
+        <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg px-5">
+            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container py-5">
+    <h2 class="text-center mb-5">Why Choose LeadSync?</h2>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="display-1 text-primary mb-3">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h4 class="card-title">Team Management</h4>
+                    <p class="card-text text-muted">
+                        Easily manage your sales team with hierarchical access control. 
+                        Approve staff, set limits, and track performance.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="display-1 text-primary mb-3">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h4 class="card-title">Smart Analytics</h4>
+                    <p class="card-text text-muted">
+                        Get insights with real-time dashboards, lead status tracking, 
+                        and performance reports to make data-driven decisions.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="display-1 text-primary mb-3">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h4 class="card-title">Mobile Responsive</h4>
+                    <p class="card-text text-muted">
+                        Access your leads from anywhere, on any device. 
+                        Our responsive design ensures seamless experience on mobile and desktop.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">How It Works</h2>
+        
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="text-center">
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="fas fa-user-plus fa-2x"></i>
+                    </div>
+                    <h5>1. Sign Up</h5>
+                    <p class="text-muted small">
+                        Register as Business Owner or Employee
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-4">
+                <div class="text-center">
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    <h5>2. Get Approved</h5>
+                    <p class="text-muted small">
+                        Owners approved by Admin, Staff approved by Owners
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-4">
+                <div class="text-center">
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="fas fa-plus-circle fa-2x"></i>
+                    </div>
+                    <h5>3. Add Leads</h5>
+                    <p class="text-muted small">
+                        Start adding leads with custom categories and sources
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-4">
+                <div class="text-center">
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px;">
+                        <i class="fas fa-chart-bar fa-2x"></i>
+                    </div>
+                    <h5>4. Track & Grow</h5>
+                    <p class="text-muted small">
+                        Monitor performance and grow your business
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pricing Preview -->
+<div class="container py-5">
+    <h2 class="text-center mb-5">Simple, Transparent Pricing</h2>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-primary">
+                <div class="card-header text-center bg-primary text-white">
+                    <h4 class="mb-0">Starter</h4>
+                    <h1 class="my-3">{{ currency_symbol }}0<span class="h4">/month</span></h1>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Up to 3 Staff Members</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>100 Leads Limit</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Basic Lead Management</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Email Support</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-warning shadow-lg">
+                <div class="card-header text-center bg-warning text-dark">
+                    <h4 class="mb-0">Professional</h4>
+                    <h1 class="my-3">{{ currency_symbol }}29.99<span class="h4">/month</span></h1>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Up to 10 Staff Members</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>1000 Leads Limit</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Advanced Analytics</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Priority Email Support</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Export Features</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="bg-primary text-white py-5">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to Transform Your Lead Management?</h2>
+        <p class="lead mb-4">Join thousands of businesses growing with LeadSync</p>
+        
+        {% if not user.is_authenticated %}
+        <a href="{% url 'signup' %}" class="btn btn-light btn-lg px-5">
+            <i class="fas fa-user-plus me-2"></i>Start Free Trial
+        </a>
+        {% else %}
+        <a href="{% url 'dashboard' %}" class="btn btn-light btn-lg px-5">
+            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

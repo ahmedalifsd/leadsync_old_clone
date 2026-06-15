@@ -1,0 +1,594 @@
+{% extends 'layout/layout.html' %}
+
+{% block title %}Dashboard - LeadSync{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>Add New Lead(s)
+                </h4>
+                <ul class="nav nav-tabs card-header-tabs mt-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="single-tab" data-bs-toggle="tab" href="#single">Single Lead</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="multiple-tab" data-bs-toggle="tab" href="#multiple">Multiple Leads</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Single Lead Tab -->
+                    <div class="tab-pane fade show active" id="single">
+                        <form method="post" id="singleLeadForm">
+                            {% csrf_token %}
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Client Name *</label>
+                                    {{ form.client_name }}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Contact Number *</label>
+                                    {{ form.contact_number }}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email</label>
+                                    {{ form.email }}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Status *</label>
+                                    {{ form.status }}
+                                </div>
+                            </div>
+
+                            <!-- Profile Links -->
+                            <div id="profile-links-section">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-link me-2"></i>Profile Links
+                                    <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="add-profile-link">
+                                        <i class="fas fa-plus me-1"></i>Add Link
+                                    </button>
+                                </h5>
+
+                                <div id="profile-links-container">
+                                    {{ profile_link_formset.management_form }}
+                                    {% for profile_link_form in profile_link_formset %}
+                                    <div class="profile-link-item border rounded p-3 mb-3">
+                                        <div class="row">
+                                            <div class="col-md-3 mb-2">
+                                                <label class="form-label">Platform</label>
+                                                {{ profile_link_form.platform }}
+                                            </div>
+                                            <div class="col-md-3 mb-2" id="custom-platform-{{ forloop.counter0 }}" style="display: none;">
+                                                <label class="form-label">Custom Platform</label>
+                                                {{ profile_link_form.custom_platform }}
+                                            </div>
+                                            <div class="col-md-5 mb-2">
+                                                <label class="form-label">URL</label>
+                                                {{ profile_link_form.url }}
+                                            </div>
+                                            <div class="col-md-1 mb-2 d-flex align-items-end">
+                                                {% if profile_link_formset.can_delete %}
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-profile-link">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% if profile_link_form.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ profile_link_form.errors }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Category Selection -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Category</label>
+                                    <select name="category_choice" id="id_category_choice" class="form-select">
+                                        <option value="">Select Category</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                        <option value="other">Other (Please specify)</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6" id="category_other_div" style="display: none;">
+                                    <label class="form-label">Specify Category *</label>
+                                    <input type="text" name="category_other" id="id_category_other" class="form-control"
+                                           placeholder="Enter custom category">
+                                </div>
+                            </div>
+
+                            <!-- Source Selection -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Source</label>
+                                    <select name="source_choice" id="id_source_choice" class="form-select">
+                                        <option value="">Select Source</option>
+                                        {% for source in sources %}
+                                        <option value="{{ source.id }}">{{ source.name }}</option>
+                                        {% endfor %}
+                                        <option value="other">Other (Please specify)</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6" id="source_other_div" style="display: none;">
+                                    <label class="form-label">Specify Source *</label>
+                                    <input type="text" name="source_other" id="id_source_other" class="form-control"
+                                           placeholder="Enter custom source">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Requirement *</label>
+                                {{ form.requirement }}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Follow-up Date</label>
+                                    {{ form.follow_up_date }}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Notes</label>
+                                    {{ form.notes }}
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                This lead will be {% if user.profile.role == 'staff' %}assigned to your boss{% else %}added to your account{% endif %}.
+                            </div>
+
+                            <div class="text-end">
+                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </a>
+                                <button type="submit" name="action" value="continue" class="btn btn-outline-primary me-2">
+                                    <i class="fas fa-plus me-1"></i>Save & Add Another
+                                </button>
+                                <button type="submit" name="action" value="save" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Save Lead
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Multiple Leads Tab -->
+                    <div class="tab-pane fade" id="multiple">
+                        <form method="post" id="multipleLeadsForm">
+                            {% csrf_token %}
+
+                            <!-- Shared Properties Section -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-share-alt me-2"></i>Shared Properties for All Leads</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Category for all leads</label>
+                                            <select name="category_choice" id="id_multiple_category_choice" class="form-select">
+                                                <option value="">Select Category for all leads</option>
+                                                {% for category in categories %}
+                                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                                {% endfor %}
+                                                <option value="other">Other (Please specify)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6 mb-3" id="multiple_category_other_div" style="display: none;">
+                                            <label class="form-label">Specify Category *</label>
+                                            <input type="text" name="category_other" id="id_multiple_category_other" class="form-control"
+                                                   placeholder="Enter custom category">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Source for all leads</label>
+                                            <select name="source_choice" id="id_multiple_source_choice" class="form-select">
+                                                <option value="">Select Source for all leads</option>
+                                                {% for source in sources %}
+                                                <option value="{{ source.id }}">{{ source.name }}</option>
+                                                {% endfor %}
+                                                <option value="other">Other (Please specify)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6 mb-3" id="multiple_source_other_div" style="display: none;">
+                                            <label class="form-label">Specify Source *</label>
+                                            <input type="text" name="source_other" id="id_multiple_source_other" class="form-control"
+                                                   placeholder="Enter custom source">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Status for all leads</label>
+                                            <select name="status" class="form-select">
+                                                <option value="new">New</option>
+                                                <option value="not_contacted">Not Contacted</option>
+                                                <option value="contacted">Contacted</option>
+                                                <option value="no_response">No Response</option>
+                                                <option value="interested">Interested</option>
+                                                <option value="not_interested">Not Interested</option>
+                                                <option value="qualified">Qualified</option>
+                                                <option value="proposal">Proposal Sent</option>
+                                                <option value="negotiation">Negotiation</option>
+                                                <option value="won">Won</option>
+                                                <option value="lost">Lost</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Follow-up Date for all leads</label>
+                                            <input type="date" name="follow_up_date" class="form-control">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Common Notes for all leads</label>
+                                        <textarea name="notes" class="form-control" rows="3"
+                                                  placeholder="Common notes that apply to all leads"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Individual Leads Section -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Individual Leads</h5>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-multiple-lead-row">
+                                        <i class="fas fa-plus me-1"></i>Add Row
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    {{ lead_entries_formset.management_form }}
+
+                                    <div id="multiple-leads-container">
+                                        {% for form in lead_entries_formset %}
+                                        <div class="multiple-lead-entry-row border rounded p-3 mb-3">
+                                            <div class="row">
+                                                <div class="col-md-4 mb-2">
+                                                    <label class="form-label">Client Name *</label>
+                                                    {{ form.client_name }}
+                                                </div>
+                                                <div class="col-md-3 mb-2">
+                                                    <label class="form-label">Contact Number *</label>
+                                                    {{ form.contact_number }}
+                                                </div>
+                                                <div class="col-md-3 mb-2">
+                                                    <label class="form-label">Email</label>
+                                                    {{ form.email }}
+                                                </div>
+                                                <div class="col-md-2 mb-2 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-multiple-lead-row">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-2">
+                                                <div class="col-12">
+                                                    <label class="form-label">Requirement *</label>
+                                                    {{ form.requirement }}
+                                                </div>
+                                            </div>
+                                            {% if form.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.errors }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                All leads will share the same category, source, status, follow-up date, and notes.
+                                Each lead will have its own client name, contact info, and requirement.
+                            </div>
+
+                            <div class="text-end">
+                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </a>
+                                <button type="submit" name="multiple_leads_submit" value="1" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Add Multiple Leads
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Single Lead Form Scripts (existing functionality)
+        // Category "Other" toggle for single lead
+        const categorySelect = document.getElementById('id_category_choice');
+        const categoryOtherDiv = document.getElementById('category_other_div');
+
+        if (categorySelect && categoryOtherDiv) {
+            categorySelect.addEventListener('change', function() {
+                if (this.value === 'other') {
+                    categoryOtherDiv.style.display = 'block';
+                    categoryOtherDiv.querySelector('input').required = true;
+                } else {
+                    categoryOtherDiv.style.display = 'none';
+                    categoryOtherDiv.querySelector('input').required = false;
+                }
+            });
+        }
+
+        // Source "Other" toggle for single lead
+        const sourceSelect = document.getElementById('id_source_choice');
+        const sourceOtherDiv = document.getElementById('source_other_div');
+
+        if (sourceSelect && sourceOtherDiv) {
+            sourceSelect.addEventListener('change', function() {
+                if (this.value === 'other') {
+                    sourceOtherDiv.style.display = 'block';
+                    sourceOtherDiv.querySelector('input').required = true;
+                } else {
+                    sourceOtherDiv.style.display = 'none';
+                    sourceOtherDiv.querySelector('input').required = false;
+                }
+            });
+        }
+
+        // Profile Links functionality for single lead
+        let profileLinkIndex = {{ profile_link_formset.total_form_count|default:0 }};
+
+        // Add profile link - prevent duplicate event listeners
+        const addProfileLinkButton = document.getElementById('add-profile-link');
+        if (addProfileLinkButton && !addProfileLinkButton.hasAttribute('data-listener-added')) {
+            addProfileLinkButton.setAttribute('data-listener-added', 'true');
+            addProfileLinkButton.addEventListener('click', function() {
+            const container = document.getElementById('profile-links-container');
+            const newFormHtml = `
+                <div class="profile-link-item border rounded p-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label">Platform</label>
+                            <select name="profile_links-${profileLinkIndex}-platform" class="form-select profile-platform">
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="twitter">Twitter</option>
+                                <option value="youtube">YouTube</option>
+                                <option value="website">Website</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2 custom-platform-div" style="display: none;">
+                            <label class="form-label">Custom Platform</label>
+                            <input type="text" name="profile_links-${profileLinkIndex}-custom_platform" class="form-control" placeholder="Platform name">
+                        </div>
+                        <div class="col-md-5 mb-2">
+                            <label class="form-label">URL</label>
+                            <input type="url" name="profile_links-${profileLinkIndex}-url" class="form-control" placeholder="https://example.com">
+                        </div>
+                        <div class="col-md-1 mb-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-profile-link">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" name="profile_links-${profileLinkIndex}-id" id="id_profile_links-${profileLinkIndex}-id">
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', newFormHtml);
+            profileLinkIndex++;
+
+            // Update management form
+            document.querySelector('[name="profile_links-TOTAL_FORMS"]').value = profileLinkIndex;
+            });
+        }
+
+        // Handle platform change for showing/hiding custom platform field
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('profile-platform')) {
+                const item = e.target.closest('.profile-link-item');
+                const customPlatformDiv = item.querySelector('.custom-platform-div');
+                const customPlatformInput = item.querySelector('[name*="-custom_platform"]');
+
+                if (e.target.value === 'other') {
+                    customPlatformDiv.style.display = 'block';
+                    customPlatformInput.required = true;
+                } else {
+                    customPlatformDiv.style.display = 'none';
+                    customPlatformInput.required = false;
+                    customPlatformInput.value = '';
+                }
+            }
+        });
+
+
+        // Phone number formatting for single lead
+        const phoneInput = document.getElementById('id_contact_number');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 3 && value.length <= 6) {
+                    value = value.replace(/(\d{3})(\d{0,3})/, '$1-$2');
+                } else if (value.length > 6 && value.length <= 10) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{0,4})/, '$1-$2-$3');
+                }
+                e.target.value = value;
+            });
+        }
+
+        // Set default follow-up date to tomorrow for single lead
+        const followUpInput = document.getElementById('id_follow_up_date');
+        if (followUpInput && !followUpInput.value) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            followUpInput.value = tomorrow.toISOString().split('T')[0];
+        }
+
+        // Multiple Leads Form Scripts
+        // Category "Other" toggle for multiple leads
+        const multipleCategorySelect = document.getElementById('id_multiple_category_choice');
+        const multipleCategoryOtherDiv = document.getElementById('multiple_category_other_div');
+
+        if (multipleCategorySelect && multipleCategoryOtherDiv) {
+            multipleCategorySelect.addEventListener('change', function() {
+                if (this.value === 'other') {
+                    multipleCategoryOtherDiv.style.display = 'block';
+                    multipleCategoryOtherDiv.querySelector('input').required = true;
+                } else {
+                    multipleCategoryOtherDiv.style.display = 'none';
+                    multipleCategoryOtherDiv.querySelector('input').required = false;
+                }
+            });
+        }
+
+        // Source "Other" toggle for multiple leads
+        const multipleSourceSelect = document.getElementById('id_multiple_source_choice');
+        const multipleSourceOtherDiv = document.getElementById('multiple_source_other_div');
+
+        if (multipleSourceSelect && multipleSourceOtherDiv) {
+            multipleSourceSelect.addEventListener('change', function() {
+                if (this.value === 'other') {
+                    multipleSourceOtherDiv.style.display = 'block';
+                    multipleSourceOtherDiv.querySelector('input').required = true;
+                } else {
+                    multipleSourceOtherDiv.style.display = 'none';
+                    multipleSourceOtherDiv.querySelector('input').required = false;
+                }
+            });
+        }
+
+        // Multiple leads row management
+        let multipleLeadIndex = {{ lead_entries_formset.total_form_count|default:1 }};
+
+        // Add multiple lead row button - prevent duplicate event listeners
+        const addMultipleLeadRowButton = document.getElementById('add-multiple-lead-row');
+        if (addMultipleLeadRowButton && !addMultipleLeadRowButton.hasAttribute('data-event-listener-added')) {
+            addMultipleLeadRowButton.setAttribute('data-event-listener-added', 'true');
+            addMultipleLeadRowButton.addEventListener('click', function() {
+                // Calculate the correct index based on current number of forms
+                const currentForms = document.querySelectorAll('.multiple-lead-entry-row');
+                const newIndex = currentForms.length;
+
+                const container = document.getElementById('multiple-leads-container');
+                const newFormHtml = `
+                    <div class="multiple-lead-entry-row border rounded p-3 mb-3">
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label">Client Name *</label>
+                                <input type="text" name="leads-${newIndex}-client_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label">Contact Number *</label>
+                                <input type="text" name="leads-${newIndex}-contact_number" class="form-control" required>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="leads-${newIndex}-email" class="form-control">
+                            </div>
+                            <div class="col-md-2 mb-2 d-flex align-items-end">
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-multiple-lead-row">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <label class="form-label">Requirement *</label>
+                                <textarea name="leads-${newIndex}-requirement" class="form-control" rows="2" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('afterbegin', newFormHtml);
+
+                // Re-index all forms to ensure consecutive indices
+                reindexMultipleLeadForms();
+            });
+        }
+
+        // Remove multiple lead row - use event delegation to avoid duplicate listeners
+        // This is handled by the general event listener already defined above
+        // Phone number formatting for multiple leads
+        document.addEventListener('input', function(e) {
+            if (e.target.matches('[name*="contact_number"]')) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 3 && value.length <= 6) {
+                    value = value.replace(/(\d{3})(\d{0,3})/, '$1-$2');
+                } else if (value.length > 6 && value.length <= 10) {
+                    value = value.replace(/(\d{3})(\d{3})(\d{0,4})/, '$1-$2-$3');
+                }
+                e.target.value = value;
+            }
+        });
+
+        // Combined event listener for removing both profile links and multiple lead rows
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-profile-link') || e.target.closest('.remove-profile-link')) {
+                e.target.closest('.profile-link-item').remove();
+            }
+            if (e.target.classList.contains('remove-multiple-lead-row') || e.target.closest('.remove-multiple-lead-row')) {
+                const row = e.target.closest('.multiple-lead-entry-row');
+                if (document.querySelectorAll('.multiple-lead-entry-row').length > 1) {
+                    row.remove();
+
+                    // Re-index all remaining forms to ensure consecutive indices
+                    reindexMultipleLeadForms();
+                } else {
+                    alert('You must have at least one lead entry.');
+                }
+            }
+        });
+
+        // Function to re-index all multiple lead forms to ensure consecutive indices
+        function reindexMultipleLeadForms() {
+            const allRows = document.querySelectorAll('.multiple-lead-entry-row');
+            allRows.forEach((row, index) => {
+                // Update input names to use the new index
+                const inputs = row.querySelectorAll('input, textarea, select');
+                inputs.forEach(input => {
+                    if (input.name) {
+                        // Update the index in the name attribute
+                        input.name = input.name.replace(/leads-\d+-/, `leads-${index}-`);
+                        if (input.id) {
+                            // Update the ID attribute as well
+                            input.id = input.id.replace(/id_leads-\d+-/, `id_leads-${index}-`);
+                        }
+                    }
+                });
+            });
+
+            // Update management form
+            document.querySelector('[name="leads-TOTAL_FORMS"]').value = allRows.length;
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
