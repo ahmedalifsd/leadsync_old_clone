@@ -3,23 +3,44 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import './index.css';
 
-// Pages to be created
+// Public Pages - Phase 3
+import { HomePage } from './pages/HomePage';
+import { LoginPage } from './pages/LoginPage';
+import { SignupPage } from './pages/SignupPage';
+import { PlansPage } from './pages/PlansPage';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { TermsAndConditions } from './pages/TermsAndConditions';
+import { SupportPage } from './pages/SupportPage';
+
+// Protected Pages - Phase 4
+import { DashboardPage } from './pages/DashboardPage';
+import { LeadsPage } from './pages/LeadsPage';
+import { LeadDetailPage } from './pages/LeadDetailPage';
+import { AddLeadPage } from './pages/AddLeadPage';
+import { EditLeadPage } from './pages/EditLeadPage';
+
+// Protected Pages - Phase 5
+import { ActivityPage } from './pages/ActivityPage';
+import { TemplatesPage } from './pages/TemplatesPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
+import { SettingsPage } from './pages/SettingsPage';
+
 const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
           {/* Public Routes */}
-          {/* <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/my-plans" element={<PlansPage />} />
-          <Route path="/privacy-policy" element={<PrivacyPage />} />
-          <Route path="/terms-and-conditions" element={<TermsPage />} />
-          <Route path="/support" element={<SupportPage />} /> */}
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+          <Route path="/support" element={<SupportPage />} />
 
-          {/* Protected Routes */}
-          {/* <Route
+          {/* Protected Routes - Phase 4 */}
+          <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
@@ -28,8 +49,7 @@ const App = () => {
             }
           />
 
-          {/* Leads Routes */}
-          {/* <Route
+          <Route
             path="/leads"
             element={
               <ProtectedRoute>
@@ -60,9 +80,46 @@ const App = () => {
                 <EditLeadPage />
               </ProtectedRoute>
             }
-          /> */}
+          />
 
-          {/* Fallback */}
+          {/* Protected Routes - Phase 5 */}
+          <Route
+            path="/activity"
+            element={
+              <ProtectedRoute>
+                <ActivityPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/templates"
+            element={
+              <ProtectedRoute>
+                <TemplatesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <AnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 404 Fallback */}
           <Route path="*" element={<div className="text-center py-12">Page not found</div>} />
         </Routes>
       </AuthProvider>

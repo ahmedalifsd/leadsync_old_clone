@@ -199,6 +199,11 @@ class ApiClient {
   async getUsers() {
     return this.client.get('/auth/users/');
   }
+
+  // Plans (Public - no auth required)
+  async getPlans() {
+    return this.client.get('/plans/').then(res => res.data);
+  }
 }
 
 export const api = new ApiClient();

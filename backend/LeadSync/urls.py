@@ -28,6 +28,7 @@ urlpatterns = [
     # API Routes (v1)
     path('api/auth/', include('accounts.api_urls')),
     path('api/', include('core.api_urls')),
+    path('api/', include('billing.api_urls')),
     
     # Legacy Django Template URLs (for backward compatibility)
     path('', core_views.home, name='home'),
