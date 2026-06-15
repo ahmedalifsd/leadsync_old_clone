@@ -72,26 +72,6 @@ export const Navbar = () => {
                 >
                   Activity
                 </Link>
-                <Link
-                  to="/teams"
-                  className="text-gray-700 hover:text-primary font-medium"
-                >
-                  Teams
-                </Link>
-                <Link
-                  to="/billing"
-                  className="text-gray-700 hover:text-primary font-medium"
-                >
-                  Billing
-                </Link>
-                {user?.role === 'super_admin' && (
-                  <Link
-                    to="/admin"
-                    className="text-gray-700 hover:text-primary font-medium"
-                  >
-                    Admin
-                  </Link>
-                )}
                 <div className="flex items-center space-x-4 ml-4 pl-4 border-l">
                   <Link
                     to="/settings"
@@ -191,26 +171,6 @@ export const Navbar = () => {
                 >
                   Activity
                 </Link>
-                <Link
-                  to="/teams"
-                  className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
-                >
-                  Teams
-                </Link>
-                <Link
-                  to="/billing"
-                  className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
-                >
-                  Billing
-                </Link>
-                {user?.role === 'super_admin' && (
-                  <Link
-                    to="/admin"
-                    className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"
-                  >
-                    Admin
-                  </Link>
-                )}
                 <Link
                   to="/settings"
                   className="block px-3 py-2 rounded-md text-gray-700 hover:bg-gray-100"

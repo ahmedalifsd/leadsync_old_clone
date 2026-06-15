@@ -65,30 +65,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'LeadSync.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates',],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'core.context_processors.stripe_context',
-                'core.context_processors.user_permissions_context',
-                'core.context_processors.notifications_context',
-                'core.context_processors.chat_unread_context',
-                'core.context_processors.currency_context',
-                'core.context_processors.plan_alert_context',
-                'core.context_processors.google_analytics_context',
-            ],
-        },
-    },
-]
+# Templates disabled - This is an API-only backend
+# Frontend (React) handles all UI rendering
+# If you need Django templates for development, create a separate settings_local.py
+TEMPLATES = []
 
 WSGI_APPLICATION = 'LeadSync.wsgi.application'
 
