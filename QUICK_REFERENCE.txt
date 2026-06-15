@@ -1,0 +1,286 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      LEADSYNC CRM - QUICK REFERENCE                        ║
+║                       Phases 1 & 2 Complete (28%)                          ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+DIRECTORY STRUCTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+backend/                               frontend/
+├── LeadSync/                          ├── src/
+│   ├── settings.py ✅ (REST+CORS)    │   ├── services/
+│   └── urls.py ✅ (API routes)       │   │   ├── api.ts ✅ (200 lines)
+├── core/                              │   │   ├── db.ts ✅ (281 lines)
+│   ├── serializers.py ✅ (127 L)     │   │   └── sync.ts ✅ (202 lines)
+│   ├── api_views.py ✅ (278 L)       │   ├── context/
+│   └── api_urls.py ✅ (18 L)         │   │   └── AuthContext.tsx ✅ (148 L)
+├── accounts/                          │   ├── components/
+│   ├── serializers.py ✅ (105 L)     │   │   └── ProtectedRoute.tsx ✅ (29 L)
+│   ├── api_views.py ✅ (158 L)       │   ├── types/
+│   └── api_urls.py ✅ (19 L)         │   │   └── index.ts ✅ (193 L)
+├── requirements.txt ✅                │   ├── App.tsx ✅
+├── manage.py                          │   ├── index.css ✅ (Tailwind)
+└── .env.example                       ├── tailwind.config.js ✅
+                                       ├── postcss.config.js ✅
+                                       └── .env.example
+
+═══════════════════════════════════════════════════════════════════════════════
+
+QUICK START (5 MINUTES)
+═══════════════════════════════════════════════════════════════════════════════
+
+Backend:                               Frontend:
+  cd backend                             cd frontend
+  source venv/bin/activate              npm install
+  pip install -r req*.txt               npm run dev
+  python manage.py migrate
+  python manage.py runserver             → http://localhost:5173
+
+Available at: http://localhost:8000
+
+═══════════════════════════════════════════════════════════════════════════════
+
+API ENDPOINTS SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+Auth (8)                               Leads (15)
+  /api/auth/login/                      /api/leads/
+  /api/auth/logout/                     /api/leads/{id}/
+  /api/auth/register/                   /api/leads/{id}/change_status/
+  /api/auth/user/                       /api/leads/{id}/assign/
+  /api/auth/profile/                    /api/leads/{id}/restore/
+  /api/auth/password/change/            /api/leads/deleted_leads/
+  /api/auth/check-username/
+  /api/auth/check-email/              Metadata (21)
+                                        /api/categories/
+Users (1)                               /api/sources/
+  /api/auth/users/                      /api/owner-categories/
+                                        /api/owner-sources/
+Dashboard (2)                           /api/activity-logs/
+  /api/dashboard/stats/
+  /api/leads/status-distribution/    TOTAL: 50+ endpoints
+
+═══════════════════════════════════════════════════════════════════════════════
+
+FRONTEND SERVICES
+═══════════════════════════════════════════════════════════════════════════════
+
+api.ts (205 lines)                     db.ts (281 lines)
+  ✅ 50+ API methods                     ✅ Dexie.js integration
+  ✅ Axios interceptors                 ✅ CRUD operations
+  ✅ Auth error handling                ✅ Sync queue management
+  ✅ CORS + credentials                 ✅ Offline data caching
+
+sync.ts (202 lines)                    AuthContext.tsx (148 lines)
+  ✅ Online/offline detection           ✅ Login/logout
+  ✅ Auto-sync on reconnect             ✅ Register
+  ✅ Retry logic                        ✅ Profile updates
+  ✅ Conflict resolution                ✅ Session persistence
+
+═══════════════════════════════════════════════════════════════════════════════
+
+IMPORT QUICK REFERENCE
+═══════════════════════════════════════════════════════════════════════════════
+
+// API calls
+import { api } from '../services/api';
+await api.getLeads(1, { status: 'interested' });
+await api.createLead({ client_name: 'John', email: '...' });
+
+// Offline database
+import { db } from '../services/db';
+await db.addLead({ client_name: 'Jane' });
+const leads = await db.getLeads();
+
+// Auth
+import { useAuth } from '../context/AuthContext';
+const { user, login, logout, register } = useAuth();
+
+// Types
+import type { Lead, Category, User, LeadStatus } from '../types';
+import { LEAD_STATUS_LABELS, LEAD_STATUS_COLORS } from '../types';
+
+// Sync
+import { syncService } from '../services/sync';
+await syncService.initialize();
+syncService.onSyncStatusChange((status) => {...});
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TAILWIND CSS CUSTOM COMPONENTS
+═══════════════════════════════════════════════════════════════════════════════
+
+Buttons:
+  <button className="btn-primary">Primary</button>
+  <button className="btn-secondary">Secondary</button>
+  <button className="btn-accent">Accent</button>
+  <button className="btn-outline">Outline</button>
+  <button className="btn-small">Small</button>
+  <button className="btn-large">Large</button>
+
+Badges:
+  <span className="badge-primary">Primary</span>
+  <span className="badge-success">Success</span>
+  <span className="badge-error">Error</span>
+
+Forms:
+  <input className="input" />
+  <input className="input-error" />
+  <label className="label">Label</label>
+  <div className="form-group">Field</div>
+
+Cards:
+  <div className="card">Content</div>
+  <div className="card-bordered">Bordered</div>
+
+Text:
+  <p className="text-primary">Primary</p>
+  <p className="text-error">Error</p>
+  <p className="text-muted">Muted</p>
+
+Colors:
+  primary, primary-light, primary-dark
+  secondary, secondary-light
+  accent, accent-light, accent-dark
+  success, warning, error
+  neutral, neutral-dark
+
+═══════════════════════════════════════════════════════════════════════════════
+
+DOCUMENTATION FILES
+═══════════════════════════════════════════════════════════════════════════════
+
+Essential:
+  ✅ BUILD_STATUS.md          - Complete build status
+  ✅ DEVELOPER_GUIDE.md       - How to continue development
+  ✅ PHASE_1_2_COMPLETE.md    - What was built
+
+Backend:
+  ✅ backend/README.md        - Backend setup & API docs
+  ✅ backend/.env.example     - Environment template
+
+Frontend:
+  ✅ frontend/README.md       - Frontend setup & features
+  ✅ frontend/.env.example    - Environment template
+
+═══════════════════════════════════════════════════════════════════════════════
+
+ENVIRONMENT SETUP
+═══════════════════════════════════════════════════════════════════════════════
+
+Backend (.env):
+  DEBUG=True
+  SECRET_KEY=your-secret-key
+  DATABASE_URL=postgresql://user:password@localhost:5432/leadsync
+  CORS_ALLOWED_ORIGINS=http://localhost:5173
+
+Frontend (.env):
+  VITE_API_URL=http://localhost:8000/api
+  VITE_APP_NAME=LeadSync CRM
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TESTING OFFLINE
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Open DevTools (F12)
+2. Go to Network tab
+3. Check "Offline" checkbox
+4. Make changes (add/edit leads)
+5. Check Application > IndexedDB > LeadSyncCRM > syncQueue
+6. Uncheck offline
+7. Wait for sync (10-30 seconds)
+8. Changes should be synced
+
+═══════════════════════════════════════════════════════════════════════════════
+
+NEXT PHASE (Phase 3)
+═══════════════════════════════════════════════════════════════════════════════
+
+Build public pages:
+  ✓ HomePage          (marketing landing)
+  ✓ LoginPage         (auth form + validation)
+  ✓ SignupPage        (registration)
+  ✓ PlansPage         (pricing table)
+  ✓ PrivacyPolicy
+  ✓ Terms & Conditions
+  ✓ Support page
+  ✓ Layout component  (Navbar + Footer)
+
+See DEVELOPER_GUIDE.md for step-by-step instructions.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+COMMON COMMANDS
+═══════════════════════════════════════════════════════════════════════════════
+
+Backend:
+  python manage.py migrate           - Apply database migrations
+  python manage.py createsuperuser   - Create admin user
+  python manage.py shell             - Django shell
+  python manage.py test              - Run tests
+
+Frontend:
+  npm run dev                        - Start dev server
+  npm run build                      - Build for production
+  npm run preview                    - Preview production build
+  npm run lint                       - Run ESLint
+
+═══════════════════════════════════════════════════════════════════════════════
+
+STATUS OVERVIEW
+═══════════════════════════════════════════════════════════════════════════════
+
+Phase 1: Backend REST API           ✅ COMPLETE (700+ lines)
+  - 50+ API endpoints
+  - Complete serializers
+  - Pagination & filtering
+  - Authentication
+  - CORS configured
+
+Phase 2: React Frontend Foundation  ✅ COMPLETE (1300+ lines)
+  - API client service
+  - Offline database service
+  - Auto-sync service
+  - Auth context
+  - Type definitions
+  - Routing setup
+  - Tailwind styling
+
+Phase 3: Public Pages              🔄 NEXT (1-2 days)
+  - Home, Login, Signup, Plans pages
+  - Layout components
+  - Form validation
+
+Phase 4: Dashboard & Leads         ⏳ TODO (2-3 days)
+Phase 5: Advanced Features         ⏳ TODO (2-3 days)
+Phase 6: Admin & Billing          ⏳ TODO (1-2 days)
+Phase 7: Polish & Optimization    ⏳ TODO (1 day)
+
+TOTAL: ~2 weeks to complete all phases
+
+═══════════════════════════════════════════════════════════════════════════════
+
+USEFUL LINKS
+═══════════════════════════════════════════════════════════════════════════════
+
+React Docs:          https://react.dev
+React Router:        https://reactrouter.com
+Tailwind CSS:        https://tailwindcss.com
+TypeScript:          https://www.typescriptlang.org
+Dexie.js:            https://dexie.org
+Django REST:         https://www.django-rest-framework.org
+Axios:               https://axios-http.com
+
+═══════════════════════════════════════════════════════════════════════════════
+
+NEXT ACTION
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Read DEVELOPER_GUIDE.md (comprehensive guide)
+2. Run frontend & backend dev servers
+3. Test API connectivity
+4. Create Phase 3 pages (public pages)
+5. Continue building following the guide
+
+═══════════════════════════════════════════════════════════════════════════════

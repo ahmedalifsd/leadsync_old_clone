@@ -24,6 +24,12 @@ from core import views as core_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    
+    # API Routes (v1)
+    path('api/auth/', include('accounts.api_urls')),
+    path('api/', include('core.api_urls')),
+    
+    # Legacy Django Template URLs (for backward compatibility)
     path('', core_views.home, name='home'),
     path('my-plans/', core_views.my_plans_page, name='my_plans_page'),
     path('privacy-policy/', core_views.privacy_policy, name='privacy_policy'),
