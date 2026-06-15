@@ -25,6 +25,12 @@ import { TemplatesPage } from './pages/TemplatesPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { SettingsPage } from './pages/SettingsPage';
 
+// Protected Pages - Phase 6
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { UsersManagementPage } from './pages/UsersManagementPage';
+import { BillingPage } from './pages/BillingPage';
+import { TeamsPage } from './pages/TeamsPage';
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -115,6 +121,43 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Routes - Phase 6 */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <UsersManagementPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/billing"
+            element={
+              <ProtectedRoute>
+                <BillingPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/teams"
+            element={
+              <ProtectedRoute>
+                <TeamsPage />
               </ProtectedRoute>
             }
           />
